@@ -1,0 +1,3 @@
+"regex"	"result"
+"AVG_Beta"	"betas"
+"Detection Pval"	"pvals"

@@ -1,0 +1,19 @@
+Package: methylumi
+Type: Package
+Title: Handle Illumina methylation data
+Version: 0.9.7
+Date: 2009-05-07
+Author: Sean Davis and Sven Bilke
+Depends: R (>= 2.9), Biobase, methods
+Imports: Biobase, graphics, lattice
+Suggests: lattice, limma, xtable
+biocViews: DNAMethylation, TwoChannel, Preprocessing, QualityControl, CpGIsland
+Maintainer: Sean Davis <sdavis2@mail.nih.gov>
+Description: This package provides classes for holding and manipulating
+	     Illumina methylation data.  Based on eSet, it can contain MIAME
+	     information, sample information, feature information, and
+	     multiple matrices of data.  An "intelligent" import function,
+	     methylumiR can read the Illumina text files and create a
+	     MethyLumiSet. Normalization and quality control features are also
+	     included.
+License: GPL-2
