@@ -1,9 +1,8 @@
 % NOTE -- ONLY EDIT THE .Rnw FILE!!!  The .tex file is
 % likely to be overwritten.
 %
-%\VignetteDepends{Biobase}
-%\VignetteIndexEntry{An introduction to Biobase and ExpressionSets}
-%\VignetteKeywords{tutorial, environment, graphics, ExpressionSet}
+%\VignetteIndexEntry{An Introduction to the methylumi package}
+%\VignetteKeywords{tutorial, graphics, methylation}
 %
 %\VignetteDepends{Biobase, lattice, limma, xtable}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
