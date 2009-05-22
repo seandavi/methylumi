@@ -130,32 +130,20 @@ if (is.null(getGeneric("summary"))) setGeneric("summary", function(object,...) s
 
 setMethod("unmethylated", signature(object="MethyLumiSet"),
           function(object) {
-            if("Signal CY3" %in% assayDataElementNames(object)) {
-              return(assayDataElement(object,"Signal CY3"))
-            } else {
-              return(assayDataElement(object,"Signal_A"))
-            }})
+            return(assayDataElement(object,"unmethylated"))
+          })
 setReplaceMethod("unmethylated", signature(object="MethyLumiSet",value="matrix"),
           function(object,value) {
-            if("Signal CY3" %in% assayDataElementNames(object)) {
-              assayDataElementReplace(object,"Signal CY3",value)
-            } else {
-              assayDataElementReplace(object,"Signal_A",value)
-            }})
+            assayDataElementReplace(object,"unmethylated",value)
+          })
 setMethod("methylated", signature(object="MethyLumiSet"),
           function(object) {
-            if("Signal CY5" %in% assayDataElementNames(object)) {
-              return(assayDataElement(object,"Signal CY5"))
-            } else {
-              return(assayDataElement(object,"Signal_B"))
-            }})
+            return(assayDataElement(object,"methylated"))
+            })
 setReplaceMethod("methylated", signature(object="MethyLumiSet",value="matrix"),
           function(object,value) {
-            if("Signal CY5" %in% assayDataElementNames(object)) {
-              assayDataElementReplace(object,"Signal CY5",value)
-            } else {
-              assayDataElementReplace(object,"Signal_B",value)
-            }})
+            assayDataElementReplace(object,"methylated",value)
+          })
 
 
 setMethod("show",signature(object="MethyLumiSet"), function(object) 
