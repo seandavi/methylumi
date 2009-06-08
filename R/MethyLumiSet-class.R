@@ -485,10 +485,13 @@ if (is.null(getGeneric("qcplot"))) setGeneric("qcplot", function(object,controlt
   arraytype <- "goldengate"
   if(length(grep("Signal_Red",assayDataElementNames(object),ignore.case=TRUE))>0)
     arraytype <- "infinium"
-  datElements <- switch(arraytype,
-                        infinium=c('Signal_Red','Signal_Grn'),
-                        goldengate=c('Signal CY3','Signal CY5')
-                        )
+  ## Had to change the stuff below to use 'methylated' and
+  ## 'unmethylated' since I now rename these columns everywhere
+#  datElements <- switch(arraytype,
+#                        infinium=c('Signal_Red','Signal_Grn'),
+#                        goldengate=c('Signal CY3','Signal CY5')
+#                        )
+  datElements <- c('unmethylated','methylated')
   plot(dotplot(t(assayDataElement(object,datElements[1])
           [grep(controltype,featureNames(object)),]),
                xlab=datElements[1],main=controltype,auto.key=TRUE),
