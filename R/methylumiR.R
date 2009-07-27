@@ -35,7 +35,7 @@
 ### separated by either "." or ":"
 ###
 
-.getAssayDataNameSubstitions <- function() {
+getAssayDataNameSubstitutions <- function() {
   subs <- read.table(system.file("extdata/substitutions.txt",package="methylumi")
                      ,header=TRUE,as.is=TRUE,sep="\t")
   return(subs)
@@ -43,7 +43,7 @@
 
 .doAssayDataNameSubstitutions <- function(assayDataNames) {
   assayDataNamesCopy <- assayDataNames
-  subs <- .getAssayDataNameSubstitions()
+  subs <- getAssayDataNameSubstitutions()
   for(i in 1:nrow(subs)) {
     tmp <- grep(subs$regex[i],assayDataNames)
     if(length(tmp)>1) {
@@ -277,4 +277,5 @@ extractBarcodeAndPosition <- function(sentrixids) {
   l$columnNumber <- as.numeric(gsub('C','',l$column))
   return(data.frame(l))
 }
+
 
