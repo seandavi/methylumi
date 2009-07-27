@@ -11,7 +11,7 @@ importFrom(lattice,
            dotplot,
            parallel)
 
-export(methylumiR,extractBarcodeAndPosition,normalizeMethyLumiSet)
+export(methylumiR,extractBarcodeAndPosition,normalizeMethyLumiSet,getAssayDataNameSubstitutions)
 exportClasses("MethyLumiSet","MethyLumiQC","MethyLumi")
 exportMethods("getHistory","betas","pvals","exprs","summary",
               "show","combine","hist","boxplot","pairs","[",
