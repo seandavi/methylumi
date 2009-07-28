@@ -64,6 +64,12 @@ mldat
 
 Accessors for various slots of the resulting object are outlined in the online help.  It is worth noting, though, that the \Rmethod{QCdata} will return another \Rclass{eSet}-like object of class \Rclass{MethyLumiQC}; the data contained here can be useful if an array has failed.
 
+Note that the assayData names have been changed from the original column identifiers in the data file from Illumina.  The mappings are available via the function \Rfunction{getAssayDataNameSubstitutions}.
+
+<<cache=TRUE>>=
+getAssayDataNameSubstitutions()
+@ 
+
 \section{Quality Control}
 
 The data that are included with the methylumi package are all normal samples from the same tissue.  The samples are labeled with the presumed gender.  The data are meant to be illustrative of some typical quality-control and sample-labeling problems.  In order to get a quick overview of the samples, it is useful to look at an MDS plot of the samples, using only probes on the X chromosome.  Since females undergo X-inactivation, they should show something approximating hemi-methylation on that chromosome while males should show very little methylation on the X chromosome.
