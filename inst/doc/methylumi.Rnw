@@ -113,9 +113,9 @@ The Illumina platform shows a significant dye bias in the two channels which wil
 First, a bit of cleanup is needed.  The two samples with significantly poorer quality are removed.  The gender of the mis-labeled sample is also corrected.  
 
 <<cache=TRUE>>=
-toRemove <- (avgPval<0.05)
+toKeep <- (avgPval<0.05)
 pData(mldat)$Gender[9] <- "F"
-mldat.norm <- normalizeMethyLumiSet(mldat[,toRemove])
+mldat.norm <- normalizeMethyLumiSet(mldat[,toKeep])
 @ 
 
 \section{Example Analysis}
