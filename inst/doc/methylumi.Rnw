@@ -120,7 +120,7 @@ mldat.norm <- normalizeMethyLumiSet(mldat[,toKeep])
 
 \section{Example Analysis}
 
-As a simple example of an analysis, we can look for the differences between males and females.  We already know there is a strong difference based on simple unsupervized methods (the MDS plot).  However, methylation is particularly informative for sex differences because females undergo X-inactivation and are, therefore, expected to have one copy of the X chromosome largely methylated. 
+As a simple example of an analysis, we can look for the differences between males and females.  We already know there is a strong difference based on simple unsupervized methods (the MDS plot).  However, methylation is particularly informative for sex differences because females undergo X-inactivation and are, therefore, expected to have one copy of the X chromosome largely methylated. \textbf{Note that, while limma is used here to illustrate a point, an appropriate statistical framework for finding differential methylation targets based on the Illumina methylation platforms with data that is not normally distributed under the null is a current research topic for a number of groups.}
 
 <<cache=TRUE>>=
 library(limma)
@@ -151,9 +151,10 @@ invisible(dev.off())
 @ 
 
 \begin{figure}[h]
-\begin{center}
-\includegraphics[width=0.8\textwidth ]{gender_probes_by_chrom}
-\end{center}
+  \begin{center}
+    \includegraphics[width=0.8\textwidth ]{gender_probes_by_chrom}
+  \end{center}
+  \caption{Probes differentially methylated plotted by chromosome.  Note that the p-values plotted here are based on a linear model.  Since the underlying data are not normally distributed, the p-values representing the outcomes of the linear models are not exact.}
 \end{figure}
 
 \section{sessionInfo}
