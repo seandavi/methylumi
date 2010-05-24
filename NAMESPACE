@@ -18,4 +18,4 @@ exportMethods("getHistory","betas","pvals","exprs","summary",
               "QCdata","plotSampleIntensities","qcplot",
               "methylated","unmethylated","unmethylated<-",
               "methylated<-","QCdata<-","exprs<-",
-              "pvals<-","betas<-","controlTypes")
+              "pvals<-","betas<-","controlTypes","corplot")
