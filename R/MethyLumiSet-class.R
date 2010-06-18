@@ -31,7 +31,8 @@ setMethod('initialize', 'MethyLumiSet',
                    featureData = annotatedDataFrameFrom(assayData,byrow=TRUE),
                    experimentData = new("MIAME"),
                    annotation= character(),
-                   betas = new("matrix")
+                   betas = new("matrix"),
+				   ...
                    )
                    {
             callNextMethod(.Object,
