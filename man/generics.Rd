@@ -1,5 +1,6 @@
 \name{MethyLumi-accessors}
 \alias{betas}
+\alias{corplot}
 \alias{betas<-}
 \alias{unmethylated}
 \alias{methylated}
