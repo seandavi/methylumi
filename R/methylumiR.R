@@ -64,8 +64,24 @@ getAssayDataNameSubstitutions <- function() {
   datcn <- cn[datcnidx]
   cnSplit <- do.call(rbind,strsplit(cn,datcolsep))
   datcnSplit <- do.call(rbind,strsplit(datcn,datcolsep))
+
   dattypes <- data.frame(original=unique(datcnSplit[,2]),
-                         newnames=.doAssayDataNameSubstitutions(unique(datcnSplit[,2])))
+                        newnames=.doAssayDataNameSubstitutions(unique(datcnSplit[,2])), stringsAsFactors = F)  ## turn off stringAsFactors
+ #                        newnames=.doAssayDataNameSubstitutions(unique(datcnSplit[,2]))) # changed by Pan Du, July 1, 2010
+  
+	## added by Pan Du, July 1, 2010
+	## Check the number of columns of each data types, remove those do not match with the substituted ones, which should have the same dimensions.
+	colnum <- table(datcnSplit[,2])
+	## If the column numbers for each datatype are not consistent, we need to futher check it and remove the inconsistent ones.
+	if (length(unique(colnum)) > 1) {
+		substitutedNames <- dattypes$original[dattypes$original != dattypes$newnames]
+		## check whether all substituted data types have the same number of columns
+		if (length(unique(colnum[substitutedNames])) != 1) stop("Parsed column dimension doesnot match!\n")
+		## check whether other data types also have the same number of columns as the substituted ones	
+		rmInd <- which(colnum[dattypes$original] != colnum[substitutedNames[1]])
+		dattypes <- dattypes[-rmInd,]
+	}
+
   assaydata <- new.env(hash=TRUE,parent=emptyenv())
   featurenames <- make.unique(as.character(dat$TargetID))
   for (i in 1:nrow(dattypes)) {
@@ -75,7 +91,11 @@ getAssayDataNameSubstitutions <- function() {
     rownames(tmpmat) <- featurenames
     assaydata[[as.character(dattypes$newnames[i])]] <- tmpmat
   }
-  fd <- dat[,(!(cn %in% datcn))]
+
+  ## added by Pan Du, July 1, 2010
+  storageMode(assaydata) <- "lockedEnvironment"
+
+  fd <- dat[,(!(cn %in% datcn)), drop=FALSE]  # add drop = FALSE by Pan Du on Oct 6, 2010
   rownames(fd) <- featurenames
   featuredata <- as(fd,"AnnotatedDataFrame")
   return(list(featuredata=featuredata,assaydata=assaydata))
@@ -206,6 +226,13 @@ methylumiR <-
     }
     
     sampleName <-  sampleNames(fulldat$datblock$assaydata)
+	
+	## added by Pan Du, July 1, 2010
+	if (any(duplicated(sampleName))) {
+		warning("Duplicated column names found!\n Suffix indexes were appended!\n")
+		sampleName <- make.names(sampleName, unique=T)
+	}
+	
     sampleID <- sampleName
     label <- NULL
     pData <- NULL
