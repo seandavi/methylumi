@@ -1,0 +1,21 @@
+import(Biobase)
+
+importFrom(graphics,
+           boxplot,
+           hist,
+           image,
+           pairs,
+           plot)
+
+importFrom(lattice,
+           dotplot,
+           parallel)
+
+export(methylumiR,extractBarcodeAndPosition,normalizeMethyLumiSet,getAssayDataNameSubstitutions)
+exportClasses("MethyLumiSet","MethyLumiQC","MethyLumi")
+exportMethods("getHistory","betas","pvals","exprs","summary",
+              "show","combine","hist","boxplot","pairs","[",
+              "QCdata","plotSampleIntensities","qcplot",
+              "methylated","unmethylated","unmethylated<-",
+              "methylated<-","QCdata<-","exprs<-",
+              "pvals<-","betas<-","controlTypes","corplot")
