@@ -276,23 +276,33 @@ methylumiR <-
     rownames(varMetadata) <- c(colnames(pData))
     pdata <- new("AnnotatedDataFrame", data=pData, varMetadata=varMetadata)
     
-    x.lumi=new('MethyLumiSet',assayData=fulldat$datblock$assaydata,
-      featureData=fulldat$datblock$featuredata,
-      phenoData=pdata)
-    if(!is.null(fulldat$qcblock)) {
-      control.lumi <- new('MethyLumiQC',assayData=fulldat$qcblock$assaydata,
-                          featureData=fulldat$qcblock$featuredata)
-      x.lumi@QC <- control.lumi
-    }
-    history.finished <- as.character(Sys.time())
+	## check whether the data file is a methylation data file or control data file
+	## Added by Pan DU Dec. 30, 2010
+	if ("betas" %in% assayDataElementNames(fulldat$datblock$assaydata)) {
+	    x.lumi=new('MethyLumiSet',assayData=fulldat$datblock$assaydata,
+	      featureData=fulldat$datblock$featuredata,
+	      phenoData=pdata)
+		
+		#
+		if(!is.null(fulldat$qcblock)) {
+	      control.lumi <- new('MethyLumiQC',assayData=fulldat$qcblock$assaydata,
+	                          featureData=fulldat$qcblock$featuredata)
+	      x.lumi@QC <- control.lumi
+	    }
+	    history.finished <- as.character(Sys.time())
 
-    history.command <- paste(capture.output(print(match.call(methylumiR))),collapse="")
-    
-    x.lumi@history<- rbind(x.lumi@history,
-                           data.frame(submitted=history.submitted,
-                                      finished=history.finished,
-                                      command=history.command))
-    return(x.lumi)
+	    history.command <- paste(capture.output(print(match.call(methylumiR))),collapse="")
+
+	    x.lumi@history<- rbind(x.lumi@history,
+	                           data.frame(submitted=history.submitted,
+	                                      finished=history.finished,
+	                                      command=history.command))
+	} else {
+     	x.lumi <- new('MethyLumiQC',assayData=fulldat$datblock$assaydata,
+                          featureData=fulldat$datblock$featuredata)
+	}
+	
+     return(x.lumi)
   }
 
 extractBarcodeAndPosition <- function(sentrixids) {
