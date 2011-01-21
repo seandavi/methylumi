@@ -11,11 +11,14 @@ importFrom(lattice,
            dotplot,
            parallel)
 
-export(methylumiR,extractBarcodeAndPosition,normalizeMethyLumiSet,getAssayDataNameSubstitutions)
-exportClasses("MethyLumiSet","MethyLumiQC","MethyLumi")
+export(methylumiR, extractBarcodeAndPosition, normalizeMethyLumiSet, getAssayDataNameSubstitutions, estimateM)
+exportClasses("MethyLumiSet","MethyLumiQC","MethyLumi", "MethyLumiM")
 exportMethods("getHistory","betas","pvals","exprs","summary",
               "show","combine","hist","boxplot","pairs","[",
               "QCdata","plotSampleIntensities","qcplot",
               "methylated","unmethylated","unmethylated<-",
               "methylated<-","QCdata<-","exprs<-",
-              "pvals<-","betas<-","controlTypes","corplot")
+              "pvals<-","betas<-","controlTypes","corplot",
+			"controlData", "controlData<-", "detection", "detection<-", 
+			"methylated.N", "methylated.N<-", "unmethylated.N", "unmethylated.N<-"
+			)
