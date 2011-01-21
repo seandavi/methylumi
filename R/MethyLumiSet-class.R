@@ -1,15 +1,7 @@
 # $HeadUrl$
 # $Id$
 ##=================================================
-## Define MethyLumiSet object:
-setClass('MethyLumi',
-         contains='eSet')
-
-setClass('MethyLumiQC',
-         contains='MethyLumi')
-
-setClassUnion("QCDataOrNULL",c('NULL',"MethyLumiQC"))
-
+## Define MethyLumiSet class:
 setClass('MethyLumiSet',
          representation(QC="QCDataOrNULL",
                         history='data.frame'),
@@ -82,23 +74,6 @@ setValidity("MethyLumiQC", function(object)
 
 ##=================================================
 ## methods
-if (is.null(getGeneric("getHistory"))) setGeneric("getHistory", function(object) standardGeneric("getHistory"))
-if (is.null(getGeneric("betas"))) setGeneric("betas", function(object) standardGeneric("betas"))
-if (is.null(getGeneric("betas<-"))) setGeneric("betas<-", function(object, value) standardGeneric("betas<-"))
-if (is.null(getGeneric("pvals"))) setGeneric("pvals", function(object) standardGeneric("pvals"))
-if (is.null(getGeneric("pvals<-"))) setGeneric("pvals<-", function(object, value) standardGeneric("pvals<-"))
-if (is.null(getGeneric("exprs"))) setGeneric("exprs", function(object) standardGeneric("exprs"))
-if (is.null(getGeneric("exprs<-"))) setGeneric("exprs<-", function(object, value) standardGeneric("exprs<-"))
-if (is.null(getGeneric("unmethylated"))) setGeneric("unmethylated", function(object) standardGeneric("unmethylated"))
-if (is.null(getGeneric("unmethylated<-"))) setGeneric("unmethylated<-", function(object, value) standardGeneric("unmethylated<-"))
-if (is.null(getGeneric("methylated"))) setGeneric("methylated", function(object) standardGeneric("methylated"))
-if (is.null(getGeneric("methylated<-"))) setGeneric("methylated<-", function(object, value) standardGeneric("methylated<-"))
-if (is.null(getGeneric("hist"))) setGeneric("hist", function(x,...) standardGeneric("hist"))
-if (is.null(getGeneric("corplot"))) setGeneric("corplot", function(x,...) standardGeneric("corplot"))
-if (is.null(getGeneric("plotDensity"))) setGeneric("plotDensity", function(x,...) standardGeneric("plotDensity"))
-if (is.null(getGeneric("QCdata"))) setGeneric("QCdata", function(object) standardGeneric("QCdata"))
-if (is.null(getGeneric("QCdata<-"))) setGeneric("QCdata<-", function(object, value) standardGeneric("QCdata<-"))
-
 
 setMethod("betas", signature(object="MethyLumiSet"),
           function(object) assayDataElement(object,"betas"))
