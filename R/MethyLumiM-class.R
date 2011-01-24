@@ -59,7 +59,7 @@ setAs("eSet", "MethyLumiM", function(from) {
 
   	history.submitted <- as.character(Sys.time())
 
-	from <- asS4(from)
+	# from <- asS4(from)
 	
 	if (exists('methylated', assayData(from)) && exists('methylated', assayData(from))) {
 		M <- estimateM(from, returnType="matrix")
@@ -67,7 +67,7 @@ setAs("eSet", "MethyLumiM", function(from) {
 		stop("Cannot convert as MethyLumiM object because methylated and unmethylated slots do not exist!\n")
 	}
 	
-	if ("history" %in% slotNames(from)) {
+	if (.hasSlot(from, "history")) {
 		history <- from@history
 		if (is.null(history$lumiVersion)) history$lumiVersion <- rep(NA, nrow(history))
 	} else {
@@ -105,7 +105,7 @@ setAs("eSet", "MethyLumiM", function(from) {
 	if (!is.null(unmethy.N)) aData[['unmethylated.N']] <- unmethy.N
 	storageMode(aData) <- "lockedEnvironment"	
 	to <- new("MethyLumiM", assayData=aData, phenoData=phenoData(from), featureData=featureData(from), annotation=annotation(from), experimentData=experimentData(from), protocolData=protocolData(from))		
-    
+
 	# check whether there are QC data available
 	if (.hasSlot(from, "QC")) {
 		if (is(QCdata(from), "MethyLumiQC")) {
@@ -265,6 +265,7 @@ setReplaceMethod("controlData", signature(object="MethyLumiM"), function(object,
 	} else {
 		cat("The control data should be a MethyLumiQC object!\n")
 	}
+	return(object)
 })	
 
 
