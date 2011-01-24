@@ -6,7 +6,7 @@ Date: 2011-01-21
 Author: Sean Davis, Pan Du, Sven Bilke
 Depends: R (>= 2.9), Biobase, methods
 Imports: Biobase, graphics, lattice
-Suggests: lattice, limma, xtable
+Suggests: lumi, lattice, limma, xtable
 biocViews: DNAMethylation, TwoChannel, Preprocessing, QualityControl, CpGIsland
 Maintainer: Sean Davis <sdavis2@mail.nih.gov>
 Description: This package provides classes for holding and manipulating
