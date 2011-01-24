@@ -1,8 +1,8 @@
 Package: methylumi
 Type: Package
 Title: Handle Illumina methylation data
-Version: 1.7.3
-Date: 2011-01-21
+Version: 1.7.4
+Date: 2011-01-24
 Author: Sean Davis, Pan Du, Sven Bilke
 Depends: R (>= 2.9), Biobase, methods
 Imports: Biobase, graphics, lattice
@@ -14,6 +14,6 @@ Description: This package provides classes for holding and manipulating
 	     information, sample information, feature information, and
 	     multiple matrices of data.  An "intelligent" import function,
 	     methylumiR can read the Illumina text files and create a
-	     MethyLumiSet. Normalization and quality control features are also
-	     included.
+	     MethyLumiSet. Normalization and quality control features for  
+	     GoldenGate arrays are also included.
 License: GPL-2
