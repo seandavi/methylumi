@@ -35,3 +35,22 @@ if (is.null(getGeneric("detection"))) setGeneric("detection", function(object) s
 if (is.null(getGeneric("detection<-"))) setGeneric("detection<-", function(object, value) standardGeneric("detection<-"))
 
 
+if (is.null(getGeneric("featureFilter")))
+    setGeneric("featureFilter", 
+               function(eset,
+                        require.entrez=FALSE,
+                        require.GOBP=FALSE,
+                        require.GOCC=FALSE,
+                        require.GOMF=FALSE,
+                        exclude.ChrX=FALSE,
+                        require.closeToTSS=FALSE,
+                        range.DistToTSS=c(-500, 300),
+                        require.CpGisland=FALSE, ...)
+               standardGeneric("featureFilter"))
+
+if (is.null(getGeneric("varFilter")))
+    setGeneric("varFilter", 
+               function(eset,
+                        var.func=IQR, var.cutoff=0.05,
+                        filterByQuantile=TRUE, ...)
+               standardGeneric("varFilter"))
