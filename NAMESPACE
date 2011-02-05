@@ -1,5 +1,11 @@
 import(Biobase)
 
+importFrom(annotate,
+           getAnnMap)
+
+importMethodsFrom(AnnotationDbi,
+                  mget)
+
 importFrom(graphics,
            boxplot,
            hist,
@@ -19,6 +25,7 @@ exportMethods("getHistory","betas","pvals","exprs","summary",
               "methylated","unmethylated","unmethylated<-",
               "methylated<-","QCdata<-","exprs<-",
               "pvals<-","betas<-","controlTypes","corplot",
-			"controlData", "controlData<-", "detection", "detection<-", 
-			"methylated.N", "methylated.N<-", "unmethylated.N", "unmethylated.N<-"
+              "controlData", "controlData<-", "detection", "detection<-", 
+              "methylated.N", "methylated.N<-", "unmethylated.N", "unmethylated.N<-",
+              "featureFilter","varFilter"
 			)
