@@ -109,17 +109,18 @@ setAs("eSet", "MethyLumiM", function(from) {
 	# check whether there are QC data available
 	if (.hasSlot(from, "QC")) {
 		if (is(QCdata(from), "MethyLumiQC")) {
-			controlData(to) <- from@QC
-			# to <- addControlData2methyLumiM(controlData=from@QC, methyLumiM=to)
+			to@controlData <- from@QC
 		} 
 	}
 
 	history.finished <- as.character(Sys.time())
 	history.command <- capture.output(print(match.call(setAs)))  
 	lumiVersion <- packageDescription('lumi')$Version
-	to@history<- rbind(history, data.frame(submitted=history.submitted, finished=history.finished, 
-			command=history.command, lumiVersion=lumiVersion))
-	
+	to@history <- rbind(history, 
+                      data.frame(submitted=history.submitted, 
+                                 finished=history.finished, 
+                                 command=history.command, 
+                                 lumiVersion=lumiVersion))
 	return(to)
 })
 

@@ -1,19 +1,31 @@
 Package: methylumi
 Type: Package
 Title: Handle Illumina methylation data
-Version: 1.9.0
-Date: 2011-02-05
-Author: Sean Davis, Pan Du, Sven Bilke
-Depends: R (>= 2.9), Biobase, methods
-Imports: Biobase, graphics, lattice, annotate, genefilter, AnnotationDbi
-Suggests: lumi, lattice, limma, xtable, GGHumanMethCancerPanelv1.db
-biocViews: DNAMethylation, TwoChannel, Preprocessing, QualityControl, CpGIsland
+Version: 1.9.13
+Date: 2011-10-04
+Author: Sean Davis, Pan Du, Sven Bilke, Tim Triche, Jr.
+Depends: R, Biobase, methods
+Imports: Biobase, graphics, lattice, annotate, genefilter,
+        AnnotationDbi
+Suggests: lumi, lattice, limma, xtable, GGHumanMethCancerPanelv1.db,
+        IlluminaHumanMethylation27k.db (>= 1.4.4),
+        IlluminaHumanMethylation450k.db, ggplot2, SQN, multicore, MASS,
+        matrixStats
+biocViews: DNAMethylation, TwoChannel, Preprocessing, QualityControl,
+        CpGIsland
 Maintainer: Sean Davis <sdavis2@mail.nih.gov>
 Description: This package provides classes for holding and manipulating
 	     Illumina methylation data.  Based on eSet, it can contain MIAME
 	     information, sample information, feature information, and
 	     multiple matrices of data.  An "intelligent" import function,
 	     methylumiR can read the Illumina text files and create a
-	     MethyLumiSet. Normalization and quality control features for  
-	     GoldenGate arrays are also included.
+	     MethyLumiSet. methylumIDAT can directly read raw IDAT files from 
+       HumanMethylation27 and HumanMethylation450 microarrays.  Normalization,
+       background correction, and quality control features for GoldenGate,
+       Infinium, and Infinium HD arrays are also included.
 License: GPL-2
+Collate: AllGenerics.R MethyLumiSet-class.R MethyLumiM-class.R
+        MoreGenerics.R methylumIDAT.R methylumiCSV.R qc.probe.plot.R
+        detectionpval.R normalization.R utilities.R featureFilter.R
+        varFilter.R methylumiR.R bgcorr.R stripMethyLumiSet.R
+        subset450kas27k.R readIDAT2.R plotNegOob.R
