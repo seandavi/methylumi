@@ -9,7 +9,11 @@
            require.CpGisland=FALSE, ...)
 {
      annChip <- annotation(eset)
-     if (nchar(annChip) == 0) stop("'eset' must have a valid annotation slot")
+     if (annChip == 'IlluminaHumanMethylation450k') {
+       warning("HumanMethylation450k probes annotate to multiple accessions(!)")
+     } else if (nchar(annChip) == 0) {
+       stop("'eset' must have a valid annotation slot")
+     }
 
      nfeat <- function(eset) length(featureNames(eset))
      filter.log <- new.env(parent=emptyenv())
@@ -31,7 +35,11 @@
              stop("'range.DistToTSS' must be a vector of numeric values.")
          if (length(range.DistToTSS) != 2)
              stop("The length of 'range.DistToTSS' must be 2.")
-         
+   
+               
+         if (annChip == 'IlluminaHumanMethylation450k') {
+           stop('DISTTOTSS can have multiple values for 450k probes')
+         }
          map <- "DISTTOTSS"
          distotss <- mget(featureNames(eset),
                      envir=annotate::getAnnMap(map, annChip),
