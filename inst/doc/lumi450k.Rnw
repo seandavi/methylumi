@@ -1,0 +1,65 @@
+% -*- mode: noweb; noweb-default-code-mode: R-mode; -*-
+%\VignetteIndexEntry{450k IDATs to lumi objects via methylumi 1.8+}
+%\VignetteDepends{IlluminaHumanMethylation450k.db}
+%\VignetteDepends{methylumi}
+%\VignettePackage{lumi}
+
+\documentclass{article}
+\usepackage{amsmath,pstricks}
+\usepackage{hyperref}
+\usepackage[authoryear,round]{natbib}
+\newcommand{\Rfunction}[1]{{\texttt{#1}}}
+\newcommand{\Robject}[1]{{\texttt{#1}}}
+\newcommand{\Rpackage}[1]{{\textit{#1}}}
+\newcommand{\Rclass}[1]{{\textit{#1}}}
+\newcommand{\Rmethod}[1]{{\textit{#1}}}
+
+\SweaveOpts{keep.source=TRUE}
+\begin{document}
+\setkeys{Gin}{width=0.8\textwidth} 
+\author{Tim Triche, Jr.}
+\title{Using lumi with 450k raw data}
+\maketitle
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\tableofcontents
+\clearpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Creating a MethyLumiM object from IDATs}
+
+<<load libraries and data for analysis, eval=T>>=
+library('methylumi')
+library('IlluminaHumanMethylation450k.db')
+setwd("~/Dropbox/pandu/IDATs")  # like duh, I need to change this
+barcodes <- c('5640277004_R02C01','5640277004_R03C01')
+lumi450k <- lumIDAT(barcodes) # no normalization done
+sampleNames(lumi450k) <- c('Buffy coat 6','Buffy coat 8')
+show(lumi450k)
+@
+
+\clearpage
+
+\section{Negative and normalization controls}
+Plot the negative and normalization controls:
+
+\begin{figure}[h!]
+\centering
+<<controls, fig=true, width=6.5, height=6.5, quiet=T, echo=T>>=
+library(ggplot2)
+p <- qc.probe.plot(lumi450k, by.type=TRUE)
+print(p)
+@
+\caption{Some of the controls on the 450k chip}
+\label{fig:controlplot}
+\end{figure}            
+
+\clearpage
+\section{sessionInfo}
+<<results=tex>>=
+#save(lumi450k, file="lumi450k.rda")
+toLatex(sessionInfo())
+@ 
+
+\end{document}
+
