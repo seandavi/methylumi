@@ -17,15 +17,18 @@ importFrom(lattice,
            dotplot,
            parallel)
 
-export(methylumiR, extractBarcodeAndPosition, normalizeMethyLumiSet, getAssayDataNameSubstitutions, estimateM)
+export(methylumiR, extractBarcodeAndPosition, normalizeMethyLumiSet, getAssayDataNameSubstitutions, estimateM, methylumIDAT, lumIDAT, methylumiCSV, lumiCSV, methylumi.diagnostics, qc.probe.plot, cy3, cy5, getBarcodes, stripBeadNs, stripBeadSDs, stripMethyLumiSet, psummary, negctls.stderr, methylumi.bgcorr, IDATtoDF, IDATsToDFs, readMethyLumIDAT, getProtocolData, designItoMandU, designIItoMandU, mergeProbeDesigns, NChannelSetToMethyLumiSet, subset.450k.as.27k, stripOOB, .combine.methylumiQC, .combine.methylumiSets)
 exportClasses("MethyLumiSet","MethyLumiQC","MethyLumi", "MethyLumiM")
 exportMethods("getHistory","betas","pvals","exprs","summary",
               "show","combine","hist","boxplot","pairs","[",
-              "QCdata","plotSampleIntensities","qcplot",
+              "QCdata","plotSampleIntensities","qcplot","total.intensity",
               "methylated","unmethylated","unmethylated<-",
-              "methylated<-","QCdata<-","exprs<-",
-              "pvals<-","betas<-","controlTypes","corplot",
+              "methylated<-","QCdata<-","exprs<-","diagnostics","Cy3.N","Cy5.N",
+              "pvals<-","betas<-","controlTypes","corplot", "negctls.stderr",
               "controlData", "controlData<-", "detection", "detection<-", 
-              "methylated.N", "methylated.N<-", "unmethylated.N", "unmethylated.N<-",
-              "featureFilter","varFilter"
-			)
+              "unmethylated.N","unmethylated.N<-","pval.detect<-","pval.detect",
+              "sampleNAs","probeNAs","plotNAs","normctls","negctls", 
+              "methylated.N","methylated.N<-", "featureFilter","varFilter",
+              "intensities.OOB","intensities.IB","negnorm","Cy3<-","Cy5<-",
+              "intensities.OOB.allelic", "intensitiesByChannel","intensities.M",
+              "intensities.U","combine.27k.450k")

@@ -2,8 +2,15 @@
 # $Id$
 ##=================================================
 ## Define MethyLumiSet class:
-setClass('MethyLumiSet',
+setClass('MethyLumi', contains='eSet')
+setClass('MethyLumiQC', contains='MethyLumi')
+setClassUnion("QCDataOrNULL",c('NULL',"MethyLumiQC"))
+setClass('MethyLumiOOB', contains='MethyLumi')
+setClassUnion("OOBDataOrNULL",c('NULL',"MethyLumiOOB"))
+
+setClass('MethyLumiSet', # {{{
          representation(QC="QCDataOrNULL",
+                        # OOB="OOBDataOrNULL",
                         history='data.frame'),
          prototype=list(QC=NULL,
            history=data.frame(
@@ -11,10 +18,8 @@ setClass('MethyLumiSet',
              finished    = I(vector()),
              command     = I(vector())
              )),
-         contains='MethyLumi')
-
-
-setMethod('initialize', 'MethyLumiSet',
+         contains='MethyLumi') # }}}
+setMethod('initialize', 'MethyLumiSet', # {{{
           function(.Object,
                    assayData=assayDataNew(
                      betas       = betas,
@@ -34,9 +39,8 @@ setMethod('initialize', 'MethyLumiSet',
                            experimentData=experimentData,
                            annotation=annotation)
           }
-          )
-
-setMethod('initialize', 'MethyLumiQC',
+          ) # }}}
+setMethod('initialize', 'MethyLumiQC', # {{{
           function(.Object,
                    assayData=assayDataNew(
                      ...),
@@ -54,158 +58,267 @@ setMethod('initialize', 'MethyLumiQC',
                            experimentData=experimentData,
                            annotation=annotation)
           }
-          )
-
-
-setValidity("MethyLumiSet", function(object) 
-{
+          ) # }}}
+#setMethod('initialize', 'MethyLumiOOB',  # {{{
+          #function(.Object,
+                   #assayData=assayDataNew(
+                     #...),
+                   #phenoData   = annotatedDataFrameFrom(assayData,byrow=FALSE),
+                   #featureData = annotatedDataFrameFrom(assayData,byrow=TRUE),
+                   #experimentData = new("MIAME"),
+                   #annotation= character(),
+                   #betas = new("matrix")
+                   #)
+                   #{
+            #callNextMethod(.Object,
+                           #assayData=assayData,
+                           #phenoData=phenoData,
+                           #featureData=featureData,
+                           #experimentData=experimentData,
+                           #annotation=annotation)
+          #}
+          #)  # }}}
+setValidity("MethyLumiSet", function(object) { # {{{
     msg <- Biobase:::validMsg(NULL, Biobase:::isValidVersion(object, "eSet"))
     msg <- Biobase:::validMsg(msg, assayDataValidMembers(assayData(object), c("betas")))
     if (is.null(msg)) TRUE else msg
-})
-
-setValidity("MethyLumiQC", function(object) 
-{
+}) # }}}
+setValidity("MethyLumiQC", function(object) { # {{{
     msg <- Biobase:::validMsg(NULL, Biobase:::isValidVersion(object, "eSet"))
 #    msg <- Biobase:::validMsg(msg, assayDataValidMembers(assayData(object), c("avgsignal")))
     if (is.null(msg)) TRUE else msg
-})
+}) # }}}
+#setValidity("MethyLumiOOB", function(object) {  # {{{
+    #msg <- Biobase:::validMsg(NULL, Biobase:::isValidVersion(object, "eSet"))
+    #if (is.null(msg)) TRUE else msg
+#})  # }}}
 
+setGeneric('betas', # {{{
+    function(object) standardGeneric('betas')) # }}} 
+setMethod("betas", signature(object="MethyLumiSet"), # {{{
+          function(object) assayDataElement(object,"betas")) # }}}
+setGeneric('betas<-', # {{{
+    function(object,value) standardGeneric('betas<-')) # }}}
+setReplaceMethod("betas", signature(object="MethyLumiSet",value="matrix"), # {{{
+function(object, value) assayDataElementReplace(object, "betas", value)) # }}}
 
-##=================================================
-## methods
+setMethod('exprs', signature(object='MethyLumiSet'), function(object) { # {{{
+  log2(pmax(methylated(object),1)/pmax(unmethylated(object),1))
+}) # }}}
+setGeneric('mvals', # {{{
+    function(object) standardGeneric('mvals')) # }}}
+setMethod('mvals', signature(object='MethyLumiSet'), function(object) { # {{{
+  log2((methylated(object)+1)/(unmethylated(object)+1))
+}) # }}}
 
-setMethod("betas", signature(object="MethyLumiSet"),
-          function(object) assayDataElement(object,"betas"))
+setMethod("pvals", signature(object="MethyLumi"), # {{{
+          function(object) assayDataElement(object,"pvals")) # }}}
+setReplaceMethod("pvals", signature(object="MethyLumi",value="matrix"), # {{{
+                 function(object, value) assayDataElementReplace(object, "pvals", value)) # }}}
 
-setReplaceMethod("betas", signature(object="MethyLumiSet",value="matrix"),
-                 function(object, value) assayDataElementReplace(object, "betas", value))
+setMethod("QCdata", signature(object="MethyLumiSet"), # {{{
+          function(object) object@QC) # }}}
+setReplaceMethod("QCdata", signature(object="MethyLumiSet",value="MethyLumiQC"), function(object, value) { # {{{
+    object@QC <- value
+    return(object)
+  }) # }}}
+setMethod("controlData", signature(object="MethyLumiSet"), # {{{
+          function(object) object@QC) # }}}
+setReplaceMethod("controlData", signature(object="MethyLumiSet",value="MethyLumiQC"), function(object, value) { # {{{
+  object@QC <- value
+  return(object)
+}) # }}} 
 
-setMethod("pvals", signature(object="MethyLumi"),
-          function(object) assayDataElement(object,"pvals"))
+setMethod("getHistory",signature(object="MethyLumiSet"), function(object) {# {{{
+    object@history
+}) # }}}
+if (is.null(getGeneric("summary"))) { # {{{
+  setGeneric("summary", function(object,...) standardGeneric("summary"))
+} # }}}
 
-setReplaceMethod("pvals", signature(object="MethyLumi",value="matrix"),
-                 function(object, value) assayDataElementReplace(object, "pvals", value))
-
-setMethod("QCdata", signature(object="MethyLumiSet"),
-          function(object) object@QC)
-
-setReplaceMethod("QCdata", signature(object="MethyLumiSet",value="MethyLumiQC"),
-                 function(object, value) {object@QC <- value
-                                          return(object)})
-
-setMethod("exprs", signature(object="MethyLumiSet"),
-          function(object) betas(object))
-
-setReplaceMethod("exprs", signature(object="MethyLumiSet",value="matrix"),
-                 function(object, value) assayDataElementReplace(object, "betas", value))
-
-setMethod("getHistory",signature(object="MethyLumiSet"), function(object) object@history)
-
-if (is.null(getGeneric("summary"))) setGeneric("summary", function(object,...) standardGeneric("summary"))
-
-setMethod("unmethylated", signature(object="MethyLumiSet"),
-          function(object) {
+setMethod("unmethylated",signature(object="MethyLumiSet"),function(object){# {{{
             return(assayDataElement(object,"unmethylated"))
-          })
-setReplaceMethod("unmethylated", signature(object="MethyLumiSet",value="matrix"),
-          function(object,value) {
+          }) # }}}
+setReplaceMethod("unmethylated", signature(object="MethyLumiSet",value="matrix"), function(object,value) { # {{{
             assayDataElementReplace(object,"unmethylated",value)
-          })
-setMethod("methylated", signature(object="MethyLumiSet"),
-          function(object) {
+          }) # }}}
+setMethod("methylated",signature(object="MethyLumiSet"),function(object) { # {{{
             return(assayDataElement(object,"methylated"))
-            })
-setReplaceMethod("methylated", signature(object="MethyLumiSet",value="matrix"),
-          function(object,value) {
+            }) # }}}
+setReplaceMethod("methylated", signature(object="MethyLumiSet",value="matrix"), function(object,value) { # {{{
             assayDataElementReplace(object,"methylated",value)
-          })
+          }) # }}}
 
+setMethod("unmethylated.OOB", signature(object="MethyLumiSet"),function(object){ # {{{
+            return(assayDataElement(object,"unmethylated.OOB"))
+          }) # }}}
+setReplaceMethod("unmethylated.OOB", signature(object="MethyLumiSet",value="matrix"), function(object,value) { # {{{ 
+            assayDataElementReplace(object,"unmethylated.OOB",value)
+          }) # }}}
+setMethod("methylated.OOB", signature(object="MethyLumiSet"), function(object) { # {{{ 
+            return(assayDataElement(object,"methylated.OOB"))
+            }) # }}}
+setReplaceMethod("methylated.OOB", signature(object="MethyLumiSet",value="matrix"), function(object,value) { # {{{
+            assayDataElementReplace(object,"methylated.OOB",value)
+          }) # }}}
 
-setMethod("show",signature(object="MethyLumiSet"), function(object) 
-{
+setMethod("show",signature(object="MethyLumiSet"), function(object) { # {{{ 
 	cat('\nObject Information:\n')
 	callNextMethod()
 	cat('Major Operation History:\n')
 	print(getHistory(object)) 
-})
+}) # }}}
 
-setMethod("summary",signature(object="MethyLumi"), function(object) 
-{
+setMethod("summary",signature(object="MethyLumi"), function(object) { # {{{
 	show(object)
-})
+}) # }}}
 
+if(is.null(getGeneric('intensities.OOB'))) { # {{{
+  setGeneric('intensities.OOB',function(x, channel) {
+    standardGeneric('intensities.OOB')
+  })
+} # }}}
+setMethod("intensities.OOB",signature(x="MethyLumiSet", channel="character"), function(x, channel) { # {{{
+    if(!('COLOR_CHANNEL' %in% fvarLabels(x))) { 
+      if(annotation(x) == 'IlluminaHumanMethylation27k') {
+        fData(x)$COLOR_CHANNEL = mget(featureNames(x), 
+                                      IlluminaHumanMethylation27kCOLORCHANNEL)
+      }
+      if(annotation(x) == 'IlluminaHumanMethylation450k') {
+        fData(x)$COLOR_CHANNEL = mget(featureNames(x), 
+                                      IlluminaHumanMethylation450kCOLORCHANNEL)
+      }
+    } 
+    if(channel == 'Cy3') { 
+      probes = which(fData(x)$COLOR_CHANNEL == 'Red') 
+    } else if(channel == 'Cy5') { 
+      probes = which(fData(x)$COLOR_CHANNEL == 'Grn')
+    } 
+    return(rbind( assayDataElement(x, 'methylated.OOB')[probes,],
+                  assayDataElement(x, 'unmethylated.OOB')[probes,] ) )
+}) # }}}
+setMethod("intensities.OOB",signature(x="MethyLumiSet", channel="missing"),# {{{
+  function(x) lapply(list(Cy3='Cy3',Cy5='Cy5'),function(y) intensities.OOB(x,y))
+) # }}}
 
-##geneNames method
-if (is.null(getGeneric("combine")))
-  	setGeneric("combine", function(x, y, ...)
-		standardGeneric("combine"))
+if(is.null(getGeneric('intensities.OOB.allelic'))) { # {{{
+  setGeneric('intensities.OOB.allelic',function(x, channel, allele) {
+    standardGeneric('intensities.OOB.allelic')
+  })
+} # }}}
+setMethod("intensities.OOB.allelic",signature(x="MethyLumiSet", channel="character", allele="character"), function(x, channel, allele) { # {{{
+    if(!('COLOR_CHANNEL' %in% fvarLabels(x))) { 
+      if(annotation(x) == 'IlluminaHumanMethylation27k') { # {{{
+        fData(x)$COLOR_CHANNEL = mget(featureNames(x), 
+                                      IlluminaHumanMethylation27kCOLORCHANNEL)
+      } # }}}
+      if(annotation(x) == 'IlluminaHumanMethylation450k') { # {{{
+        fData(x)$COLOR_CHANNEL = mget(featureNames(x), 
+                                      IlluminaHumanMethylation450kCOLORCHANNEL)
+      } # }}}
+    } 
+    element = paste(allele, 'OOB', sep='.')
+    if(channel == 'Cy3') probes = which(fData(x)$COLOR_CHANNEL == 'Red') 
+    if(channel == 'Cy5') probes = which(fData(x)$COLOR_CHANNEL == 'Grn') 
+    return( assayDataElement(x, element)[probes, ])
+}) # }}}
+setMethod("intensities.OOB.allelic",signature(x="MethyLumiSet", channel="missing", allele="missing"),# {{{
+  function(x) {
+    lapply(list(Cy3='Cy3',Cy5='Cy5'), function(y) {
+      lapply(list(M='methylated', U='unmethylated'), function(z) {
+        intensities.OOB.allelic(x, y, z)
+      })
+    })
+  }) # }}}
 
-setMethod("combine", signature=c(x="MethyLumiSet", y="MethyLumiSet"), function(x, y) 
-{
-    if (class(x) != class(y))
-      stop(paste("objects must be the same class, but are ",
-                 class(x), ", ", class(y), sep=""))
-	
-	if (any(sort(featureNames(x)) != sort(featureNames(y)))) stop('Two data sets have different row names!')
+if(is.null(getGeneric('intensities.IB'))) { # {{{
+  setGeneric('intensities.IB',function(x, channel) {
+    standardGeneric('intensities.IB')
+  })
+} # }}}
+setMethod("intensities.IB",signature(x="MethyLumiSet", channel="character"), function(x, channel) { # {{{
+    if(!('COLOR_CHANNEL' %in% fvarLabels(x))) { 
+      if(annotation(x) == 'IlluminaHumanMethylation27k') {
+        fData(x)$COLOR_CHANNEL = mget(featureNames(x), 
+                                      IlluminaHumanMethylation27kCOLORCHANNEL)
+      }
+      if(annotation(x) == 'IlluminaHumanMethylation450k') {
+        fData(x)$COLOR_CHANNEL = mget(featureNames(x), 
+                                      IlluminaHumanMethylation450kCOLORCHANNEL)
+      }
+    } 
+    if(channel == 'Cy3') { 
+      probes = which(fData(x)$COLOR_CHANNEL == 'Grn') 
+    } else if(channel == 'Cy5') { 
+      probes = which(fData(x)$COLOR_CHANNEL == 'Red')
+    } 
+    return(rbind( assayDataElement(x, 'methylated')[probes,],
+                  assayDataElement(x, 'unmethylated')[probes,] ) )
+}) # }}}
+setMethod("intensities.IB",signature(x="MethyLumiSet", channel="missing"), # {{{
+  function(x) lapply(list(Cy3='Cy3',Cy5='Cy5'),function(y) intensities.IB(x,y))
+) # }}}
 
-   	history.submitted <- as.character(Sys.time())
+if(is.null(getGeneric('intensities.M'))) { # {{{
+  setGeneric('intensities.M',function(x, channel) {
+    standardGeneric('intensities.M')
+  })
+} # }}} 
+setMethod("intensities.M",signature(x="MethyLumiSet", channel="character"),# {{{
+  function(x, channel) {
+    if(!('COLOR_CHANNEL' %in% fvarLabels(x))) { 
+      if(annotation(x) == 'IlluminaHumanMethylation27k') {
+        fData(x)$COLOR_CHANNEL = mget(featureNames(x), 
+                                      IlluminaHumanMethylation27kCOLORCHANNEL)
+      }
+      if(annotation(x) == 'IlluminaHumanMethylation450k') {
+        fData(x)$COLOR_CHANNEL = mget(featureNames(x), 
+                                      IlluminaHumanMethylation450kCOLORCHANNEL)
+      }
+    } 
+    if(channel == 'Cy3') { 
+      probes = which(fData(x)$COLOR_CHANNEL == 'Grn') 
+    } else if(channel == 'Cy5') { 
+      probes = which(fData(x)$COLOR_CHANNEL == 'Red')
+    } 
+    return(assayDataElement(x, 'methylated')[probes,]) 
+}) # }}}
+setMethod("intensities.M",signature(x="MethyLumiSet", channel="missing"), # {{{
+  function(x) lapply(list(Cy3='Cy3',Cy5='Cy5'),function(y) intensities.M(x,y))
+) # }}}
 
-    assayData(x) <- combine(assayData(x), assayData(y))
-    # phenoData(x) <- combine(phenoData(x), phenoData(y))
-    # featureData(x) <- combine(featureData(x), featureData(y))
-    experimentData(x) <- combine(experimentData(x),experimentData(y))
-	
-	## combine pheno data
-	if (!is.null(phenoData(x)) | !is.null(phenoData(y))) {
-		phenoData.x <- phenoData(x)
-		phenoData.y <- phenoData(y)
-		
-		pData(phenoData.x) <- merge(pData(phenoData.x), pData(phenoData.y), all=TRUE)
+if(is.null(getGeneric('intensities.U'))) { # {{{
+  setGeneric('intensities.U',function(x, channel) {
+    standardGeneric('intensities.U')
+  })
+} # }}}
+setMethod("intensities.U",signature(x="MethyLumiSet", channel="character"),# {{{
+  function(x, channel) {
+    if(!('COLOR_CHANNEL' %in% fvarLabels(x))) { 
+      if(annotation(x) == 'IlluminaHumanMethylation27k') {
+        fData(x)$COLOR_CHANNEL = mget(featureNames(x), 
+                                      IlluminaHumanMethylation27kCOLORCHANNEL)
+      }
+      if(annotation(x) == 'IlluminaHumanMethylation450k') {
+        fData(x)$COLOR_CHANNEL = mget(featureNames(x), 
+                                      IlluminaHumanMethylation450kCOLORCHANNEL)
+      }
+    } 
+    if(channel == 'Cy3') { 
+      probes = which(fData(x)$COLOR_CHANNEL == 'Grn') 
+    } else if(channel == 'Cy5') { 
+      probes = which(fData(x)$COLOR_CHANNEL == 'Red')
+    } 
+    return(assayDataElement(x, 'unmethylated')[probes,]) 
+}) # }}}
+setMethod("intensities.U",signature(x="MethyLumiSet", channel="missing"), # {{{
+  function(x) lapply(list(Cy3='Cy3',Cy5='Cy5'),function(y) intensities.U(x,y))
+) # }}}
 
-		metaInfo <- rbind(varMetadata(phenoData.x), varMetadata(phenoData.y))
-		varMetadata(phenoData.x) <- metaInfo[!duplicated(c(rownames(varMetadata(phenoData.x)),
-		 		rownames(varMetadata(phenoData.y)))), ,drop=FALSE]
-		phenoData(x) <- phenoData.x
-	}	
-	
-	## combine feature data
-	if (!is.null(featureData(x)) | !is.null(featureData(y))) {
-		feature.x <- featureData(x)
-		feature.y <- featureData(y)
-		
-		repInfo <- merge(pData(feature.x), pData(feature.y), by='targetID', all=TRUE, suffixes = c(".x",".y"))
-		if ('presentCount' %in% intersect(colnames(pData(feature.x)), colnames(pData(feature.y)))) {
-			colInd <- which(colnames(repInfo) %in% c('presentCount.x', 'presentCount.y'))
-			presentCount <- rowSums(repInfo[, colInd])
-			repInfo <- repInfo[, -colInd, drop=FALSE]
-			repInfo <- data.frame(repInfo, presentCount=presentCount)
-		}
-		pData(feature.x) <- repInfo
-		metaInfo <- rbind(varMetadata(feature.x), varMetadata(feature.y))
-		varMetadata(feature.x) <- metaInfo[!duplicated(c(rownames(varMetadata(feature.x)), rownames(varMetadata(feature.y)))), ,drop=FALSE]
-		featureData(x) <- feature.x
-	}
-
-    # history tracking
-    history.finished <- as.character(Sys.time())
-	#history.command <- match.call()
-    history.command <- capture.output(print(match.call(combine)))  
-	x@history<- rbind(x@history, y@history)
-  x@history<- rbind(x@history, data.frame(submitted=history.submitted,finished=history.finished,command=history.command))
-	return(x)
-})
-
-
-
-if(!isGeneric('boxplot')) {
+if(is.null(getGeneric('boxplot'))) {  # {{{
   setGeneric('boxplot',function(x,...) standardGeneric('boxplot'))
-}
-
-##some special handling of main is needed
-setMethod("boxplot",signature(x="MethyLumiSet"),
-function(x, range=0, main, logMode=TRUE, ...)
-{
+} # }}}
+setMethod("boxplot",signature(x="MethyLumiSet"), function(x, range=0, main, logMode=TRUE, ...) { # {{{ 
   tmp <- description(x)
   if (missing(main) && (is(tmp, "MIAME")))
     main <- tmp@title
@@ -232,13 +345,12 @@ function(x, range=0, main, logMode=TRUE, ...)
   axis(1, at=1:ncol(dataMatrix), labels=labels, tick=TRUE, las=2)
   par(mar=old.mar)
   par(xaxt=old.xaxt)
-})
+}) # }}}
 
-if (is.null(getGeneric("pairs"))) setGeneric("pairs", function(x,...) standardGeneric("pairs"))
-
-setMethod("pairs", signature(x="MethyLumiSet"), 
-	function(x,...,logMode=FALSE,maxpairs=5,fold=0.1) 
-{
+if (is.null(getGeneric("pairs"))) { # {{{
+  setGeneric("pairs", function(x,...) standardGeneric("pairs"))
+} # }}}
+setMethod("pairs", signature(x="MethyLumiSet"), function(x,...,logMode=FALSE,maxpairs=5,fold=0.1) { # {{{
     
 	upperPanel <- function(x, y, fold=fold) {
 		if (length(x) > 3000) {
@@ -291,17 +403,19 @@ setMethod("pairs", signature(x="MethyLumiSet"),
           }
         }
         par(ask=FALSE)
-})
+})  # }}}
 
-if (is.null(getGeneric("plotSampleIntensities"))) setGeneric("plotSampleIntensities", function(x,beta.cuts=c(0.2,0.8),s=1) standardGeneric("plotSampleIntensities"))
-
-myDensity <- function(x) {
-x <- x[!is.na(x)]
-return(density(x))
-}
-
-setMethod('plotSampleIntensities', signature(x='MethyLumiSet'), 
-function(x, beta.cuts=c(0.2,0.8),s=1) {
+if (is.null(getGeneric("plotSampleIntensities"))) { # {{{
+  setGeneric("plotSampleIntensities", function(x,beta.cuts=c(0.2,0.8),s=1) {
+      standardGeneric("plotSampleIntensities")
+    }) 
+} # }}}
+myDensity <- function(x) { # {{{
+  x <- x[!is.na(x)]
+  return(density(x))
+} # }}}
+setMethod('plotSampleIntensities', signature(x='MethyLumiSet'), function(x, beta.cuts=c(0.2,0.8),s=1) { # {{{
+  message("The purpose of this method is better served by diagnostics()")
   cy3h <- myDensity(unmethylated(x)[betas(x)[,s]<beta.cuts[1],s])
   cy3l <- myDensity(unmethylated(x)[betas(x)[,s]>beta.cuts[2],s])
   cy5l <- myDensity(methylated(x)[betas(x)[,s]<beta.cuts[1],s])
@@ -322,49 +436,258 @@ function(x, beta.cuts=c(0.2,0.8),s=1) {
   lines(cy5h,col='red')
   box()
   axis(1)
-})
+})  # }}}
 
+setMethod("hist",signature(x="MethyLumiSet"),function(x,...) { # {{{
+  samples = dim(x)[2]
+  extra = ifelse(exists('extra'), as.character(extra), '')
+  per.side = ceiling(sqrt(samples))
+  if(per.side > 5) warning("This plot is not going to be easy to read...")
+  if(samples == 8) { # useful special case for me
+    par(mfrow=c(2, 4))
+  } else { 
+    par(mfrow=c(per.side, per.side))
+  }
+  for(i in seq_along(sampleNames(x))) {
+    hist(betas(x)[,i],xlab="Beta",main=paste(sampleNames(x)[i],extra),breaks=99)
+  }
+}) # }}}
+setMethod("hist",signature(x="MethyLumiQC"),function(x,...) { # {{{
+  samples = dim(x)[2]
+  if(samples > 5) stop("Too many samples, choose a subset for a decent plot")
+  else par(mfrow=c(samples,2))
+  max.neg = max( max(negctls(x, 'Cy5')), max(negctls(x, 'Cy3')) )
+  xl = c(0, max.neg) # x limits
+  for(i in seq_along(sampleNames(x))) {
+    hist(negctls(x,'Cy3')[,i], breaks=50, col='green', border='green',
+         main=paste(sampleNames(x)[i], "negative controls"), xlim=xl,
+         xlab='Nonspecific Cy3 fluorescence from negative controls', ...)
+    hist(negctls(x,'Cy5')[,i], breaks=50, col='red', border='red',
+         main=paste(sampleNames(x)[i], "negative controls"), xlim=xl,
+         xlab='Nonspecific Cy5 fluorescence from negative controls', ...)
+  }
+}) # }}}
+setMethod("hist",signature(x="MethyLumiOOB"),function(x,...) { # {{{
+  samples = dim(x)[2]
+  if(samples > 4) stop("Too many samples, choose a subset for a decent plot")
+  brk = ifelse(exists('breaks'), as.numeric(breaks), 500)
+  par(mfrow=c(samples,2))
+  max.oob = ifelse(exists('max.oob'), # if supplied, eg. NEG vs OOB
+                   as.numeric(max.oob), 
+                   max( max(na.omit(intensities.OOB(x,'Cy3'))),
+                        max(na.omit(intensities.OOB(x,'Cy5'))) ) )
+  xl = c(0, max.oob) # x limits
+  for(i in seq_along(sampleNames(x))) {
+    hist(intensities.OOB(x,'Cy3')[,i],breaks=500,col='green',border='green',
+         main=paste(sampleNames(x)[i], "Cy3 out-of-band fluorescence"), xlim=xl,
+         xlab='Nonspecific Cy3 fluorescence from Cy5-channel probe pairs')
+    hist(intensities.OOB(x,'Cy5')[,i],breaks=500,col='red',border='red',
+         main=paste(sampleNames(x)[i], "Cy5 out-of-band fluorescence"), xlim=xl,
+         xlab='Nonspecific Cy5 fluorescence from Cy3-channel probe pairs')
+  }
+}) # }}}
 
-setMethod("hist",signature(x="MethyLumiSet"),function(x,...) {
-  hist(betas(x),xlab="Beta",...)
-})
+setMethod("[", "MethyLumiSet", function(x, i, j, ..., drop = FALSE) { # {{{
 
-setMethod("[", "MethyLumiSet", function(x, i, j, ..., drop = FALSE) 
-{
-  if (missing(drop)) drop <- FALSE
   history.submitted <- as.character(Sys.time())
-  
-  ## do default processing of 'ExpressionSet'
   x <- callNextMethod()
   
   ddim <- dim(x)
   if (!missing(i) & !missing(j)) {
-    history.command <- paste('Subsetting', ddim[1], 'features and', ddim[2], 'samples.')		
+    if( 'QC' %in% slotNames(x) ) x@QC = x@QC[i,j,drop=FALSE]
+    if( 'OOB' %in% slotNames(x) ) x@OOB = x@OOB[i,j,drop=FALSE]
+    history.command <- paste('Subset of',ddim[1],'features &',ddim[2],'samples')
   } else if (!missing(i)) {
-    history.command <- paste('Subsetting', ddim[1], 'features.')
+    history.command <- paste('Subset of', ddim[1], 'features.')
   } else if (!missing(j)) {
-    history.command <- paste('Subsetting', ddim[2], 'samples.')
-    QCdata(x) <- QCdata(x)[,j]
-  } else {
-    return(x)
+    if( 'QC' %in% slotNames(x) ) x@QC = x@QC[,j,drop=FALSE]
+    if( 'OOB' %in% slotNames(x) ) x@OOB = x@OOB[,j,drop=FALSE]
+    history.command <- paste('Subset of', ddim[2], 'samples.')
   }
   
-                                        # history tracking
+  # history tracking
   history.finished <- as.character(Sys.time())
   x@history<- rbind(x@history, data.frame(submitted=history.submitted,finished=history.finished,command=history.command))
   
   return(x)
-})
+}) # }}}
 
-setMethod("corplot","MethyLumiSet",function(x,...) {
+if(is.null(getGeneric("combine"))) { # {{{
+ 	setGeneric("combine", function(x, y, ...)	standardGeneric("combine"))
+} # }}}
+.combine.methylumiQC <- function(x,y) { # {{{
+
+  if (class(x)!=class(y)) { # {{{
+    stop(paste("objects must be the same class, but are ", 
+               class(x), ", ", class(y), sep=""))
+  } # }}}
+  if (any(sort(featureNames(x)) != sort(featureNames(y)))) { # {{{
+    stop('The two data sets have different row names!')
+  } # }}}
+  assayData(x) <- combine(assayData(x), assayData(y))
+  phenoData(x) <- combine(phenoData(x), phenoData(y))
+  featureData(x) <- combine(featureData(x), featureData(y))
+  protocolData(x) <- combine(protocolData(x), protocolData(y))
+  experimentData(x) <- combine(experimentData(x), experimentData(y))
+	return(x)
+
+}  # }}}
+setMethod("combine", signature=c(x="MethyLumiQC", y="MethyLumiQC"), function(x,y) { # {{{
+  .combine.methylumiQC(x,y)
+}) # }}}
+#.combine.methylumiOOB <- function(x,y) { # {{{
+
+  #if (class(x)!=class(y)) { # {{{
+    #stop(paste("objects must be the same class, but are ", 
+               #class(x), ", ", class(y), sep=""))
+  #} # }}}
+  #if (any(sort(featureNames(x)) != sort(featureNames(y)))) { # {{{
+    #stop('The two data sets have different row names!')
+  #} # }}}
+  #assayData(x) <- combine(assayData(x), assayData(y))
+  #phenoData(x) <- combine(phenoData(x), phenoData(y))
+  #featureData(x) <- combine(featureData(x), featureData(y))
+  #protocolData(x) <- combine(protocolData(x), protocolData(y))
+  #experimentData(x) <- combine(experimentData(x), experimentData(y))
+	#return(x)
+
+#}  # }}}
+#setMethod("combine", signature=c(x="MethyLumiOOB", y="MethyLumiOOB"), function(x,y) { # {{{
+#  .combine.methylumiOOB(x,y)
+# }) # }}}
+.combine.methylumiSets <- function(x,y) { # {{{
+  if (class(x)!=class(y)) { # {{{
+    stop(paste("objects must be the same class, but are ", 
+               class(x), ", ", class(y), sep=""))
+  } # }}}
+  if (any(sort(featureNames(x)) != sort(featureNames(y)))) { # {{{
+    stop('The two data sets have different row names!')
+  } # }}}
+  history.submitted <- as.character(Sys.time())
+  n.x = dim(x)[2]
+  n.y = dim(y)[2]
+  assayData(x) <- combine(assayData(x), assayData(y))
+  phenoData(x) <- combine(phenoData(x), phenoData(y))
+  featureData(x) <- combine(featureData(x), featureData(y))
+  protocolData(x) <- combine(protocolData(x), protocolData(y))
+  experimentData(x) <- combine(experimentData(x), experimentData(y))
+	if (!is.null(x@QC) & !is.null(y@QC)) { # {{{
+    QCdata(x) = .combine.methylumiQC(QCdata(x), QCdata(y))
+  } else if(!is.null(y@QC)) {
+    warning("Warning: discarding control probe data for additional samples")
+  } else if(!is.null(x@QC)) {
+    warning("Warning: discarding control probe data for existing samples")
+  } # }}}
+#  if (!is.null(x@OOB)|!is.null(y@OOB)) { # {{{
+#    OOB(x) = .combine.methylumiOOB(OOB(x), OOB(y))
+#  } else if(!is.null(y@OOB)) {
+#    warning("Warning: discarding out-of-band data for additional samples")
+#  } else if(!is.null(x@OOB)) {
+#    warning("Warning: discarding out-of-band data for existing samples")
+#  } # }}}
+  history.finished <- as.character(Sys.time())
+  history.command <- paste('Combined', n.x, 'existing samples',
+                           'with', n.y, 'additional samples.')
+  x@history <- rbind(x@history, y@history)
+  x@history <- rbind(x@history, 
+                     data.frame(submitted=history.submitted,
+                                finished=history.finished,
+                                command=history.command))
+	return(x)
+}  # }}}
+setMethod("combine", signature=c(x="MethyLumiSet", y="MethyLumiSet"), function(x,y) { # {{{
+  .combine.methylumiSets(x,y)
+}) # }}}
+
+if(is.null(getGeneric("combine.27k.450k"))) { # {{{
+ 	setGeneric("combine.27k.450k", function(x, y, ...) {
+    if(length(list(...)) > 0) callGeneric(x, do.call(callGeneric, list(y, ...)))
+    else standardGeneric("combine.27k.450k")
+  })
+} # }}}
+.combine.methylumiQC.27k.450k <- function(x,y,...) { # {{{
+
+  message("This method needs polishing -- should subset and/or impute both...")
+  if (class(x)!=class(y)) { # {{{
+    stop(paste("objects must be the same class, but are ", 
+               class(x), ", ", class(y), sep=""))
+  } # }}}
+  if (any(sort(featureNames(x)) != sort(featureNames(y)))) { # {{{
+    stop('The two data sets have different row names!')
+  } # }}}
+  assayData(x) <- combine(assayData(x), assayData(y))
+  phenoData(x) <- combine(phenoData(x), phenoData(y))
+  featureData(x) <- combine(featureData(x), featureData(y))
+  protocolData(x) <- combine(protocolData(x), protocolData(y))
+  experimentData(x) <- combine(experimentData(x), experimentData(y))
+	return(x)
+
+}  # }}}
+#.combine.methylumiOOB.27k.450k <- function(x,y,...) { # {{{
+
+  #message("This method needs polishing -- should subset and/or impute both...")
+  #if (class(x)!=class(y)) { # {{{
+    #stop(paste("objects must be the same class, but are ", 
+               #class(x), ", ", class(y), sep=""))
+  #} # }}}
+  #if (any(sort(featureNames(x)) != sort(featureNames(y)))) { # {{{
+    #stop('The two data sets have different row names!')
+  #} # }}}
+  #assayData(x) <- combine(assayData(x), assayData(y))
+  #phenoData(x) <- combine(phenoData(x), phenoData(y))
+  #featureData(x) <- combine(featureData(x), featureData(y))
+  #protocolData(x) <- combine(protocolData(x), protocolData(y))
+  #experimentData(x) <- combine(experimentData(x), experimentData(y))
+	#return(x)
+
+#}  # }}}
+setMethod("combine.27k.450k", signature=c(x="MethyLumiSet", y="MethyLumiSet"), function(x,y) { # {{{
+  if (class(x)!=class(y)) { # {{{
+    stop(paste("objects must be the same class, but are ", 
+               class(x), ", ", class(y), sep=""))
+  } # }}}
+
+  history.submitted <- as.character(Sys.time())
+  x = subset.common.probes(x)
+  y = subset.common.probes(y)
+  n.x = dim(x)[2]
+  n.y = dim(y)[2]
+  n.xy = length(unique(sampleNames(x),sampleNames(y)))
+  if(n.xy<(n.x+n.y)) {
+    sampleNames(x) = paste(sampleNames(x), x$platform, sep='.')
+    sampleNames(y) = paste(sampleNames(y), y$platform, sep='.')
+    n.xy = length(unique(sampleNames(x),sampleNames(y)))
+  }
+  assayData(x) <- combine(assayData(x), assayData(y))
+  phenoData(x) <- combine(phenoData(x), phenoData(y))
+  featureData(x) <- combine(featureData(x), featureData(y))
+  protocolData(x) <- combine(protocolData(x), protocolData(y))
+  experimentData(x) <- combine(experimentData(x), experimentData(y))
+	if (!is.null(x@QC) | !is.null(y@QC)) { # {{{
+    QCdata(x)
+  } # }}}
+#  if (!is.null(x@OOB)|!is.null(y@OOB)) { # {{{
+#    OOB(x) = .combine.methylumiOOB(OOB(x), OOB(y))
+#  } # }}}
+  history.finished <- as.character(Sys.time())
+  history.command <- paste('Combined common probes from', n.x, 'samples',
+                           'with', n.y, 'additional samples', 
+                           paste('(', n.xy, ' unique)', sep=''))
+  x@history <- rbind(x@history, y@history)
+  x@history <- rbind(x@history, 
+                     data.frame(submitted=history.submitted,
+                                finished=history.finished,
+                                command=history.command))
+	return(x)
+
+}) # }}}
+
+setMethod("corplot","MethyLumiSet",function(x,...) {  # {{{
   corvals <- cor(betas(x))
   ordering=hclust(as.dist(corvals))$order
   image(corvals[ordering,ordering])
-})
-
-
-normalizeMethyLumiSet <- function(x,beta.cuts=c(0.2,0.8),mapfun=c('atan','ratio'))
-{
+})  # }}}
+normalizeMethyLumiSet <- function(x,beta.cuts=c(0.2,0.8),mapfun=c('atan','ratio')) { # {{{
   warning("This function is probably not optimal for Infinium data and is meant\nfor GoldenGate methylation data only.")
   mapfun=match.arg(mapfun)
   history.submitted <- as.character(Sys.time())
@@ -422,42 +745,29 @@ normalizeMethyLumiSet <- function(x,beta.cuts=c(0.2,0.8),mapfun=c('atan','ratio'
   ret <- ret[,good]
   ret@history <- rbind(getHistory(x), data.frame(submitted=history.submitted,finished=history.finished,command=history.command))
   return(ret)
-}
+} # }}}
 
-
-#####
-###
-### Graphics
-###
-#####
-
-### Parallel plot of ecdf
-###    This plots the amount of data at each cut given in quantiles
-###
-if (is.null(getGeneric("parplot"))) setGeneric("parplot", function(object,...) standardGeneric("parplot"))
-
-.parallel <- function(object,quantiles,what,...) {
+setGeneric("parplot", function(object,...) { # {{{
+           standardGeneric("parplot")
+}) # }}}
+.parallel <- function(object,quantiles,what,...) { # {{{
   parallel(apply(what(object),2,function(x,quantiles) {
     a <- ecdf(x)
     return(a(quantiles))
     },quantiles),...)
-}
-
-
-setMethod("parplot", signature(object="MethyLumi"),
-          function(object,
-                   quantiles=seq(0,1,0.2),
-                   what=c("betas","exprs","pvals"),...)
-                   {
+} # }}}
+setMethod("parplot", signature(object="MethyLumi"), function(object,quantiles=seq(0,1,0.2),what=c("betas","exprs","pvals"),...) { # {{{
                      what=match.arg(what)
                      what=get(what)
                      .parallel(object,quantiles=quantiles,what=what,...)
-                   })
+                   })  #}}}
 
-if (is.null(getGeneric("qcplot"))) setGeneric("qcplot", function(object,controltype,...) standardGeneric("qcplot"))
-
-
-.qcplot <- function(object,controltype,...) {
+if (is.null(getGeneric("qcplot"))) {  # {{{
+  setGeneric("qcplot", function(object,controltype,...) {
+      standardGeneric("qcplot")
+  })
+}  # }}}
+.qcplot <- function(object,controltype,...) { # {{{
   rows <- grep(controltype,featureNames(object))
   arraytype <- "goldengate"
   if(length(grep("Signal_Red",assayDataElementNames(object),ignore.case=TRUE))>0)
@@ -477,25 +787,28 @@ if (is.null(getGeneric("qcplot"))) setGeneric("qcplot", function(object,controlt
           [grep(controltype,featureNames(object)),]),
                auto.key=TRUE,xlab=datElements[2],main=controltype),
        split=c(2,1,2,1),newpage=FALSE)
-}
-
-setMethod("qcplot", signature(object="MethyLumiQC"),
+}  # }}}
+setMethod("qcplot", signature(object="MethyLumiQC"),  #{{{
           function(object,controltype="NON",...) {
             return(.qcplot(object,controltype,...))}
-          )
-
-setMethod("qcplot", signature(object="MethyLumiSet"),
+          )  # }}}
+setMethod("qcplot", signature(object="MethyLumiSet"), # {{{
           function(object,controltype="NON",...) {
             qcplot(QCdata(object),controltype)}
-          )
+          ) # }}}
 
-if (is.null(getGeneric("controlTypes"))) setGeneric("controlTypes", function(object,...) standardGeneric("controlTypes"))
-
-setMethod("controlTypes",signature(object="MethyLumiQC"),
-          function(object) {
-            return(unique(sapply(strsplit(featureNames(object),'\\.'),function(x) x[1])))})
-
-setMethod("controlTypes",signature(object="MethyLumiSet"),
+if (is.null(getGeneric("controlTypes"))) { # {{{
+  setGeneric("controlTypes", function(object,...) {
+      standardGeneric("controlTypes")
+    }) 
+} # }}}
+setMethod("controlTypes",signature(object="MethyLumiQC"),  # {{{
+  function(object) {
+    return(unique(sapply(strsplit(featureNames(object),'\\.'),function(x){ 
+          x[1]
+    })))
+}) # }}}
+setMethod("controlTypes",signature(object="MethyLumiSet"),  # {{{
           function(object,...) {
-            return(controlTypes(QCdata(object)))})
-
+            return(controlTypes(QCdata(object)))
+          })  # }}}
