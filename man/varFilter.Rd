@@ -12,7 +12,7 @@
   advantageous for downstream data analysis. }
 
 \usage{
-varFilter(eset, var.func=IQR, var.cutoff=0.05, filterByQuantile=TRUE, ...)
+varFilter(eset, var.func=IQR, var.cutoff=0.5, filterByQuantile=TRUE, ...)
 }
 
 \arguments{
@@ -69,7 +69,8 @@ varFilter(eset, var.func=IQR, var.cutoff=0.05, filterByQuantile=TRUE, ...)
 \examples{
   data(mldat)
   annotation(mldat) <- "GGHumanMethCancerPanelv1"
-  filt <- varFilter(mldat, var.cutoff=0.05)
+  ## keep top 75 percent
+  filt <- varFilter(mldat, var.cutoff=0.25)
   filt$filter.log
   dim(filt$eset)
 }
