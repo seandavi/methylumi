@@ -8,7 +8,7 @@ rowIQRs <- function(eSet) {
 
 ## warpping the varFilter function from the genefilter package
 .varFilter <- function(eset,
-                   var.func=IQR, var.cutoff=0.05,
+                   var.func=IQR, var.cutoff=0.5,
                    filterByQuantile=TRUE, ...)
 {
     if (!is.function(var.func))
@@ -24,7 +24,7 @@ rowIQRs <- function(eSet) {
  
     if (filterByQuantile) {
         if ( 0 < var.cutoff && var.cutoff < 1 ) {
-            var.cutoff = quantile(esetIqr, var.cutoff)
+            var.cutoff = quantile(esetIqr, var.cutoff, na.rm=TRUE)
         } else stop("Cutoff Quantile has to be between 0 and 1.")
     }
     selected <- esetIqr > var.cutoff
@@ -38,7 +38,7 @@ rowIQRs <- function(eSet) {
           
 setMethod("varFilter", "MethyLumiSet",
           function(eset,
-                   var.func=IQR, var.cutoff=0.05,
+                   var.func=IQR, var.cutoff=0.5,
                    filterByQuantile=TRUE, ...)
           {
               .varFilter(eset, var.func, var.cutoff, filterByQuantile)
@@ -47,7 +47,7 @@ setMethod("varFilter", "MethyLumiSet",
 
 setMethod("varFilter", "MethyLumiM",
           function(eset,
-                   var.func=IQR, var.cutoff=0.05,
+                   var.func=IQR, var.cutoff=0.5,
                    filterByQuantile=TRUE, ...)
           {
               .varFilter(eset, var.func, var.cutoff, filterByQuantile)
