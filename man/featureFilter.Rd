@@ -36,9 +36,11 @@ featureFilter(eset, require.entrez=FALSE,
   
   \item{require.closeToTSS}{If \code{TRUE}, filter out features that
     are not close to transcription start site (TSS). Features without
-    annotation of distance to TSS will also be removed.}
+    annotation of distance to TSS will also be removed. Can only used
+    for GoldenGate platform.}
 
-  \item{range.DistToTSS}{A vector of numeric values of length 2, indicating the
+  \item{range.DistToTSS}{Ignored if \code{require.colseToTSS} is
+    \code{FALSE}. A vector of numeric values of length 2, indicating the
     range of tolerable distance from transcription start site (TSS) in
     basepair (bp). If
     \code{require.clostToTSS} is \code{TRUE}, features whose distance
@@ -70,7 +72,7 @@ featureFilter(eset, require.entrez=FALSE,
 \seealso{\code{\link[genefilter]{nsFilter}}}
 
 \examples{
-  data(mldat)
+  data(mldat) ## GoldenGate Cancer Panel
   annotation(mldat) <- "GGHumanMethCancerPanelv1"
   filt <- featureFilter(mldat, require.entrez=TRUE,
             exclude.ChrX=TRUE,
