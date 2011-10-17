@@ -599,10 +599,10 @@ setMethod("combine", signature=c(x="MethyLumiSet", y="MethyLumiSet"), function(x
   .combine.methylumiSets(x,y)
 }) # }}}
 
-if(is.null(getGeneric("combine.27k.450k"))) { # {{{
- 	setGeneric("combine.27k.450k", function(x, y, ...) {
+if(is.null(getGeneric("combine27k450k"))) { # {{{
+ 	setGeneric("combine27k450k", function(x, y, ...) {
     if(length(list(...)) > 0) callGeneric(x, do.call(callGeneric, list(y, ...)))
-    else standardGeneric("combine.27k.450k")
+    else standardGeneric("combine27k450k")
   })
 } # }}}
 .combine.methylumiQC.27k.450k <- function(x,y,...) { # {{{
@@ -641,7 +641,7 @@ if(is.null(getGeneric("combine.27k.450k"))) { # {{{
 	#return(x)
 
 #}  # }}}
-setMethod("combine.27k.450k", signature=c(x="MethyLumiSet", y="MethyLumiSet"), function(x,y) { # {{{
+setMethod("combine27k450k", signature=c(x="MethyLumiSet", y="MethyLumiSet"), function(x,y) { # {{{
   if (class(x)!=class(y)) { # {{{
     stop(paste("objects must be the same class, but are ", 
                class(x), ", ", class(y), sep=""))
@@ -796,19 +796,3 @@ setMethod("qcplot", signature(object="MethyLumiSet"), # {{{
           function(object,controltype="NON",...) {
             qcplot(QCdata(object),controltype)}
           ) # }}}
-
-if (is.null(getGeneric("controlTypes"))) { # {{{
-  setGeneric("controlTypes", function(object,...) {
-      standardGeneric("controlTypes")
-    }) 
-} # }}}
-setMethod("controlTypes",signature(object="MethyLumiQC"),  # {{{
-  function(object) {
-    return(unique(sapply(strsplit(featureNames(object),'\\.'),function(x){ 
-          x[1]
-    })))
-}) # }}}
-setMethod("controlTypes",signature(object="MethyLumiSet"),  # {{{
-          function(object,...) {
-            return(controlTypes(QCdata(object)))
-          })  # }}}
