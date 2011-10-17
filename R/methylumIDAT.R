@@ -289,7 +289,7 @@ IDATsToDFs <- function(barcodes, fileExts=list(Cy3="Grn.idat", Cy5="Red.idat"), 
 
 ## anything that isn't bead-level comes here first
 ##
-DFsToNChannelSet <- function(listOfDFs,chans=c(Cy3='GRN',Cy5='RED'),parallel=F, IDAT=F){ # {{{ tidy up the data 
+DFsToNChannelSet <- function(listOfDFs,chans=c(Cy3='GRN',Cy5='RED'),parallel=F, IDAT=F, protocol.data=F){ # {{{ tidy up the data 
 
   stopifnot(is(listOfDFs, 'list'))
   cols <- c('Mean','SD','NBeads')
@@ -306,7 +306,7 @@ DFsToNChannelSet <- function(listOfDFs,chans=c(Cy3='GRN',Cy5='RED'),parallel=F, 
   Beads = paste(names(chans)[1],'NBeads',sep='.')
   NBeads = as.matrix(as.data.frame(lapply(listOfDFs, function(x) x[[Beads]])))
   colnames(NBeads) = names(listOfDFs)
-  obj = new("NChannelSet",  ## FIXME: more flexibility?!?
+  obj = new("NChannelSet",
              assayData=assayDataNew(R=assays[['Cy5.Mean']],
                                     G=assays[['Cy3.Mean']],
                                     R.SD=assays[['Cy5.SD']],
@@ -316,35 +316,36 @@ DFsToNChannelSet <- function(listOfDFs,chans=c(Cy3='GRN',Cy5='RED'),parallel=F, 
   if(IDAT) { # {{{
     ChipType = attr(listOfDFs[[1]], 'ChipType')
     RunInfo = lapply(listOfDFs, function(d) attr(d, 'RunInfo'))
-    scanDates = data.frame(DecodeDate=rep(NA, length(listOfDFs)),
-                           ScanDate=rep(NA, length(listOfDFs)))
-    rownames(scanDates) = names(listOfDFs)
-    for(i in seq_along(listOfDFs)) {
-      cat("decoding protocolData for", names(listOfDFs)[i], "...\n")
-      if(nrow(RunInfo[[i]]) >= 2) {
-        scanDates$DecodeDate[i] = RunInfo[[i]][1,1]
-        scanDates$ScanDate[i]  =  RunInfo[[i]][2,1]
+    if(protocol.data) { # {{{
+      scanDates = data.frame(DecodeDate=rep(NA, length(listOfDFs)),
+                             ScanDate=rep(NA, length(listOfDFs)))
+      rownames(scanDates) = names(listOfDFs)
+      for(i in seq_along(listOfDFs)) {
+        cat("decoding protocolData for", names(listOfDFs)[i], "...\n")
+        if(nrow(RunInfo[[i]]) >= 2) {
+          scanDates$DecodeDate[i] = RunInfo[[i]][1,1]
+          scanDates$ScanDate[i]  =  RunInfo[[i]][2,1]
+        }
       }
-    }
-    protocoldata = new("AnnotatedDataFrame",
-                        data=scanDates,
-                        varMetadata=data.frame(
-                          labelDescription=colnames(scanDates),
-                          row.names=colnames(scanDates)
-                         )
-                        )
-    protocolData(obj) = protocoldata
+      protocoldata = new("AnnotatedDataFrame",
+                          data=scanDates,
+                          varMetadata=data.frame(
+                            labelDescription=colnames(scanDates),
+                            row.names=colnames(scanDates)
+                           )
+                          )
+      protocolData(obj) = protocoldata
+    } # }}}
     if(ChipType == "BeadChip 12x1") {
       annotation(obj) = 'IlluminaHumanMethylation27k'
     } else if(ChipType == "BeadChip 12x8") {
       annotation(obj) = 'IlluminaHumanMethylation450k'
     }
   } # }}}
-  if(is.null(annotation(obj))) {
+  if(is.null(annotation(obj))) { # {{{
     if(dim(obj)[1] == 55300) annotation(obj) = 'IlluminaHumanMethylation27k'
     else annotation(obj) = 'IlluminaHumanMethylation450k'
-  }
-
+  } # }}}
   return(obj)
 
 } # }}}
@@ -680,6 +681,9 @@ NChannelSetToMethyLumiSet <- function(NChannelSet, parallel=F, normalize=F, pval
 
 } # }}}
 
+## FIXME: consider using crlmm::readIDAT instead (test first)
+## FIXME: switch to using 'parallel' by default with dummy mclapply()
+##
 methylumIDAT <- function(barcodes=NULL,pdat=NULL,parallel=F,n=T,n.sd=F,oob=T,...) { # {{{
   if(is(barcodes, 'data.frame')) pdat = barcodes
   if((is.null(barcodes))&(is.null(pdat) | (!('barcode' %in% names(pdat))))){#{{{

@@ -30,7 +30,10 @@ plotNegOob <- function(x, log2=F) {
   ch = levels(merged$probes) = c('Controls','Out-of-band')
   bychannel = as.character(sapply(c('Cy3','Cy5'), function(z) paste(z, ch)))
   levels(merged$channel.probes) = bychannel
-  chcolors = c('darkgreen','green','darkred','red')
+  chcolors = c('Cy3 Controls'='darkgreen',
+               'Cy3 Out-of-band'='green',
+               'Cy5 Controls'='darkred',
+               'Cy5 Out-of-band'='red')
   names(chcolors) = bychannel
 
   ( ggplot(merged, aes(x=intensity, 
@@ -38,7 +41,7 @@ plotNegOob <- function(x, log2=F) {
                        fill=channel.probes)) +
            geom_histogram(aes(y=..density..),
                           binwidth=25, 
-                          alpha=I(0.25), 
+                          alpha=I(0.5), 
                           position=position_identity()) +
            facet_grid(chip ~ channel) + 
            scale_x_continuous(limits=xl) + 
