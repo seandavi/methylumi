@@ -88,15 +88,25 @@ setMethod("plotProbeNAs",signature(object="methylData"),function(object){ # {{{
                  data=x, colour=mu)
 }) # }}}
 
-## FIXME: update these methods to work with older methylumi objects as well
+if(!isGeneric('controlTypes')) setGeneric('controlTypes', # {{{
+  function(object, ...) standardGeneric('controlTypes')
+) # }}}
 setMethod('controlTypes', signature(object="MethyLumiSet"), #{{{
-  function(object) controlTypes(object@QC)
+  function(object, ...) controlTypes(object@QC)
 ) # }}}
 setMethod('controlTypes', signature(object="MethyLumiM"), #{{{
-  function(object) controlTypes(object@controlData)
+  function(object, ...) controlTypes(object@controlData)
 ) # }}}
 setMethod('controlTypes', signature(object="MethyLumiQC"), #{{{
-  function(object) levels( as.factor(fData(object)$Type) )
+  function(object, ...) {
+    if('Type' %in% fvarLabels(object)) {
+      return(levels( as.factor(fData(object)$Type) ))
+    } else { 
+      return(
+        unique(sapply(strsplit(featureNames(object),'\\.'),function(x)x[1]))
+      )
+    }
+  }
 ) # }}}
 
 setMethod('betas', signature(object="MethyLumiM"), function(object) { # {{{

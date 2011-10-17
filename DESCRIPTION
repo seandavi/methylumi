@@ -1,10 +1,10 @@
 Package: methylumi
 Type: Package
 Title: Handle Illumina methylation data
-Version: 1.9.14
-Date: 2011-10-13
+Version: 1.9.15
+Date: 2011-10-16
 Author: Sean Davis, Pan Du, Sven Bilke, Tim Triche, Jr.
-Depends: R, Biobase, methods
+Depends: R (>= 2.10), Biobase, methods
 Imports: Biobase, graphics, lattice, annotate, genefilter,
         AnnotationDbi
 Suggests: lumi, lattice, limma, xtable, GGHumanMethCancerPanelv1.db,
@@ -29,3 +29,4 @@ Collate: AllGenerics.R MethyLumiSet-class.R MethyLumiM-class.R
         detectionpval.R normalization.R utilities.R featureFilter.R
         varFilter.R methylumiR.R bgcorr.R stripMethyLumiSet.R
         subset450kas27k.R readIDAT2.R plotNegOob.R
+Packaged: 2011-10-16 22:10:18 UTC; tim

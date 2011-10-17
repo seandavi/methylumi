@@ -53,7 +53,7 @@ if (is.null(getGeneric("featureFilter"))) # {{{
 if (is.null(getGeneric("varFilter"))) # {{{
     setGeneric("varFilter", 
                function(eset,
-                        var.func=IQR, var.cutoff=0.05,
+                        var.func=IQR, var.cutoff=0.5,
                         filterByQuantile=TRUE, ...)
                standardGeneric("varFilter")) # }}}
 
