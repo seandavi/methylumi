@@ -7,7 +7,7 @@
 %\VignetteDepends{Biobase, lattice, limma, xtable}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \documentclass[12pt]{article}
-\usepackage{amsmath,pstricks,fullpage}
+\usepackage{amsmath,fullpage}
 \usepackage{hyperref}
 
 \newcommand{\R}{{\textsf{R}}}
