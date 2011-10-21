@@ -89,8 +89,7 @@ methylumi.bgcorr<-function(x, method='noob', offset=15, controls=NULL, correct=T
   #} else { 
 
   if(parallel) {
-    require('multicore')
-    estimates = mclapply(names(dat), function(nch) { 
+    estimates = .mclapply(names(dat), function(nch) { 
       xf = rbind(dat[[nch]][['M']], dat[[nch]][['U']])
       if(!is.null(dat[[nch]][['D2']])) xf = rbind(xf, dat[[nch]][['D2']])
       xs = get.xs(xf, controls[[nch]], method=method,
@@ -244,8 +243,7 @@ gamma.get.xs <- function(xf,controls,offset=50,correct=T,parallel=F,...){#{{{
   names(meta) = c('gamma','alpha','delta','beta')
 
   if( parallel == TRUE ) {
-    require('multicore')
-    xs = data.matrix(as.data.frame(mclapply(1:ncol(xf), function(i) {
+    xs = data.matrix(as.data.frame(.mclapply(1:ncol(xf), function(i) {
            gamma.integral(xf[,i], params[i,], offset=offset)
     })))
   } else { 
