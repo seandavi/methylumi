@@ -1,11 +1,10 @@
 % -*- mode: noweb; noweb-default-code-mode: R-mode; -*-
-%\VignetteIndexEntry{450k IDATs to lumi objects via methylumi 1.8+}
+%\VignetteIndexEntry{Working with Illumina 450k Arrays using methylumi}
 %\VignetteDepends{IlluminaHumanMethylation450k.db}
-%\VignetteDepends{methylumi}
-%\VignettePackage{lumi}
-
+%\VignetteDepends{TCGAMethylation450k}
+%\VignettePackage{methylumi}
 \documentclass{article}
-\usepackage{amsmath,pstricks}
+\usepackage{amsmath}
 \usepackage{hyperref}
 \usepackage[authoryear,round]{natbib}
 \newcommand{\Rfunction}[1]{{\texttt{#1}}}
@@ -17,8 +16,8 @@
 \SweaveOpts{keep.source=TRUE}
 \begin{document}
 \setkeys{Gin}{width=0.8\textwidth} 
-\author{Tim Triche, Jr.}
-\title{Using lumi with 450k raw data}
+\author{Tim Triche, Jr. & Sean Davis}
+\title{Working with Illumina 450k Arrays using methylumi}
 \maketitle
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -26,15 +25,19 @@
 \clearpage
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{Creating a MethyLumiM object from IDATs}
+\section{Creating a MethyLumiSet object from IDATs}
+
+<<setup,eval=true,hide=true,echo=false>>=
+options('width'=55)
+@ 
 
 <<load libraries and data for analysis, eval=T>>=
 library('methylumi')
 library('IlluminaHumanMethylation450k.db')
-setwd("~/Dropbox/pandu/IDATs")  # like duh, I need to change this
-barcodes <- c('5640277004_R02C01','5640277004_R03C01')
-lumi450k <- lumIDAT(barcodes) # no normalization done
-sampleNames(lumi450k) <- c('Buffy coat 6','Buffy coat 8')
+barcodes <- c('6005486014_R04C02',
+              '6005486023_R05C01')
+lumi450k <- methylumIDAT(barcodes,idatPath=system.file('extdata/idat',package='TCGAMethylation450k')) # no normalization done
+sampleNames(lumi450k) <- c('TCGA1','TCGA2')
 show(lumi450k)
 @
 
@@ -56,7 +59,7 @@ print(p)
 
 \clearpage
 \section{sessionInfo}
-<<results=tex>>=
+<<results=tex,echo=false>>=
 #save(lumi450k, file="lumi450k.rda")
 toLatex(sessionInfo())
 @ 
