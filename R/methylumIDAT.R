@@ -278,8 +278,7 @@ IDATtoDF <- function(x, fileExts=list(Cy3="Grn.idat", Cy5="Red.idat")) { #{{{
 IDATsToDFs <- function(barcodes, fileExts=list(Cy3="Grn.idat", Cy5="Red.idat"), parallel=F) { # {{{
   names(barcodes) = as.character(barcodes)
   if(parallel) {
-    require(multicore)
-    listOfDFs = mclapply(barcodes, IDATtoDF, fileExts=fileExts)
+    listOfDFs = .mclapply(barcodes, IDATtoDF, fileExts=fileExts)
   } else {
     listOfDFs = lapply(barcodes, IDATtoDF, fileExts=fileExts)
   }
