@@ -1,30 +1,57 @@
 \name{MethyLumiSet-class}
+\Rdversion{1.1}
 \docType{class}
 \alias{MethyLumiSet-class}
+\alias{Cy3.N,MethyLumiSet-method}
+\alias{Cy5.N,MethyLumiSet-method}
+\alias{QCdata,MethyLumiSet-method}
+\alias{QCdata<-,MethyLumiSet,MethyLumiQC-method}
 \alias{[,MethyLumiSet-method}
-\alias{betas<-,MethyLumiSet,matrix-method}
 \alias{betas,MethyLumiSet-method}
+\alias{betas<-,MethyLumiSet,matrix-method}
 \alias{boxplot,MethyLumiSet-method}
+\alias{combine27k450k,MethyLumiSet,MethyLumiSet-method}
 \alias{combine,MethyLumiSet,MethyLumiSet-method}
+\alias{controlData,MethyLumiSet-method}
+\alias{controlData<-,MethyLumiSet,MethyLumiQC-method}
+\alias{controlTypes,MethyLumiSet-method}
 \alias{corplot,MethyLumiSet-method}
-\alias{exprs<-,MethyLumiSet,matrix-method}
 \alias{exprs,MethyLumiSet-method}
+\alias{featureFilter,MethyLumiSet-method}
 \alias{getHistory,MethyLumiSet-method}
 \alias{hist,MethyLumiSet-method}
-\alias{initialize,MethyLumiSet-method}
+\alias{intensities.IB,MethyLumiSet,character-method}
+\alias{intensities.IB,MethyLumiSet,missing-method}
+\alias{intensities.M,MethyLumiSet,character-method}
+\alias{intensities.M,MethyLumiSet,missing-method}
+\alias{intensities.OOB.allelic,MethyLumiSet,character,character-method}
+\alias{intensities.OOB.allelic,MethyLumiSet,missing,missing-method}
+\alias{intensities.OOB,MethyLumiSet,character-method}
+\alias{intensities.OOB,MethyLumiSet,missing-method}
+\alias{intensities.U,MethyLumiSet,character-method}
+\alias{intensities.U,MethyLumiSet,missing-method}
+\alias{intensitiesByChannel,MethyLumiSet-method}
+\alias{methylated,MethyLumiSet-method}
+\alias{methylated<-,MethyLumiSet,matrix-method}
+\alias{negctls.stderr,MethyLumiSet,character-method}
+\alias{negctls.stderr,MethyLumiSet,missing-method}
+\alias{negctls,MethyLumiSet,character-method}
+\alias{negctls,MethyLumiSet,missing-method}
+\alias{negnorm,MethyLumiSet,character-method}
+\alias{negnorm,MethyLumiSet,missing-method}
+\alias{normctls,MethyLumiSet-method}
 \alias{pairs,MethyLumiSet-method}
 \alias{plotSampleIntensities,MethyLumiSet-method}
-\alias{QCdata<-,MethyLumiSet,MethyLumiQC-method}
-\alias{QCdata,MethyLumiSet-method}
-\alias{show,MethyLumiSet-method}
-\alias{methylated<-,MethyLumiSet,matrix-method}
-\alias{methylated,MethyLumiSet-method}
-\alias{unmethylated<-,MethyLumiSet,matrix-method}
-\alias{unmethylated,MethyLumiSet-method}
+\alias{probeNAs,MethyLumiSet-method}
 \alias{qcplot,MethyLumiSet-method}
-\alias{controlTypes,MethyLumiSet-method}
+\alias{sampleNAs,MethyLumiSet-method}
+\alias{show,MethyLumiSet-method}
+\alias{total.intensity,MethyLumiSet-method}
+\alias{unmethylated,MethyLumiSet-method}
+\alias{unmethylated<-,MethyLumiSet,matrix-method}
+\alias{varFilter,MethyLumiSet-method}
 
-\title{Class to hold Illumina Methylation data}
+\title{Class \code{"MethyLumiSet"} for containing Illumina methylation data}
 \description{This class inherits from the MethyLumi class (and
   therefore, from eSet in Biobase) and is designed to hold both the
   intensities and the calculated betas, as well as pvalues if present.}
@@ -45,13 +72,17 @@ Objects can be created by calls of the form \code{new("MethyLumiSet", assayData,
     \item{\code{annotation}:}{Object of class \code{"character"}, not
       currently used}
     \item{\code{.__classVersion__}:}{Object of class \code{"Versions"}}
+    \item{\code{protocolData}:}{Object of class
+      \code{"AnnotatedDataFrame"} that contains protocol information,
+      including scan date if available}
   }
 }
 \section{Extends}{
-Class \code{"\linkS4class{MethyLumi}"}, directly.
-Class \code{"\linkS4class{eSet}"}, by class "MethyLumi", distance 2.
-Class \code{"\linkS4class{VersionedBiobase}"}, by class "MethyLumi", distance 3.
-Class \code{"\linkS4class{Versioned}"}, by class "MethyLumi", distance 4.
+  Class \code{"\linkS4class{MethyLumi}"}, directly.
+  Class \code{"\linkS4class{methylData}"}, directly.
+  Class \code{"\linkS4class{eSet}"}, by class "MethyLumi", distance 2.
+  Class \code{"\linkS4class{VersionedBiobase}"}, by class "MethyLumi", distance 3.
+  Class \code{"\linkS4class{Versioned}"}, by class "MethyLumi", distance 4.
 }
 \section{Methods}{
   \describe{
@@ -94,13 +125,45 @@ Class \code{"\linkS4class{Versioned}"}, by class "MethyLumi", distance 4.
     \item{qcplot}{\code{signature(object = "MethyLumiSet", what, ...)}:
       QC plots of various controltypes }
     \item{controlTypes}{\code{signature(object = "MethyLumiSet")}:
-      determine the character vector of control types from the QCdata information }
+      determine the character vector of control types from the QCdata
+      information }
+    \item{Cy3.N}{\code{signature(object = "MethyLumiSet")}: ... }
+    \item{Cy5.N}{\code{signature(object = "MethyLumiSet")}: ... }
+    \item{combine27k450k}{\code{signature(x = "MethyLumiSet", y = "MethyLumiSet")}: ... }
+    \item{controlData}{\code{signature(object = "MethyLumiSet")}: ... }
+    \item{controlData<-}{\code{signature(object = "MethyLumiSet", value = "MethyLumiQC")}: ... }
+    \item{featureFilter}{\code{signature(eset = "MethyLumiSet")}: ... }
+    \item{intensities.IB}{\code{signature(x = "MethyLumiSet", channel = "character")}: ... }
+    \item{intensities.IB}{\code{signature(x = "MethyLumiSet", channel = "missing")}: ... }
+    \item{intensities.M}{\code{signature(x = "MethyLumiSet", channel = "character")}: ... }
+    \item{intensities.M}{\code{signature(x = "MethyLumiSet", channel = "missing")}: ... }
+    \item{intensities.OOB.allelic}{\code{signature(x = "MethyLumiSet", channel = "character", allele = "character")}: ... }
+    \item{intensities.OOB.allelic}{\code{signature(x = "MethyLumiSet", channel = "missing", allele = "missing")}: ... }
+    \item{intensities.OOB}{\code{signature(x = "MethyLumiSet", channel = "character")}: ... }
+    \item{intensities.OOB}{\code{signature(x = "MethyLumiSet", channel = "missing")}: ... }
+    \item{intensities.U}{\code{signature(x = "MethyLumiSet", channel = "character")}: ... }
+    \item{intensities.U}{\code{signature(x = "MethyLumiSet", channel = "missing")}: ... }
+    \item{intensitiesByChannel}{\code{signature(object = "MethyLumiSet")}: ... }
+    \item{negctls.stderr}{\code{signature(object = "MethyLumiSet", channel = "character")}: ... }
+    \item{negctls.stderr}{\code{signature(object = "MethyLumiSet", channel = "missing")}: ... }
+    \item{negctls}{\code{signature(object = "MethyLumiSet", channel = "character")}: ... }
+    \item{negctls}{\code{signature(object = "MethyLumiSet", channel = "missing")}: ... }
+    \item{negnorm}{\code{signature(object = "MethyLumiSet", channel = "character")}: ... }
+    \item{negnorm}{\code{signature(object = "MethyLumiSet", channel = "missing")}: ... }
+    \item{normctls}{\code{signature(object = "MethyLumiSet")}: ... }
+    \item{plotSampleIntensities}{\code{signature(x = "MethyLumiSet")}: ... }
+    \item{probeNAs}{\code{signature(object = "MethyLumiSet")}: ... }
+    \item{sampleNAs}{\code{signature(object = "MethyLumiSet")}: ... }
+    \item{total.intensity}{\code{signature(object = "MethyLumiSet")}: ... }
+    \item{varFilter}{\code{signature(eset = "MethyLumiSet")}: ... }
+	 }
+
 }
 }
-\author{Sean Davis <sdavis2@mail.nih.gov>}
+\author{Sean Davis & Tim Triche, Jr.}
 \seealso{
   \code{\link{methylumiR}}, \code{\link{normalizeMethyLumiSet}},
-  \code{\linkS4class{MethyLumiSet}}, \code{\linkS4class{MethyLumiQC}},
+  \code{\link{methylumIDAT}}, \code{\linkS4class{MethyLumiQC}},
   \code{\linkS4class{eSet}} 
 }
 \examples{
