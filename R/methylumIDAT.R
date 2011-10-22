@@ -82,12 +82,12 @@ readMethyLumIDAT <- function(idatFile){ # {{{
   tempCon <- file(idatFile,"rb")
   prefixCheck <- readChar(tempCon,4)
   versionNumber <- readBin(tempCon, "integer", n=1, size=8,
-                           endian="little", signed=FALSE)
+                           endian="little")
   if(versionNumber<3)
 	  stop("Older style IDAT files not supported: update your scanner settings")
 
   nFields <- readBin(tempCon, "integer", n=1, size=4,
-                     endian="little", signed=FALSE)
+                     endian="little")
 
   fields <- matrix(0,nFields,3);
   colnames(fields) <- c("Field Code", "Byte Offset", "Bytes")
@@ -95,7 +95,7 @@ readMethyLumIDAT <- function(idatFile){ # {{{
     fields[i1,"Field Code"] <-
       readBin(tempCon, "integer", n=1, size=2, endian="little", signed=FALSE)
     fields[i1,"Byte Offset"] <-
-      readBin(tempCon, "integer", n=1, size=8, endian="little", signed=FALSE)
+      readBin(tempCon, "integer", n=1, size=8, endian="little")
   }
 
   knownCodes <- c(1000, 102, 103, 104, 107, 200, 300, 400,
@@ -134,11 +134,11 @@ readMethyLumIDAT <- function(idatFile){ # {{{
 
   seek(tempCon, fields["nSNPsRead", "Byte Offset"])
   nSNPsRead <- readBin(tempCon, "integer", n=1, size=4,
-                       endian="little", signed=FALSE)
+                       endian="little")
 
   seek(tempCon, fields["IlluminaID", "Byte Offset"])
   IlluminaID <- readBin(tempCon, "integer", n=nSNPsRead, size=4,
-                       endian="little", signed=FALSE)
+                       endian="little")
 
   seek(tempCon, fields["SD", "Byte Offset"])
   SD <- readBin(tempCon, "integer", n=nSNPsRead, size=2,
@@ -154,13 +154,13 @@ readMethyLumIDAT <- function(idatFile){ # {{{
   # This seems to be identical to IlluminaID
   seek(tempCon, fields["MidBlock", "Byte Offset"])
   nMidBlockEntries <- readBin(tempCon, "integer", n=1, size=4,
-                              endian="little", signed=FALSE)
+                              endian="little")
   MidBlock <- readBin(tempCon, "integer", n=nMidBlockEntries, size=4,
-                      endian="little", signed=FALSE)
+                      endian="little")
 
   seek(tempCon, fields["RedGreen", "Byte Offset"])
   RedGreen <- readBin(tempCon, "numeric", n=1, size=4,
-                      endian="little", signed=FALSE)
+                      endian="little")
   #RedGreen <- readBin(tempCon, "integer", n=4, size=1,
   #                    endian="little", signed=FALSE)
  
@@ -203,7 +203,7 @@ readMethyLumIDAT <- function(idatFile){ # {{{
 
   seek(tempCon, fields["RunInfo", "Byte Offset"])
   nRunInfoBlocks <- readBin(tempCon, "integer", n=1, size=4,
-                            endian="little", signed=FALSE)
+                            endian="little")
   RunInfo <- matrix(NA, 5, 5)
   colnames(RunInfo) <- c("RunTime", "BlockType", "BlockPars",
                          "BlockCode", "CodeVersion")
