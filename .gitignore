@@ -3,3 +3,5 @@
 .#*
 \#*#
 *.toc
+r_env_cache
+weaver_debug_log.txt
