@@ -13,8 +13,9 @@ if(is.null(getGeneric('pval.detect<-'))) setGeneric('pval.detect<-', # {{{
 ) # }}}
 setReplaceMethod('pval.detect', signature(object="methylData", value="numeric"), function(object, ..., value){ # {{{
 
-  require(matrixStats) 
-  if(!exists('minBeads') | is.null(minBeads)) minBeads = 3
+  require(matrixStats)
+  minBeads=3
+  #if(!exists('minBeads') | is.null(minBeads)) minBeads = 3
   if(is(object, 'MethyLumiSet')) stopifnot('QC' %in% slotNames(object))
   if(is(object, 'MethyLumiM')) stopifnot('controlData' %in% slotNames(object))
   if(minBeads > 1) stopifnot('methylated.N' %in% assayDataElementNames(object))
