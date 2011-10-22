@@ -260,9 +260,9 @@ readMethyLumIDAT <- function(idatFile){ # {{{
 
 ## this is typically best run in parallel across a bunch of IDAT files
 ##
-IDATtoDF <- function(x, fileExts=list(Cy3="Grn.idat", Cy5="Red.idat")) { #{{{
+IDATtoDF <- function(x, fileExts=list(Cy3="Grn.idat", Cy5="Red.idat"),idatPath) { #{{{
   processed = lapply(fileExts, function(chan) {
-    dat = readMethyLumIDAT(paste(x, chan, sep='_'))
+    dat = readMethyLumIDAT(file.path(idatPath,paste(x, chan, sep='_')))
     return(list(Quants=as.data.frame(dat$Quants), 
                 RunInfo=dat$RunInfo,
                 ChipType=dat$ChipType))
@@ -275,12 +275,12 @@ IDATtoDF <- function(x, fileExts=list(Cy3="Grn.idat", Cy5="Red.idat")) { #{{{
 
 ## automates the above-mentioned best practices
 ##
-IDATsToDFs <- function(barcodes, fileExts=list(Cy3="Grn.idat", Cy5="Red.idat"), parallel=F) { # {{{
+IDATsToDFs <- function(barcodes, fileExts=list(Cy3="Grn.idat", Cy5="Red.idat"), parallel=F, idatPath) { # {{{
   names(barcodes) = as.character(barcodes)
   if(parallel) {
-    listOfDFs = .mclapply(barcodes, IDATtoDF, fileExts=fileExts)
+    listOfDFs = .mclapply(barcodes, IDATtoDF, fileExts=fileExts, idatPath=idatPath)
   } else {
-    listOfDFs = lapply(barcodes, IDATtoDF, fileExts=fileExts)
+    listOfDFs = lapply(barcodes, IDATtoDF, fileExts=fileExts, idatPath=idatPath)
   }
   names(listOfDFs) = as.character(barcodes)
   return(listOfDFs)
@@ -683,7 +683,7 @@ NChannelSetToMethyLumiSet <- function(NChannelSet, parallel=F, normalize=F, pval
 ## FIXME: consider using crlmm::readIDAT instead (test first)
 ## FIXME: switch to using 'parallel' by default with dummy mclapply()
 ##
-methylumIDAT <- function(barcodes=NULL,pdat=NULL,parallel=F,n=T,n.sd=F,oob=T,...) { # {{{
+methylumIDAT <- function(barcodes=NULL,pdat=NULL,parallel=F,n=T,n.sd=F,oob=T,idatPath=getwd(),...) { # {{{
   if(is(barcodes, 'data.frame')) pdat = barcodes
   if((is.null(barcodes))&(is.null(pdat) | (!('barcode' %in% names(pdat))))){#{{{
     stop('"barcodes" or "pdat" (with pdat$barcode defined) must be supplied.')
@@ -714,7 +714,7 @@ methylumIDAT <- function(barcodes=NULL,pdat=NULL,parallel=F,n=T,n.sd=F,oob=T,...
   } # }}}
   files.present = rep(TRUE, length(barcodes)) # {{{
   idats = sapply(barcodes, function(b) paste(b,c('_Red','_Grn'),'.idat',sep=''))
-  for(i in colnames(idats)) for(j in idats[,i]) if(!(j %in% list.files())) {
+  for(i in colnames(idats)) for(j in idats[,i]) if(!(j %in% list.files(idatPath))) {
     message(paste('Error: file', j, 'is missing for sample', i))
     files.present = FALSE
   }
@@ -730,7 +730,7 @@ methylumIDAT <- function(barcodes=NULL,pdat=NULL,parallel=F,n=T,n.sd=F,oob=T,...
 
   mlumi = NChannelSetToMethyLumiSet(
     DFsToNChannelSet(
-      IDATsToDFs(barcodes, parallel=parallel), IDAT=TRUE,
+      IDATsToDFs(barcodes, parallel=parallel, idatPath=idatPath), IDAT=TRUE,
     parallel=parallel),
   parallel=parallel, n=n, oob=oob, caller=deparse(match.call()))
 
@@ -750,7 +750,7 @@ methylumIDAT <- function(barcodes=NULL,pdat=NULL,parallel=F,n=T,n.sd=F,oob=T,...
 
 } # }}}
 
-lumIDAT <- function(barcodes, pdat=NULL, parallel=F, n=T, ...){ # {{{ 
-  as(methylumIDAT(barcodes=barcodes,pdat=pdat,parallel=parallel,n=n,oob=F),
+lumIDAT <- function(barcodes, pdat=NULL, parallel=F, n=T, idatPath=getwd(), ...){ # {{{ 
+  as(methylumIDAT(barcodes=barcodes,pdat=pdat,parallel=parallel,n=n,oob=F,idatPath=idatPath),
      'MethyLumiM')
 } # }}}
