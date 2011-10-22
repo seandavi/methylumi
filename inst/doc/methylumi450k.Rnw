@@ -13,7 +13,7 @@
 \newcommand{\Rclass}[1]{{\textit{#1}}}
 \newcommand{\Rmethod}[1]{{\textit{#1}}}
 
-\SweaveOpts{keep.source=TRUE}
+\SweaveOpts{keep.source=TRUE,cache=TRUE}
 \begin{document}
 \setkeys{Gin}{width=0.8\textwidth} 
 \author{Tim Triche, Jr. & Sean Davis}
@@ -48,7 +48,7 @@ Plot the negative and normalization controls:
 
 \begin{figure}[h!]
 \centering
-<<controls, fig=true, width=6.5, height=6.5, quiet=T, echo=T>>=
+<<controls, fig=true, width=6.5, height=8, quiet=T, echo=T, cache=FALSE>>=
 library(ggplot2)
 p <- qc.probe.plot(lumi450k, by.type=TRUE)
 print(p)
