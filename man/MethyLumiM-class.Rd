@@ -2,40 +2,36 @@
 \Rdversion{1.1}
 \docType{class}
 \alias{MethyLumiM-class}
-\alias{coerce,eSet,MethyLumiM-method}
-\alias{getHistory,MethyLumiM-method}
-\alias{initialize,MethyLumiM-method}
-\alias{methylated,MethyLumiM-method}
-\alias{methylated<-,MethyLumiM-method}
-\alias{methylated<-,MethyLumiM,ANY-method}
-\alias{unmethylated,MethyLumiM-method}
-\alias{unmethylated<-,MethyLumiM-method}
-\alias{unmethylated<-,MethyLumiM,ANY-method}
-\alias{methylated.N,MethyLumiM-method}
-\alias{methylated.N<-,MethyLumiM-method}
-\alias{methylated.N<-,MethyLumiM,ANY-method}
-\alias{unmethylated.N,MethyLumiM-method}
-\alias{unmethylated.N<-,MethyLumiM-method}
-\alias{unmethylated.N<-,MethyLumiM,ANY-method}
+\alias{QCdata,MethyLumiM-method}
+\alias{[,MethyLumiM-method}
+\alias{betas,MethyLumiM-method}
+\alias{combine,MethyLumiM,MethyLumiM-method}
+\alias{controlData,MethyLumiM-method}
+\alias{controlData<-,MethyLumiM,ANY-method}
+\alias{controlTypes,MethyLumiM-method}
 \alias{detection,MethyLumiM-method}
 \alias{detection<-,MethyLumiM-method}
-\alias{detection<-,MethyLumiM,ANY-method}
-\alias{detection}
-\alias{detection<-}
-\alias{methylated.N}
-\alias{methylated.N<-}
-\alias{unmethylated.N}
-\alias{unmethylated.N<-}
-\alias{controlData}
-\alias{controlData<-}
-\alias{controlData,MethyLumiM-method}
-\alias{controlData<-,MethyLumiM-method}
-\alias{controlData<-,MethyLumiM,ANY-method}
-\alias{combine,MethyLumiM,MethyLumiM-method}
-\alias{[,MethyLumiM-method}
-\alias{[,MethyLumiM,ANY,ANY,ANY-method}
-
-\title{Class "MethyLumiM": for Illumina Methylation microarray data}
+\alias{getHistory,MethyLumiM-method}
+\alias{intensitiesByChannel,MethyLumiM-method}
+\alias{methylated.N,MethyLumiM-method}
+\alias{methylated.N<-,MethyLumiM,ANY-method}
+\alias{methylated,MethyLumiM-method}
+\alias{methylated<-,MethyLumiM,ANY-method}
+\alias{negctls,MethyLumiM,character-method}
+\alias{negctls,MethyLumiM,missing-method}
+\alias{negnorm,MethyLumiM,character-method}
+\alias{negnorm,MethyLumiM,missing-method}
+\alias{normctls,MethyLumiM-method}
+\alias{probeNAs,MethyLumiM-method}
+\alias{pvals,MethyLumiM-method}
+\alias{sampleNAs,MethyLumiM-method}
+\alias{total.intensity,MethyLumiM-method}
+\alias{unmethylated.N,MethyLumiM-method}
+\alias{unmethylated.N<-,MethyLumiM,ANY-method}
+\alias{unmethylated,MethyLumiM-method}
+\alias{unmethylated<-,MethyLumiM,ANY-method}
+\title{Class "MethyLumiM": for Illumina Methylation microarray data
+  using logRatios}
 \description{
 MethyLumiM is a class inherited from \code{\link[Biobase]{ExpressionSet-class}}. It is designed for Illumina Methylation microarray data. The exprs dataMatrix included in the assayData slot of MethyLumiM object includes a matrix of M-values, which is the log2 ratio of methylated and unmethylated probe intensities. The MethyLumiM class include a boxplot function uniquely designed for two-mode histogram data. It also include a coerce function to map from \code{\link[methylumi]{MethyLumi-class}}, \code{\link[methylumi]{MethyLumiSet-class}} or other \code{\link[Biobase]{eSet-class}} inherited object to MethyLumiM class object. 
 }
@@ -83,7 +79,7 @@ Class \code{"\link{Versioned}"}, by class "ExpressionSet", distance 4.
 	 }
 }
 \references{
-1. Du, P., Zhang, X, Huang, C.C., Jafari, N., Kibbe, W.A., Hou, L., and Lin, S.M.,  (2010) 'Comparison of Beta-value and M-value methods for quantifying methylation levels by microarray analysis', (under review)
+1. Du, P., Zhang, X, Huang, C.C., Jafari, N., Kibbe, W.A., Hou, L., and Lin, S.M.,  (2010) 'Comparison of Beta-value and M-value methods for quantifying methylation levels by microarray analysis'
 }
 \author{
 Pan DU
