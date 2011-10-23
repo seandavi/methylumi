@@ -5,7 +5,7 @@
 \alias{Cy3.N,MethyLumiSet-method}
 \alias{Cy5.N,MethyLumiSet-method}
 \alias{QCdata,MethyLumiSet-method}
-\alias{QCdata<-,MethyLumiSet,MethyLumiQC-method}
+\alias{QCdata<-,MethyLumiSet}
 \alias{[,MethyLumiSet-method}
 \alias{betas,MethyLumiSet-method}
 \alias{betas<-,MethyLumiSet,matrix-method}
@@ -13,11 +13,10 @@
 \alias{combine27k450k,MethyLumiSet,MethyLumiSet-method}
 \alias{combine,MethyLumiSet,MethyLumiSet-method}
 \alias{controlData,MethyLumiSet-method}
-\alias{controlData<-,MethyLumiSet,MethyLumiQC-method}
+\alias{controlData<-,MethyLumiSet}
 \alias{controlTypes,MethyLumiSet-method}
 \alias{corplot,MethyLumiSet-method}
 \alias{exprs,MethyLumiSet-method}
-\alias{featureFilter,MethyLumiSet-method}
 \alias{getHistory,MethyLumiSet-method}
 \alias{hist,MethyLumiSet-method}
 \alias{intensities.IB,MethyLumiSet,character-method}
@@ -49,7 +48,6 @@
 \alias{total.intensity,MethyLumiSet-method}
 \alias{unmethylated,MethyLumiSet-method}
 \alias{unmethylated<-,MethyLumiSet,matrix-method}
-\alias{varFilter,MethyLumiSet-method}
 
 \title{Class \code{"MethyLumiSet"} for containing Illumina methylation data}
 \description{This class inherits from the MethyLumi class (and
@@ -158,7 +156,6 @@ Objects can be created by calls of the form \code{new("MethyLumiSet", assayData,
     \item{varFilter}{\code{signature(eset = "MethyLumiSet")}: ... }
 	 }
 
-}
 }
 \author{Sean Davis & Tim Triche, Jr.}
 \seealso{
