@@ -5,8 +5,6 @@
 setClass('MethyLumi', contains='eSet')
 setClass('MethyLumiQC', contains='MethyLumi')
 setClassUnion("QCDataOrNULL",c('NULL',"MethyLumiQC"))
-setClass('MethyLumiOOB', contains='MethyLumi')
-setClassUnion("OOBDataOrNULL",c('NULL',"MethyLumiOOB"))
 
 setClass('MethyLumiSet', # {{{
          representation(QC="QCDataOrNULL",
@@ -59,25 +57,6 @@ setMethod('initialize', 'MethyLumiQC', # {{{
                            annotation=annotation)
           }
           ) # }}}
-#setMethod('initialize', 'MethyLumiOOB',  # {{{
-          #function(.Object,
-                   #assayData=assayDataNew(
-                     #...),
-                   #phenoData   = annotatedDataFrameFrom(assayData,byrow=FALSE),
-                   #featureData = annotatedDataFrameFrom(assayData,byrow=TRUE),
-                   #experimentData = new("MIAME"),
-                   #annotation= character(),
-                   #betas = new("matrix")
-                   #)
-                   #{
-            #callNextMethod(.Object,
-                           #assayData=assayData,
-                           #phenoData=phenoData,
-                           #featureData=featureData,
-                           #experimentData=experimentData,
-                           #annotation=annotation)
-          #}
-          #)  # }}}
 setValidity("MethyLumiSet", function(object) { # {{{
     msg <- Biobase:::validMsg(NULL, Biobase:::isValidVersion(object, "eSet"))
     msg <- Biobase:::validMsg(msg, assayDataValidMembers(assayData(object), c("betas")))
@@ -88,10 +67,6 @@ setValidity("MethyLumiQC", function(object) { # {{{
 #    msg <- Biobase:::validMsg(msg, assayDataValidMembers(assayData(object), c("avgsignal")))
     if (is.null(msg)) TRUE else msg
 }) # }}}
-#setValidity("MethyLumiOOB", function(object) {  # {{{
-    #msg <- Biobase:::validMsg(NULL, Biobase:::isValidVersion(object, "eSet"))
-    #if (is.null(msg)) TRUE else msg
-#})  # }}}
 
 setGeneric('betas', # {{{
     function(object) standardGeneric('betas')) # }}} 
@@ -465,25 +440,6 @@ setMethod("hist",signature(x="MethyLumiQC"),function(x,...) { # {{{
     hist(negctls(x,'Cy5')[,i], breaks=50, col='red', border='red',
          main=paste(sampleNames(x)[i], "negative controls"), xlim=xl,
          xlab='Nonspecific Cy5 fluorescence from negative controls', ...)
-  }
-}) # }}}
-setMethod("hist",signature(x="MethyLumiOOB"),function(x,...) { # {{{
-  samples = dim(x)[2]
-  if(samples > 4) stop("Too many samples, choose a subset for a decent plot")
-  brk = ifelse(exists('breaks'), as.numeric(breaks), 500)
-  par(mfrow=c(samples,2))
-  max.oob = ifelse(exists('max.oob'), # if supplied, eg. NEG vs OOB
-                   as.numeric(max.oob), 
-                   max( max(na.omit(intensities.OOB(x,'Cy3'))),
-                        max(na.omit(intensities.OOB(x,'Cy5'))) ) )
-  xl = c(0, max.oob) # x limits
-  for(i in seq_along(sampleNames(x))) {
-    hist(intensities.OOB(x,'Cy3')[,i],breaks=500,col='green',border='green',
-         main=paste(sampleNames(x)[i], "Cy3 out-of-band fluorescence"), xlim=xl,
-         xlab='Nonspecific Cy3 fluorescence from Cy5-channel probe pairs')
-    hist(intensities.OOB(x,'Cy5')[,i],breaks=500,col='red',border='red',
-         main=paste(sampleNames(x)[i], "Cy5 out-of-band fluorescence"), xlim=xl,
-         xlab='Nonspecific Cy5 fluorescence from Cy3-channel probe pairs')
   }
 }) # }}}
 
