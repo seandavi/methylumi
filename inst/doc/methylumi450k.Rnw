@@ -34,6 +34,7 @@ options('width'=55)
 <<load libraries and data for analysis, eval=T>>=
 library('methylumi')
 library('IlluminaHumanMethylation450k.db')
+require('TCGAMethylation450k')
 barcodes <- c('6005486014_R04C02',
               '6005486023_R05C01')
 lumi450k <- methylumIDAT(barcodes,idatPath=system.file('extdata/idat',package='TCGAMethylation450k')) # no normalization done
