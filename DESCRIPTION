@@ -24,9 +24,3 @@ Description: This package provides classes for holding and manipulating
        background correction, and quality control features for GoldenGate,
        Infinium, and Infinium HD arrays are also included.
 License: GPL-2
-Collate: AllGenerics.R MethyLumiSet-class.R MethyLumiM-class.R
-        MoreGenerics.R mclapply_replace.R methylumIDAT.R 
-        methylumiCSV.R qc.probe.plot.R
-        detectionpval.R normalization.R utilities.R featureFilter.R
-        varFilter.R methylumiR.R bgcorr.R stripMethyLumiSet.R
-        subset450kas27k.R readIDAT2.R plotNegOob.R
