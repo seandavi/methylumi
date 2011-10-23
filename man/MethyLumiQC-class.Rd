@@ -49,7 +49,6 @@ Objects can be created by calls of the form \code{new("MethyLumiQC", assayData, 
 }
 \section{Extends}{
 Class \code{"\linkS4class{MethyLumi}"}, directly.
-Class \code{"\linkS4class{QCDataOrNULL}"}, directly.
 Class \code{"\linkS4class{eSet}"}, by class "MethyLumi", distance 2.
 Class \code{"\linkS4class{VersionedBiobase}"}, by class "MethyLumi", distance 3.
 Class \code{"\linkS4class{Versioned}"}, by class "MethyLumi", distance 4.
