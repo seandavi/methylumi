@@ -121,7 +121,7 @@ methylumi.diagnostics <- function (x, onlybg=F) { # {{{
   if (!is.null(x.qc)) { # {{{ realistically, use OOB
       bg <- list(red = log2(negctls(x.qc, "Cy5")), 
                  green = log2(negctls(x.qc, "Cy3")))
-      warning("Using negative controls for background plot (OOB is better)...")
+      message("(Using negative controls for dashed vertical background line)")
   } # }}}
   if(!('COLOR_CHANNEL' %in% fvarLabels(x))) { # {{{
     if(annotation(x) == 'IlluminaHumanMethylation27k') { 
@@ -194,7 +194,8 @@ methylumi.diagnostics <- function (x, onlybg=F) { # {{{
 } # }}}
 
 compare.chips <- function(x, by.design=F, by.channel=F, what='betas', how=NULL, plot.type='histogram', title=NULL) { # {{{
-  
+ 
+  require(ggplot2) 
   chips = dim(x)[2]
   probes = dim(x)[1]
   dat = data.frame(probe=c(rep(featureNames(x), chips)), # {{{
