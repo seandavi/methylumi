@@ -229,7 +229,7 @@ illumina.get.xs <- function(xf, controls, offset=50, robust=T, ...){#{{{
 } # }}}
 gamma.get.xs <- function(xf,controls,offset=50,correct=T,parallel=F,...){#{{{
 
-  require(rGammaGamma)
+  #require(rGammaGamma)
   bg = sapply(1:ncol(xf), function(i) gamma.mle(controls[,i]))
   if(correct) { # {{{
     bgmu = colMeans(controls, na.rm=T)
@@ -260,7 +260,7 @@ gamma.get.xs <- function(xf,controls,offset=50,correct=T,parallel=F,...){#{{{
 } # }}}
 gammaM.get.xs <- function(xf,controls,offset=15,correct=T,parallel=F,...){#{{{
 
-  require(rGammaGamma)
+  #require(rGammaGamma)
   bg = sapply(1:ncol(xf), function(i) gamma.mode(gamma.mle(controls[,i])))
   xs = sapply(1:ncol(xf), function(s) pmax(xf[,s] - bg[s], offset))
   params = data.frame(mode=bg)
@@ -338,7 +338,7 @@ illumina.get.xcs <- function(xcf, params, robust=T, ...){#{{{
 } # }}}
 gamma.get.xcs <- function(xcf, params, robust=T, parallel=F,...){#{{{
 
-  require(rGammaGamma)
+  #require(rGammaGamma)
   offset = params[[grep('offset', names(params), value=T)]][1]
   params[[grep('offset', names(params), value=T)]] = NULL
   
@@ -389,7 +389,7 @@ normexp.signal <- function (par, x)  { # {{{
 
 # gamma deconvolution (conditional expectation of xs|xf; my code)
 gamma.signal <- function (par, x)  { # {{{
-  require(rGammaGamma)
+  #require(rGammaGamma)
   par = as.numeric(par)
   gamma.integral(x, par, offset=0)
 } # }}}
