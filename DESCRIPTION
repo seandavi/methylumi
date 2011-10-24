@@ -1,16 +1,15 @@
 Package: methylumi
 Type: Package
 Title: Handle Illumina methylation data
-Version: 1.9.24
+Version: 1.9.26
 Date: 2011-10-23
 Author: Sean Davis, Pan Du, Sven Bilke, Tim Triche, Jr.
-Depends: R (>= 2.10), Biobase, methods
+Depends: Biobase, methods, R (>= 2.13)
 Imports: Biobase, graphics, lattice, annotate, genefilter,
         AnnotationDbi
-Suggests: lumi, lattice, limma, xtable,
-        IlluminaHumanMethylation27k.db (>= 1.4.4),
-        IlluminaHumanMethylation450k.db, ggplot2, SQN, MASS,
-        matrixStats,parallel
+Suggests: lumi, lattice, limma, xtable, IlluminaHumanMethylation27k.db
+        (>= 1.4.4), IlluminaHumanMethylation450k.db, ggplot2, SQN,
+        MASS, matrixStats, parallel
 biocViews: DNAMethylation, TwoChannel, Preprocessing, QualityControl,
         CpGIsland
 Maintainer: Sean Davis <sdavis2@mail.nih.gov>
@@ -24,3 +23,4 @@ Description: This package provides classes for holding and manipulating
        background correction, and quality control features for GoldenGate,
        Infinium, and Infinium HD arrays are also included.
 License: GPL-2
+Packaged: 2011-10-24 01:06:39 UTC; tim
