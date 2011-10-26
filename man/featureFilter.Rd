@@ -71,13 +71,3 @@ featureFilter(eset, require.entrez=FALSE,
 
 \seealso{\code{\link[genefilter]{nsFilter}}}
 
-\examples{
-  data(mldat) ## GoldenGate Cancer Panel
-  annotation(mldat) <- "GGHumanMethCancerPanelv1"
-  filt <- featureFilter(mldat, require.entrez=TRUE,
-            exclude.ChrX=TRUE,
-            require.closeToTSS=TRUE, range.DistToTSS=c(-500, 300),
-            require.CpGisland=TRUE)
-  filt$filter.log
-  dim(filt$eset)
-}
