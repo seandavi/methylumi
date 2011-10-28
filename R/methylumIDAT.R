@@ -76,19 +76,25 @@ getMethylationBeadMappers <- function(chipType) { # {{{
 
 ## modified from the readIDAT function originally provided by Keith Baggerly
 ##
+## 10/28/11: added patches from Kasper Daniel Hansen's crlmm:::readIDAT
+##           noted lack of any discrepancy from previous version's output
+##
 readMethyLumIDAT <- function(idatFile){ # {{{
 
+  ## 10/28/11: added updates from Kasper Daniel Hansen's crlmm::readIDAT
+  ## 
+  ## FIXME: just import the function!
+  ##
   fileSize <- file.info(idatFile)$size
   tempCon <- file(idatFile,"rb")
   prefixCheck <- readChar(tempCon,4)
-  versionNumber <- readBin(tempCon, "integer", n=1, size=8,
-                           endian="little")
+  if(prefixCheck != "IDAT"){
+    # not sure why this is in here...
+  }
+  versionNumber <- readBin(tempCon, "integer", n=1, size=8, endian="little")
   if(versionNumber<3)
 	  stop("Older style IDAT files not supported: update your scanner settings")
-
-  nFields <- readBin(tempCon, "integer", n=1, size=4,
-                     endian="little")
-
+  nFields <- readBin(tempCon, "integer", n=1, size=4, endian="little")
   fields <- matrix(0,nFields,3);
   colnames(fields) <- c("Field Code", "Byte Offset", "Bytes")
   for(i1 in 1:nFields){
@@ -98,29 +104,31 @@ readMethyLumIDAT <- function(idatFile){ # {{{
       readBin(tempCon, "integer", n=1, size=8, endian="little")
   }
 
-  knownCodes <- c(1000, 102, 103, 104, 107, 200, 300, 400,
-                  401, 402, 403, 404, 405, 406, 407, 408, 409)
-  names(knownCodes) <-
-    c("nSNPsRead",  # 1000
-      "IlluminaID", #  102
-      "SD",         #  103
-      "Mean",       #  104
-      "NBeads",     #  107
-      "MidBlock",   #  200
-      "RunInfo",    #  300
-      "RedGreen",   #  400
-      "MostlyNull", #  401
-      "Barcode",    #  402
-      "ChipType",   #  403
-      "Terminus",   #  404
-      "Unknown.1",  #  405
-      "Unknown.2",  #  406
-      "Unknown.3",  #  407
-      "Unknown.4",  #  408
-      "Unknown.5"   #  409 
+  ## patch from KDH's code
+  knownCodes <-
+    c("nSNPsRead"  = 1000,
+      "IlluminaID" =  102,
+      "SD"         =  103,
+      "Mean"       =  104,
+      "NBeads"     =  107,
+      "MidBlock"   =  200,
+      "RunInfo"    =  300,
+      "RedGreen"   =  400,
+      "MostlyNull" =  401,
+      "Barcode"    =  402,
+      "ChipType"   =  403,
+      "MostlyA"    =  404,
+      "Unknown.1"  =  405,
+      "Unknown.2"  =  406,
+      "Unknown.3"  =  407,
+      "Unknown.4"  =  408,
+      "Unknown.5"  =  409,
+      "Unknown.6"  =  410,
+      "Unknown.7"  =  510
       )
+  ## end patch
 
-  nNewFields <- 1 
+  nNewFields <- 1
   rownames(fields) <- paste("Null", 1:nFields)
   for(i1 in 1:nFields){
     temp <- match(fields[i1,"Field Code"], knownCodes)
@@ -132,108 +140,175 @@ readMethyLumIDAT <- function(idatFile){ # {{{
     }
   }
 
+  ## Patch from KDH's code 
+  fields <- fields[order(fields[, "Byte Offset"]),]
+
   seek(tempCon, fields["nSNPsRead", "Byte Offset"])
-  nSNPsRead <- readBin(tempCon, "integer", n=1, size=4,
-                       endian="little")
+  nSNPsRead <- readBin(tempCon, "integer", n=1, size=4, endian="little")
 
-  seek(tempCon, fields["IlluminaID", "Byte Offset"])
-  IlluminaID <- readBin(tempCon, "integer", n=nSNPsRead, size=4,
-                       endian="little")
+  readBlock <- function(nam) {
+      switch(nam,
+             "IlluminaID" = {
+                 seek(tempCon, fields["IlluminaID", "Byte Offset"])
+                 IlluminaID <- readBin(tempCon, "integer", n=nSNPsRead, 
+                                       size=4, endian="little")
+                 IlluminaID
+             },
+             "SD" = {
+                 seek(tempCon, fields["SD", "Byte Offset"])
+                 SD <- readBin(tempCon, "integer", n=nSNPsRead, 
+                               size=2, endian="little", signed=FALSE)
+                 SD
+             },
+             "Mean" = {
+                 seek(tempCon, fields["Mean", "Byte Offset"])
+                 Mean <- readBin(tempCon, "integer", n=nSNPsRead, 
+                                 size=2, endian="little", signed=FALSE)
+                 Mean
+             },
+             "NBeads" = {
+                 seek(tempCon, fields["NBeads", "Byte Offset"])
+                 NBeads <- readBin(tempCon, "integer", n=nSNPsRead, 
+                                   size=1, signed=FALSE)
+                 NBeads
+             },
+             "MidBlock" = {
+                 seek(tempCon, fields["MidBlock", "Byte Offset"])
+                 nMidBlockEntries <- readBin(tempCon, "integer", n=1, 
+                                             size=4, endian="little")
+                 MidBlock <- readBin(tempCon, "integer", n=nMidBlockEntries, 
+                                     size=4, endian="little")
+                 MidBlock
+             },
+             "RunInfo" = {
+                 seek(tempCon, fields["RunInfo", "Byte Offset"])
+                 nRunInfoBlocks <- readBin(tempCon, "integer", n=1, 
+                                           size=4, endian="little")
+                 RunInfo <- matrix(NA, nRunInfoBlocks, 5)
+                 colnames(RunInfo) <- c("RunTime", "BlockType", "BlockPars",
+                                        "BlockCode", "CodeVersion")
+                 for(i1 in 1:2) { #nRunInfoBlocks){  ## MR edit
+                     for(i2 in 1:5){
+                         nChars <- readBin(tempCon, "integer", n=1, 
+                                           size=1, signed=FALSE)
+                         RunInfo[i1,i2] <- readChar(tempCon, nChars)
+                     }
+                 }
+                 RunInfo
+             },
+             "RedGreen" = {
+                 seek(tempCon, fields["RedGreen", "Byte Offset"])
+                 RedGreen <- readBin(tempCon, "numeric", n=1, 
+                                     size=4, endian="little")
+                 RedGreen
+             },
+             "MostlyNull" = {
+                 seek(tempCon, fields["MostlyNull", "Byte Offset"])
+                 nChars <- readBin(tempCon, "integer", n=1, 
+                                   size=1, signed=FALSE)
+                 MostlyNull <- readChar(tempCon, nChars)
+                 MostlyNull
+             },
+             "Barcode" = {                 
+                 seek(tempCon, fields["Barcode", "Byte Offset"])
+                 nChars <- readBin(tempCon, "integer", n=1, 
+                                   size=1, signed=FALSE)
+                 Barcode <- readChar(tempCon, nChars)
+                 Barcode
+             },
+             "ChipType" = {
+                 seek(tempCon, fields["ChipType", "Byte Offset"])
+                 nChars <- readBin(tempCon, "integer", n=1, 
+                                   size=1, signed=FALSE)
+                 ChipType <- readChar(tempCon, nChars)
+                 ChipType
+             },
+             "MostlyA" = {
+                 seek(tempCon, fields["MostlyA", "Byte Offset"])
+                 nChars <- readBin(tempCon, "integer", n=1, 
+                                   size=1, signed=FALSE)
+                 MostlyA <- readChar(tempCon, nChars)
+             },
+             "Unknown.1" = {
+                 seek(tempCon, fields["Unknown.1", "Byte Offset"])
+                 nChars <- readBin(tempCon, "integer", n=1, 
+                                   size=1, signed=FALSE)
+                 Unknown.1 <- readChar(tempCon, nChars)
+                 Unknown.1
+             },
+             "Unknown.2" = {
+                 seek(tempCon, fields["Unknown.2", "Byte Offset"])
+                 nChars <- readBin(tempCon, "integer", n=1, 
+                                   size=1, signed=FALSE)
+                 Unknown.2 <- readChar(tempCon, nChars)
+                 Unknown.2
+             },
+             "Unknown.3" = {
+                 seek(tempCon, fields["Unknown.3", "Byte Offset"])
+                 nChars <- readBin(tempCon, "integer", n=1, 
+                                   size=1, signed=FALSE)
+                 Unknown.3 <- readChar(tempCon, nChars)
+                 Unknown.3
+             },
+             "Unknown.4" = {
+                 seek(tempCon, fields["Unknown.4", "Byte Offset"])
+                 nChars <- readBin(tempCon, "integer", n=1, 
+                                   size=1, signed=FALSE)
+                 Unknown.4 <- readChar(tempCon, nChars)
+                 Unknown.4
+             },
+             "Unknown.5" = {
+                 seek(tempCon, fields["Unknown.5", "Byte Offset"])
+                 nChars <- readBin(tempCon, "integer", n=1, 
+                                   size=1, signed=FALSE)
+                 Unknown.5 <- readChar(tempCon, nChars)
+                 Unknown.5
+             },
+             "Unknown.6" = {
+                 seek(tempCon, fields["Unknown.6", "Byte Offset"])
+                 nChars <- readBin(tempCon, "integer", n=1, 
+                                   size=1, signed=FALSE)
+                 Unknown.6 <- readChar(tempCon, nChars)
+                 Unknown.6
+             },
+             "Unknown.7" = {
+                 seek(tempCon, fields["Unknown.7", "Byte Offset"])
+                 nChars <- readBin(tempCon, "integer", n=1, 
+                                   size=1, signed=FALSE)
+                 Unknown.7 <- readChar(tempCon, nChars)
+                 Unknown.7
+             })
+  }
 
-  seek(tempCon, fields["SD", "Byte Offset"])
-  SD <- readBin(tempCon, "integer", n=nSNPsRead, size=2,
-                endian="little", signed=FALSE)
+  readFields <- setdiff(rownames(fields), "nSNPsRead")
+  names(readFields) <- readFields
+  allFields <- lapply(readFields, readBlock)
+  close(tempCon)
 
-  seek(tempCon, fields["Mean", "Byte Offset"])
-  Mean <- readBin(tempCon, "integer", n=nSNPsRead, size=2,
-                  endian="little", signed=FALSE)
+  UnknownNames <- c("MostlyNull", "MostlyA", "Unknown.1",
+                    "Unknown.2", "Unknown.3", "Unknown.4",
+                    "Unknown.5", "Unknown.6", "Unknown.7")
+  Unknowns <- allFields[intersect(names(allFields), UnknownNames)]
 
-  seek(tempCon, fields["NBeads", "Byte Offset"])
-  NBeads <- readBin(tempCon, "integer", n=nSNPsRead, size=1, signed=FALSE)
-
-  # This seems to be identical to IlluminaID
-  seek(tempCon, fields["MidBlock", "Byte Offset"])
-  nMidBlockEntries <- readBin(tempCon, "integer", n=1, size=4,
-                              endian="little")
-  MidBlock <- readBin(tempCon, "integer", n=nMidBlockEntries, size=4,
-                      endian="little")
-
-  seek(tempCon, fields["RedGreen", "Byte Offset"])
-  RedGreen <- readBin(tempCon, "numeric", n=1, size=4,
-                      endian="little")
-  #RedGreen <- readBin(tempCon, "integer", n=4, size=1,
-  #                    endian="little", signed=FALSE)
- 
-  seek(tempCon, fields["MostlyNull", "Byte Offset"])
-  nChars <- readBin(tempCon, "integer", n=1, size=1, signed=FALSE)
-  MostlyNull <- readChar(tempCon, nChars)
-
-  seek(tempCon, fields["Barcode", "Byte Offset"])
-  nChars <- readBin(tempCon, "integer", n=1, size=1, signed=FALSE)
-  Barcode <- readChar(tempCon, nChars)
-
-  seek(tempCon, fields["ChipType", "Byte Offset"])
-  nChars <- readBin(tempCon, "integer", n=1, size=1, signed=FALSE)
-  ChipType <- readChar(tempCon, nChars)
-
-  # this is different for the methylation arrays it seems
-  seek(tempCon, fields["Terminus", "Byte Offset"])
-  nChars <- readBin(tempCon, "integer", n=1, size=1, signed=FALSE)
-  Terminus <- readChar(tempCon, nChars)
-
-  seek(tempCon, fields["Unknown.1", "Byte Offset"])
-  nChars <- readBin(tempCon, "integer", n=1, size=1, signed=FALSE)
-  Unknown.1 <- readChar(tempCon, nChars)
-
-  seek(tempCon, fields["Unknown.2", "Byte Offset"])
-  nChars <- readBin(tempCon, "integer", n=1, size=1, signed=FALSE)
-  Unknown.2 <- readChar(tempCon, nChars)
-
-  seek(tempCon, fields["Unknown.3", "Byte Offset"])
-  nChars <- readBin(tempCon, "integer", n=1, size=1, signed=FALSE)
-  Unknown.3 <- readChar(tempCon, nChars)
-
-  seek(tempCon, fields["Unknown.4", "Byte Offset"])
-  nChars <- readBin(tempCon, "integer", n=1, size=1, signed=FALSE)
-  Unknown.4 <- readChar(tempCon, nChars)
-
-  seek(tempCon, fields["Unknown.5", "Byte Offset"])
-  nChars <- readBin(tempCon, "integer", n=1, size=1, signed=FALSE)
-  Unknown.5 <- readChar(tempCon, nChars)
-
-  seek(tempCon, fields["RunInfo", "Byte Offset"])
-  nRunInfoBlocks <- readBin(tempCon, "integer", n=1, size=4,
-                            endian="little")
-  RunInfo <- matrix(NA, 5, 5)
-  colnames(RunInfo) <- c("RunTime", "BlockType", "BlockPars",
-                         "BlockCode", "CodeVersion")
+  Quants <- cbind(allFields$Mean, allFields$SD, allFields$NBeads)
+  colnames(Quants) <- c("Mean", "SD", "NBeads")
+  rownames(Quants) <- as.character(allFields$IlluminaID)
+  InfoNames <- c("MidBlock", "RunInfo", "RedGreen", "Barcode", "ChipType")
+  Info <- allFields[intersect(names(allFields), InfoNames)]
+  ## end patch
 
   #cat(nRunInfoBlocks, "RunInfo blocks found...\n")
   ## This is a tricky piece, because the IDATs for 450k chips have been
   ## changing around lately.  But not enough to elude readMethyLumIDAT!
-  if(nRunInfoBlocks > 0) {
-    for(i1 in 1:min(nRunInfoBlocks,5)) {  ## TJT: fixes for 450k runInfo 
-      for(i2 in 1:5){
-        nChars <- readBin(tempCon, "integer", n=1, size=1, signed=FALSE)
-        RunInfo[i1,i2] <- readChar(tempCon, nChars)
-      }
-    }
-  }
-  close(tempCon)
+  #if(nRunInfoBlocks > 0) {
+    #for(i1 in 1:min(nRunInfoBlocks,5)) {  ## TJT: fixes for 450k runInfo 
+      #for(i2 in 1:5){
+        #nChars <- readBin(tempCon, "integer", n=1, size=1, signed=FALSE)
+        #RunInfo[i1,i2] <- readChar(tempCon, nChars)
+      #}
+    #}
+  #}
  
-  Unknowns <-
-    list(MostlyNull=MostlyNull,
-         MostlyA=Terminus,
-         Unknown.1=Unknown.1,
-         Unknown.2=Unknown.2,
-         Unknown.3=Unknown.3,
-         Unknown.4=Unknown.4,
-         Unknown.5=Unknown.5)
-
-  Quants <- cbind(Mean, SD, NBeads)
-  colnames(Quants) <- c("Mean", "SD", "NBeads")
-  rownames(Quants) <- as.character(IlluminaID)
-
   ## FIXME: extract protocolData here!
   idatValues <-
     list(fileSize=fileSize,
@@ -241,17 +316,13 @@ readMethyLumIDAT <- function(idatFile){ # {{{
          nFields=nFields,
          fields=fields,
          nSNPsRead=nSNPsRead,
-         #IlluminaID=IlluminaID,
-         #SD=SD,
-         #Mean=Mean,
-         #N=NBeads,
          Quants=Quants,
-         #MidBlock=MidBlock,
-         RunInfo=RunInfo,
-         RedGreen=RedGreen,
-         Barcode=Barcode,
-         Terminus=Terminus,
-         ChipType=ChipType,
+         MidBlock=Info$MidBlock,
+         RunInfo=Info$RunInfo,
+         RedGreen=Info$RedGreen,
+         Barcode=Info$Barcode,
+         Terminus=Info$Terminus,
+         ChipType=Info$ChipType,
          Unknowns=Unknowns)
   gc()
   return(idatValues)
@@ -286,7 +357,9 @@ IDATsToDFs <- function(barcodes, fileExts=list(Cy3="Grn.idat", Cy5="Red.idat"), 
   return(listOfDFs)
 } # }}}
 
-## anything that isn't bead-level comes here first
+## anything that isn't bead-level comes here first...
+##
+## FIXME: find out whether this is causing the issues with single-sample batches
 ##
 DFsToNChannelSet <- function(listOfDFs,chans=c(Cy3='GRN',Cy5='RED'),parallel=F, IDAT=F, protocol.data=F){ # {{{ tidy up the data 
 
@@ -346,57 +419,6 @@ DFsToNChannelSet <- function(listOfDFs,chans=c(Cy3='GRN',Cy5='RED'),parallel=F, 
     else annotation(obj) = 'IlluminaHumanMethylation450k'
   } # }}}
   return(obj)
-
-} # }}}
-
-## deprecated, do not use (now part of DFsToNChannelSet)
-getProtocolData <- function(barcodes, fileExts=list(Cy3="Grn.idat",Cy5="Red.idat")){ # {{{
-
-  message("News flash (6/24/2011): protocolData for 450k chips can be read!")
-  message("This function is now deprecated in light of the built-in support.")
-
-  arrays <- barcodes # ugly
-  arrays <- unique(gsub(paste('_',fileExts[[1]],sep=''),'',arrays))
-  arrays <- unique(gsub(paste('_',fileExts[[2]],sep=''),'',arrays))
-  narrays = length( arrays )
-  headerInfo = list( nProbes = rep(NA, narrays),
-                     Barcode = rep(NA, narrays),
-                     Terminus = rep(NA, narrays),
-                     ChipType = rep(NA, narrays) )
-  scanDates = data.frame(ScanDate=rep(NA, narrays), 
-                         DecodeDate=rep(NA, narrays))
-  rownames(scanDates) = arrays
-
-  ## read in the data
-  for(i in seq_along(arrays)) {
-    cat("reading protocolData for", arrays[i], "\n")
-    idsG = G = NULL
-    G = readMethyLumIDAT(paste(arrays[i], fileExts[[1]], sep='_'))
-
-    headerInfo$nProbes[i] = G$nSNPsRead
-    headerInfo$Barcode[i] = G$Barcode
-    headerInfo$Terminus[i] = G$Terminus
-    headerInfo$ChipType[i] = G$ChipType
-
-    if(headerInfo$nProbes[i]>(headerInfo$nProbes[1]+10000) || 
-       headerInfo$nProbes[i]<(headerInfo$nProbes[1]-10000)) {
-       warning("Chips are not of the same type.  Skipping ", 
-               basename(arrays[i]))
-       next()
-    }
-    scanDates$DecodeDate[i] = G$RunInfo[1, 1]
-    scanDates$ScanDate[i] = G$RunInfo[2, 1]
-    rm(G)
-    gc()
-  }
-  protocoldata = new("AnnotatedDataFrame",
-                      data=scanDates,
-                      varMetadata=data.frame(
-                        labelDescription=colnames(scanDates),
-                        row.names=colnames(scanDates)
-                       )
-                      )
-  return(protocoldata)
 
 } # }}}
 
@@ -668,7 +690,7 @@ NChannelSetToMethyLumiSet <- function(NChannelSet, parallel=F, normalize=F, pval
                                 'Infinium design type (I or II)',
                                 'Color channel (for type I probes)')
   pval.detect(x.lumi) <- pval # default value
-  message('Switch to zval.detect() in production...')
+  # message('Switch to zval.detect() in production...')
   # zval.detect(x.lumi) <- pval # default value should be 0.01 
   history.finished <- as.character(Sys.time())
   history.command <- ifelse(is.null(caller),'NChannelSet(x)',caller)
