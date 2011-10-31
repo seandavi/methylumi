@@ -6,9 +6,16 @@
   The Illumina GoldenGate methylation platform uses two colors, one to represent
   the unmethylated state and the other to represent the methylated
   state.  This function corrects that dye bias and recalculates the
-  betas based on the corrected intensities.  It is probably not optimal for
-  Infinium data since the methylated and unmethylated signals are in the
-  same channel for that platform.  
+  betas based on the corrected intensities.  
+
+  For HumanMethylation27 data, the function does nothing.
+
+  For HumanMethylation450 data, the function delegates to normalizeViaControls()
+  the task of scaling red and green intensities against a reference array (chip)
+  which defaults to the first chip in a set.  The code to do this is based on 
+  code from the 'minfi' package and uses the built-in normalization controls to
+  scale the channels of the samples, so that a consistent degree of dye bias is 
+  maintained for Infinium II probes across an experiment or set of experiments. 
 }
 \usage{
 normalizeMethyLumiSet(x, beta.cuts = c(0.2, 0.8), mapfun = c("atan", "ratio"))
@@ -22,6 +29,14 @@ normalizeMethyLumiSet(x, beta.cuts = c(0.2, 0.8), mapfun = c("atan", "ratio"))
   \item{mapfun}{Either "atan" or "ratio".  See details below.}
 }
 \details{
+  For HumanMethylation450 data, the function delegates to normalizeViaControls()
+  the task of scaling red and green intensities against a reference array (chip)
+  which defaults to the first chip in a set.  The code to do this is based on 
+  code from the 'minfi' package and uses the built-in normalization controls to
+  scale the channels of the samples, so that a consistent degree of dye bias is 
+  maintained for Infinium II probes across an experiment or set of experiments. 
+  The remainder of the documentation below is specific to GoldenGate data. 
+
   The Illumina GoldenGate methylation platform uses two colors, one to represent
   the unmethylated state and the other to represent the methylated
   state.  This function corrects that dye bias and recalculates the
@@ -40,8 +55,6 @@ normalizeMethyLumiSet(x, beta.cuts = c(0.2, 0.8), mapfun = c("atan", "ratio"))
   feel that the atan map function is probably the mathematically
   appropriate way of doing this.
 
-  Note that this normalization method is not optimal for Infinium methylation
-  data and should probably not be used for that platform.
 }
 \value{
   A new "MethyLumiSet" that contains the corrected betas and the

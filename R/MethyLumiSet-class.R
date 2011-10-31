@@ -644,7 +644,18 @@ setMethod("corplot","MethyLumiSet",function(x,...) {  # {{{
   image(corvals[ordering,ordering])
 })  # }}}
 normalizeMethyLumiSet <- function(x,beta.cuts=c(0.2,0.8),mapfun=c('atan','ratio')) { # {{{
-  warning("This function is probably not optimal for Infinium data and is meant\nfor GoldenGate methylation data only.")
+
+  if( length(annotation(x)) > 0 ) { 
+    if( annotation(x) == 'IlluminaHumanMethylation450k' ) { 
+      message('Normalizing via Illumina controls...')
+      return(normalizeViaControls(x))
+    }
+    if( annotation(x) == 'IlluminaHumanMethylation27k' ) { 
+      message('HumanMethylation27 data encountered, skipping...')
+      return(x)
+    }
+  }
+
   mapfun=match.arg(mapfun)
   history.submitted <- as.character(Sys.time())
   good <- rep(TRUE,ncol(x))
