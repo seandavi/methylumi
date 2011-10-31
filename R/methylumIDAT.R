@@ -69,6 +69,7 @@ getMethylationBeadMappers <- function(chipType) { # {{{
     mapper <- list(probes=IlluminaHumanMethylation27k_getProbes,
                    controls=IlluminaHumanMethylation27k_getControls,
                    ordering=IlluminaHumanMethylation27k_getProbeOrdering)
+
   }
   return(mapper)
 
@@ -596,8 +597,6 @@ designIItoMandU <- function(NChannelSet, parallel=F, n=T, n.sd=F, oob=T) { # {{{
 
 mergeProbeDesigns <- function(NChannelSet, parallel=F, n=T, n.sd=F, oob=T){ #{{{
   
-  mapper <- getMethylationBeadMappers(annotation(NChannelSet))
-  ordering <- mapper$ordering()[ order(mapper$ordering()$Probe_ID), ] # fugly!
   if(annotation(NChannelSet) == 'IlluminaHumanMethylation450k') {
     design1=designItoMandU(NChannelSet,parallel=parallel,n=n,n.sd=n.sd,oob=oob)
     design2=designIItoMandU(NChannelSet,parallel=parallel,n=n,n.sd=n.sd,oob=oob)
@@ -611,11 +610,11 @@ mergeProbeDesigns <- function(NChannelSet, parallel=F, n=T, n.sd=F, oob=T){ #{{{
   } else {
     stop("don't know how to process chips of type", annotation(NChannelSet))
   }
-  lapply(res, function(what) what[ordering$Probe_ID,])
+  return(res) # reorder on the way out...
 
 } # }}}
 
-NChannelSetToMethyLumiSet <- function(NChannelSet, parallel=F, normalize=F, pval=0.01, n=T, n.sd=F, oob=F, caller=NULL){ # {{{
+NChannelSetToMethyLumiSet <- function(NChannelSet, parallel=F, normalize=F, pval=0.05, n=T, n.sd=F, oob=F, caller=NULL){ # {{{
 
   history.submitted = as.character(Sys.time())
   results = mergeProbeDesigns(NChannelSet,parallel=parallel,n.sd=n.sd,oob=oob)
@@ -655,7 +654,6 @@ NChannelSetToMethyLumiSet <- function(NChannelSet, parallel=F, normalize=F, pval
                            betas=methylated/(methylated+unmethylated),
                            pvals=methylated/(methylated+unmethylated)))
   }
-  if(normalize) warning('Normalize separately if you wish, with SQN or lumi')
   rm(results)
   gc()
 
@@ -685,24 +683,30 @@ NChannelSetToMethyLumiSet <- function(NChannelSet, parallel=F, normalize=F, pval
                       rownames(betas(x.lumi))))
 
   fData(x.lumi) <- fdat
-  fvarLabels(x.lumi) <- c('Probe_ID','DESIGN','COLOR_CHANNEL')
-  fvarMetadata(x.lumi)[,1] <- c('Illumina probe ID from manifest',
-                                'Infinium design type (I or II)',
-                                'Color channel (for type I probes)')
+  possibleLabels <- c('Probe_ID',
+                      'DESIGN',
+                      'COLOR_CHANNEL',
+                      'PROBE_TYPE',
+                      'SNP10')
+  fvarLabels(x.lumi) <- possibleLabels[ 1:ncol(fdat) ]
+  possibleMetadata <- c('Illumina probe ID from manifest',
+                        'Infinium design type (I or II)',
+                        'Color channel (for type I probes)',
+                        'Interrogated locus (CpG, CpH, or SNP)',
+                        'SNP (dbSNP build 128) within 10bp of target?')
+  fvarMetadata(x.lumi)[,1] <- possibleMetadata[ 1:ncol(fdat) ]
   pval.detect(x.lumi) <- pval # default value
-  # message('Switch to zval.detect() in production...')
-  # zval.detect(x.lumi) <- pval # default value should be 0.01 
   history.finished <- as.character(Sys.time())
   history.command <- ifelse(is.null(caller),'NChannelSet(x)',caller)
   x.lumi@history <- rbind(x.lumi@history, 
                           data.frame(submitted = history.submitted, 
                                      finished = history.finished, 
                                      command = history.command))
+  if(normalize) x.lumi = normalizeMethyLumiSet(x.lumi)
   return(x.lumi)
 
 } # }}}
 
-## FIXME: consider using crlmm::readIDAT instead (test first)
 ## FIXME: switch to using 'parallel' by default with dummy mclapply()
 ##
 methylumIDAT <- function(barcodes=NULL,pdat=NULL,parallel=F,n=T,n.sd=F,oob=T,idatPath=getwd(),...) { # {{{

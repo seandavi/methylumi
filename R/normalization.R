@@ -2,7 +2,7 @@
 t.submit <- function() as.character(Sys.time())
 t.finish <- function() as.character(format(Sys.time(), "%H:%M:%S"))
 
-normalize.designII.SQN <- function(x, N.mix=3, weight=0.5, lg2=F){ # {{{ Wu's
+normalizeDesignIIViaSQN <- function(x, N.mix=3, weight=0.5, lg2=F){ # {{{ Wu's
 
   require(SQN)
   if( annotation(x) == 'IlluminaHumanMethylation27k' ) 
@@ -50,7 +50,7 @@ normalize.designII.SQN <- function(x, N.mix=3, weight=0.5, lg2=F){ # {{{ Wu's
 
 } # }}}
 
-normalize.samples.SQN <- function(x, N.mix=15, weight=0.9, lg2=T) { # {{{ Wu's
+normalizeSamplesViaSQN <- function(x, N.mix=15, weight=0.9, lg2=T) { # {{{ Wu's
 
   require(SQN)
   if( annotation(x) == 'IlluminaHumanMethylation27k' ) 
@@ -114,10 +114,42 @@ normalize.samples.SQN <- function(x, N.mix=15, weight=0.9, lg2=T) { # {{{ Wu's
 
 } # }}}
 
-normalize.designII.quantile <- function(x) { # {{{ Old standby from 'affy'
-  stop('use lumiMethyN for robust quantile or smoothing spline normalization')
+normalizeViaRUV2 <- function(x) { # {{{ Terry Speed's factor extractor
+  stop('Terry Speed\'s method has not yet been patched into methylumi')
 } # }}}
 
-normalize.methylData.RUV2 <- function(x) { # {{{ Terry Speed's factor extractor
-  stop('Terry Speed\'s method has not yet been patched into methylumi')
+normalizeViaControls <- function(x, reference=1) { # {{{ from minfi/KDH
+
+  if(is.null(x@QC)) stop('Cannot normalize against controls without controls!')
+
+  # this is easier in methylumi
+  controls <- normctls(x)
+  Green.avg <- colMeans(controls$Cy3)
+  Red.avg <- colMeans(controls$Cy5)
+
+  # this is about the same 
+  ref <- (Green.avg + Red.avg)[reference]/2
+  if(is.na(ref)) stop("'reference' refers to an array that is not present")
+  Green.factor <- ref/Green.avg
+  Red.factor <- ref/Red.avg
+
+  # this is harder in methylumi
+  Green <- list( M1=methylated(x)[ which(fData(x)$COLOR_CHANNEL=='Grn'), ],
+                 U1=unmethylated(x)[ which(fData(x)$COLOR_CHANNEL=='Grn'), ],
+                 M2=methylated(x)[ which(fData(x)$COLOR_CHANNEL=='Both'), ] )
+  Green <- lapply(Green, function(y) sweep(y, 2, FUN="*", Green.factor))
+  methylated(x)[ which(fData(x)$COLOR_CHANNEL=='Grn'), ] <- Green$M1
+  unmethylated(x)[ which(fData(x)$COLOR_CHANNEL=='Grn'), ] <- Green$U1
+  methylated(x)[ which(fData(x)$COLOR_CHANNEL=='Both'), ] <- Green$M2
+
+  Red <- list( M1=methylated(x)[ which(fData(x)$COLOR_CHANNEL=='Red'), ],
+               U1=unmethylated(x)[ which(fData(x)$COLOR_CHANNEL=='Red'), ],
+               U2=unmethylated(x)[ which(fData(x)$COLOR_CHANNEL=='Both'), ] )
+  Red <- lapply(Red, function(y) sweep(y, 2, FUN="*", Red.factor))
+  methylated(x)[ which(fData(x)$COLOR_CHANNEL=='Red'), ] <- Red$M1
+  unmethylated(x)[ which(fData(x)$COLOR_CHANNEL=='Red'), ] <- Red$U1
+  unmethylated(x)[ which(fData(x)$COLOR_CHANNEL=='Both'), ] <- Red$U2
+
+  return(x)
+
 } # }}}
