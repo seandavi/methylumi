@@ -14,12 +14,8 @@ if(is.null(getGeneric('pval.detect<-'))) setGeneric('pval.detect<-', # {{{
 setReplaceMethod('pval.detect', signature(object="methylData", value="numeric"), function(object, ..., value){ # {{{
 
   require(matrixStats)
-  minBeads=3
-  #if(!exists('minBeads') | is.null(minBeads)) minBeads = 3
   if(is(object, 'MethyLumiSet')) stopifnot('QC' %in% slotNames(object))
   if(is(object, 'MethyLumiM')) stopifnot('controlData' %in% slotNames(object))
-  if(minBeads > 1) stopifnot('methylated.N' %in% assayDataElementNames(object))
-
   channels <- c(Cy3='Cy3',Cy5='Cy5')
 
   ## determine which channel each probe is in 
@@ -61,28 +57,15 @@ setReplaceMethod('pval.detect', signature(object="methylData", value="numeric"),
       pvals.scratch[ probesj, i ] <- rowMins(1 - dval( probesj, i, j ))
     }
   } # }}}
-
   if(class(object) == 'MethyLumiSet') { # {{{
     betas(object) <- pmax(methylated(object),1)/pmax(total.intensity(object),1)
     pvals(object) <- pvals.scratch
     is.na(betas(object))[which(pvals(object) > value, arr.ind=TRUE)] <- TRUE
-    if( 'methylated.N' %in% assayDataElementNames(object) &&
-        'unmethylated.N' %in% assayDataElementNames(object) ) {
-      minN = pmax(assayDataElement(object, 'methylated.N'),
-                  assayDataElement(object, 'unmethylated.N'))
-      is.na(betas(object))[ which(minN < minBeads, arr.ind=TRUE) ] <- TRUE 
-    }
   } # }}}
   if(class(object) == 'MethyLumiM') { # {{{
     exprs(object)<-log2(pmax(methylated(object),1)/pmax(unmethylated(object),1))
     detection(object) <- pvals.scratch
     is.na(exprs(object))[which(detection(object) > value, arr.ind=TRUE)] <- TRUE
-    if( 'methylated.N' %in% assayDataElementNames(object) &&
-        'unmethylated.N' %in% assayDataElementNames(object) ) {
-      minN = pmax(assayDataElement(object, 'methylated.N'),
-                  assayDataElement(object, 'unmethylated.N'))
-      is.na(betas(object))[ which(minN < minBeads, arr.ind=TRUE) ] <- TRUE 
-    }
   } # }}}
   return(object)
 
