@@ -155,17 +155,15 @@ methylumi.bgcorr<-function(x, method='noob', offset=15, controls=NULL, correct=T
   }
   #} 
 
-  ## FIXME: if an OOB assayDataElement is found, fix it too, for accurate pvals
-  ## FIXME: backport the above from methylumi 2.0 (or forward port the rest?!?)
   for(ch in names(estimates)) { # {{{
     chnames = names(estimates[[ch]][['params']])
     for(nm in chnames) pData(x)[,nm] = estimates[[ch]][['params']][[nm]]
     varMetadata(x)[chnames,] = paste(ch, estimates[[ch]][['meta']]) 
   } # }}}
 
+  pcutoff <- pval.detect(x)
   betas(x) <- pmax(methylated(x), 1) / pmax(total.intensity(x), 2)
-  # pval.detect(x) <- pval.detect(x) ## recompute w/adjusted controls
-  betas(x)[ which(pvals(x) > 0.01) ] <- NA ## notify user of this? recompute?
+  betas(x)[ which(pvals(x) > pcutoff) ] <- NA 
 
   history.command <- paste("Applied", method, "background correction.")
   history.finished <- t.finish()
