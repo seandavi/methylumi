@@ -121,26 +121,27 @@ normalizeViaRUV2 <- function(x) { # {{{ Terry Speed's factor extractor
 normalizeViaControls <- function(x, reference=1) { # {{{ from minfi/KDH
 
   if(is.null(x@QC)) stop('Cannot normalize against controls without controls!')
+  else history.submitted <- as.character(Sys.time())
 
   # this is easier in methylumi
   controls <- normctls(x)
-  Green.avg <- colMeans(controls$Cy3)
+  Grn.avg <- colMeans(controls$Cy3)
   Red.avg <- colMeans(controls$Cy5)
 
   # this is about the same 
-  ref <- (Green.avg + Red.avg)[reference]/2
+  ref <- (Grn.avg + Red.avg)[reference]/2
   if(is.na(ref)) stop("'reference' refers to an array that is not present")
-  Green.factor <- ref/Green.avg
+  Grn.factor <- ref/Grn.avg
   Red.factor <- ref/Red.avg
 
   # this is harder in methylumi
-  Green <- list( M1=methylated(x)[ which(fData(x)$COLOR_CHANNEL=='Grn'), ],
-                 U1=unmethylated(x)[ which(fData(x)$COLOR_CHANNEL=='Grn'), ],
-                 M2=methylated(x)[ which(fData(x)$COLOR_CHANNEL=='Both'), ] )
-  Green <- lapply(Green, function(y) sweep(y, 2, FUN="*", Green.factor))
-  methylated(x)[ which(fData(x)$COLOR_CHANNEL=='Grn'), ] <- Green$M1
-  unmethylated(x)[ which(fData(x)$COLOR_CHANNEL=='Grn'), ] <- Green$U1
-  methylated(x)[ which(fData(x)$COLOR_CHANNEL=='Both'), ] <- Green$M2
+  Grn <- list( M1=methylated(x)[ which(fData(x)$COLOR_CHANNEL=='Grn'), ],
+               U1=unmethylated(x)[ which(fData(x)$COLOR_CHANNEL=='Grn'), ],
+               M2=methylated(x)[ which(fData(x)$COLOR_CHANNEL=='Both'), ] )
+  Grn <- lapply(Grn, function(y) sweep(y, 2, FUN="*", Grn.factor))
+  methylated(x)[ which(fData(x)$COLOR_CHANNEL=='Grn'), ] <- Grn$M1
+  unmethylated(x)[ which(fData(x)$COLOR_CHANNEL=='Grn'), ] <- Grn$U1
+  methylated(x)[ which(fData(x)$COLOR_CHANNEL=='Both'), ] <- Grn$M2
 
   Red <- list( M1=methylated(x)[ which(fData(x)$COLOR_CHANNEL=='Red'), ],
                U1=unmethylated(x)[ which(fData(x)$COLOR_CHANNEL=='Red'), ],
@@ -150,6 +151,18 @@ normalizeViaControls <- function(x, reference=1) { # {{{ from minfi/KDH
   unmethylated(x)[ which(fData(x)$COLOR_CHANNEL=='Red'), ] <- Red$U1
   unmethylated(x)[ which(fData(x)$COLOR_CHANNEL=='Both'), ] <- Red$U2
 
+  # now do the same to the controls (for plotting purposes)
+  ctls = list(Cy3=methylated(x@QC), Cy5=unmethylated(x@QC))
+  assayDataElement(x@QC,'methylated') <- sweep(ctls$Cy3, 2, FUN='*', Grn.factor)
+  assayDataElement(x@QC,'unmethylated') <- sweep(ctls$Cy5,2,FUN='*', Red.factor)
+
+  # and add an entry to the transaction log for this preprocessing step.
+  history.command <- deparse(match.call())
+  history.finished <- t.finish()
+  x@history<- rbind(x@history,
+                    data.frame(submitted=history.submitted,
+                               finished=history.finished,
+                               command=history.command))
   return(x)
 
 } # }}}
