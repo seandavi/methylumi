@@ -1,3 +1,7 @@
+# utility functions
+t.submit <- function() as.character(Sys.time())
+t.finish <- function() as.character(format(Sys.time(), "%H:%M:%S"))
+
 # generic dispatcher for background correction of Infinium methylation arrays
 methylumi.bgcorr<-function(x, method='noob', offset=15, controls=NULL, correct=T, parallel=F, ...) { # {{{
 
@@ -124,8 +128,6 @@ methylumi.bgcorr<-function(x, method='noob', offset=15, controls=NULL, correct=T
     controlData(x) = ctrl
   } # }}}
 
-  ## FIXME: Peter's random loci for the design II probes' nonspecific intensity?
-  ##
   #if( allelic ) { # {{{ 
     #stop("Don't use this for the time being.")
     ## {{{
@@ -165,7 +167,7 @@ methylumi.bgcorr<-function(x, method='noob', offset=15, controls=NULL, correct=T
   betas(x) <- pmax(methylated(x), 1) / pmax(total.intensity(x), 2)
   betas(x)[ which(pvals(x) > pcutoff) ] <- NA 
 
-  history.command <- paste("Applied", method, "background correction.")
+  history.command <- deparse(match.call())
   history.finished <- t.finish()
   x@history<- rbind(x@history,
                     data.frame(submitted=history.submitted,
@@ -391,7 +393,3 @@ gamma.signal <- function (par, x)  { # {{{
   par = as.numeric(par)
   gamma.integral(x, par, offset=0)
 } # }}}
-
-# utility functions
-t.submit <- function() as.character(Sys.time())
-t.finish <- function() as.character(format(Sys.time(), "%H:%M:%S"))
