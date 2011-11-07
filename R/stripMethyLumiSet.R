@@ -10,7 +10,7 @@ stripBeadNs <- function(object) { # {{{ make 450k datasets smaller
     storageMode(aData) <- "lockedEnvironment"
     assayData(object) <- aData
     history.finished <- as.character(Sys.time())
-    history.command <- 'Removed probe-level bead numbers from assayData.'
+    history.command <- deparse(match.call())
     oldHistory <- object@history
     newHistory <- data.frame(submitted=history.submitted, 
                              finished=history.finished,
@@ -31,7 +31,7 @@ stripBeadSDs <- function(object) { # {{{
     storageMode(aData) <- "lockedEnvironment"
     assayData(object) <- aData
     history.finished <- as.character(Sys.time())
-    history.command <- 'Removed probe-level stderrs from assayData.'
+    history.command <- deparse(match.call())
     oldHistory <- object@history
     newHistory <- data.frame(submitted=history.submitted, 
                              finished=history.finished,
@@ -52,7 +52,7 @@ stripOOB <- function(object) { # {{{
     storageMode(aData) <- "lockedEnvironment"
     assayData(object) <- aData
     history.finished <- as.character(Sys.time())
-    history.command <- 'Removed out-of-band intensities from assayData.'
+    history.command <- deparse(match.call())
     oldHistory <- object@history
     newHistory <- data.frame(submitted=history.submitted, 
                              finished=history.finished,
