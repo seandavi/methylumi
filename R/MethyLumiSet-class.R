@@ -78,12 +78,14 @@ setReplaceMethod("betas", signature(object="MethyLumiSet",value="matrix"), # {{{
 function(object, value) assayDataElementReplace(object, "betas", value)) # }}}
 
 setMethod('exprs', signature(object='MethyLumiSet'), function(object) { # {{{
-  log2(pmax(methylated(object),1)/pmax(unmethylated(object),1))
+  log2( pmax(pmin(betas(object), 0.99999), 0.000001) / 
+        pmax(pmin(1-betas(object), 0.99999), 0.000001) )
 }) # }}}
 setGeneric('mvals', # {{{
     function(object) standardGeneric('mvals')) # }}}
 setMethod('mvals', signature(object='MethyLumiSet'), function(object) { # {{{
-  log2((methylated(object)+1)/(unmethylated(object)+1))
+  log2( pmax(pmin(betas(object), 0.99999), 0.000001) / 
+        pmax(pmin(1-betas(object), 0.99999), 0.000001) )
 }) # }}}
 
 setMethod("pvals", signature(object="MethyLumi"), # {{{
