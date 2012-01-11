@@ -1,10 +1,8 @@
 ### Replace mcapply with reasonable default that works on windows.
 .mclapply <- function(...) {
-  if(.Platform$OS.type=='unix') {
-    require(parallel)
+  if(require(parallel)) {
     if(is.null(options("mc.cores")[[1]])) {
-      message("Autodetecting CPU cores...")
-      options("mc.cores"=detectCores())
+      message("Remember to set options('mc.cores') if you want multiple cores used where possible")
     }
     return(mclapply(...))
   } else {
