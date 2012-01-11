@@ -2,11 +2,15 @@
 t.submit <- function() as.character(Sys.time())
 t.finish <- function() as.character(format(Sys.time(), "%H:%M:%S"))
 
-normalizeViaSQN <- function(x, N.mix=3, weight=0.5){ # {{{ Wu & Aryee 
+# aka 'BAWS'
+normalizeViaSQN <- function(x, N.mix=3, weight=.5, by.CpG=F){ # {{{ 
 
   require(SQN)
+  if(by.CpG) require(IlluminaHumanMethylation450probe)
   if( annotation(x) == 'IlluminaHumanMethylation27k' ) 
     stop('Subset quantile normalization should not be used on 27k arrays')
+
+  # why stop?  not strictly necessary for SWaB norm
   stopifnot( 'methylated.OOB' %in% assayDataNames(x) & 
              'unmethylated.OOB' %in% assayDataNames(x) )
   history.submitted <- as.character(Sys.time())
@@ -16,46 +20,56 @@ normalizeViaSQN <- function(x, N.mix=3, weight=0.5){ # {{{ Wu & Aryee
   }
   dII.probes = featureNames(x)[which(fData(x)$DESIGN == 'II')]
   dII = list(Cy3=methylated(x)[dII.probes,], Cy5=unmethylated(x)[dII.probes,])
-  dII.rows = lapply(dII.probes, seq_along)
   IB = intensities.IB(x)
   OB = intensities.OOB(x)
+
+  # "clone" the Cy3 IB/OB intensities if needed
+  if( nrow(IB$Cy3) < nrow(IB$Cy5) ) {
+    IB$Cy3 <- rbind(IB$Cy3, IB$Cy3)
+    rownames(IB$Cy3)[which(duplicated(rownames(IB$Cy3)))] = 
+      paste(rownames(IB$Cy3)[which(duplicated(rownames(IB$Cy3)))], '.1', sep='')
+    IB$Cy3 <- IB$Cy3[1:nrow(IB$Cy5), ]
+    OB$Cy3 <- rbind(OB$Cy3, OB$Cy3)
+    rownames(OB$Cy3)[which(duplicated(rownames(OB$Cy3)))] = 
+      paste(rownames(OB$Cy3)[which(duplicated(rownames(OB$Cy3)))], '.1', sep='')
+    OB$Cy3 <- OB$Cy3[1:nrow(OB$Cy5), ]
+  } else if( nrow(IB$Cy5) < nrow(IB$Cy3) ) {
+    IB$Cy5 <- rbind(IB$Cy5, IB$Cy5)
+    rownames(IB$Cy5)[which(duplicated(rownames(IB$Cy5)))] = 
+      paste(rownames(IB$Cy5)[which(duplicated(rownames(IB$Cy5)))], '.1', sep='')
+    IB$Cy5 <- IB$Cy5[1:nrow(IB$Cy3), ]
+    OB$Cy5 <- rbind(OB$Cy5, OB$Cy5)
+    rownames(OB$Cy5)[which(duplicated(rownames(OB$Cy5)))] = 
+      paste(rownames(OB$Cy5)[which(duplicated(rownames(OB$Cy5)))], '.1', sep='')
+    OB$Cy5 <- OB$Cy5[1:nrow(OB$Cy3), ]
+  }
+
   Cy3.intensities = rbind( dII$Cy3, 
                            IB$Cy3, 
                            OB$Cy3 )
   Cy5.intensities = rbind( dII$Cy5, 
-                           IB$Cy5[seq_along(rownames(IB$Cy3)),],
-                           OB$Cy5[seq_along(rownames(OB$Cy3)),] )
+                           IB$Cy5,
+                           OB$Cy5 )
   if(!is.null(QCdata(x))) {
-    Cy3.intensities = rbind( Cy3.intensities, normctls(x)$Cy3 )
-    Cy5.intensities = rbind( Cy5.intensities, normctls(x)$Cy5 )
-  }
-  ctrl.id = list(Cy3=setdiff(seq_along(rownames(Cy3.intensities)),dII.rows$Cy3),
-                 Cy5=setdiff(seq_along(rownames(Cy5.intensities)),dII.rows$Cy5))
-
-  # subset quantile normalize each array with itself (green vs. red)
-  for( subject in sampleNames(x)) {
-    
-    stop('need to finish within-array SQN')
-    ctrl.id = (length(dII.probes)+1):(length(dII.probes)+normnumber)
-    bound = cbind(Cy3.col, Cy5.col)
-    withins = SQN(bound, N.mix, ctrl.id=ctrl.id, weight)
-    methylated(x)[dII.probes, subject] = withins[1:length(dII.probes),1]
-    Cy3(x@QC)[normprobes.Cy3, subject] = withins[ctrl.id,1]
-    unmethylated(x)[dII.probes, subject] = withins[1:length(dII.probes),2]
-    Cy5(x@QC)[normprobes.Cy5, subject] = withins[ctrl.id,2]
+    Cy3.intensities = rbind( Cy3.intensities, normctls(x,'Cy3') )
+    Cy5.intensities = rbind( Cy5.intensities, normctls(x,'Cy5') )
   }
 
-  # now normalize all the arrays against each other in each channel
-  for( channel in names(dII) ) {
+  dII.rows = 1:length(dII.probes)
 
-    stop('need to finish between-array SQN')
-    betweens = SQN(bound, N.mix, ctrl.id=ctrl.id, weight)
-    methylated(x)[dII.probes, subject] = normed[1:length(dII.probes),1]
-    Cy3(x@QC)[normprobes.Cy3, subject] = normed[ctrl.id,1]
-    unmethylated(x)[dII.probes, subject] = normed[1:length(dII.probes),2]
-    Cy5(x@QC)[normprobes.Cy5, subject] = normed[ctrl.id,2]
-  }
+  # remember, we made the channels the same number of rows:
+  ctrl.ids = setdiff( 1:nrow(Cy3.intensities), dII.rows )
+  bound = cbind(Cy3.intensities, Cy5.intensities)
+  normed = SQN(bound, N.mix, ctrl.id=ctrl.id, weight)
+  unbound = list(Cy3=normed[ , 1:(0.5*ncol(normed)) ],
+                 Cy5=normed[ , ((0.5*ncol(normed))+1):ncol(normed)])
 
+  browser()
+  stop('Confirm these results before trusting them!  And use unbound$channel.')
+  methylated(x)[dII.probes, subject] = withins[1:length(dII.probes),1]
+  Cy3(x@QC)[normprobes.Cy3, subject] = withins[ctrl.id,1]
+  unmethylated(x)[dII.probes, subject] = withins[1:length(dII.probes),2]
+  Cy5(x@QC)[normprobes.Cy5, subject] = withins[ctrl.id,2]
 
   history.command <- "Applied subset quantile normalization to design II probes"
   history.finished <- t.finish()
