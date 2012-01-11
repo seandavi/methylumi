@@ -687,13 +687,21 @@ NChannelSetToMethyLumiSet <- function(NChannelSet, parallel=F, normalize=F, pval
                       'DESIGN',
                       'COLOR_CHANNEL',
                       'PROBE_TYPE',
-                      'SNP10')
+                      'SNP10',
+                      'SYMBOL',
+                      'CHR36',
+                      'CPG36',
+                      'CPGS')
   fvarLabels(x.lumi) <- possibleLabels[ 1:ncol(fdat) ]
   possibleMetadata <- c('Illumina probe ID from manifest',
                         'Infinium design type (I or II)',
                         'Color channel (for type I probes)',
-                        'Interrogated locus (CpG, CpH, or SNP)',
-                        'SNP (dbSNP build 128) within 10bp of target?')
+                        'Probe locus type (CpG, CpH, or SNP)',
+                        'SNP (dbSNP build 128) within 10bp of target?',
+                        'Gene symbol (if probe is annotated to a gene)',
+                        'Chromosome mapping for probe in hg18 assembly',
+                        'Coordinates of interrogated cytosine in hg18',
+                        'Number of CpG dinucleotides in probe sequence')
   fvarMetadata(x.lumi)[,1] <- possibleMetadata[ 1:ncol(fdat) ]
   pval.detect(x.lumi) <- pval # default value
   history.finished <- as.character(Sys.time())
@@ -709,7 +717,7 @@ NChannelSetToMethyLumiSet <- function(NChannelSet, parallel=F, normalize=F, pval
 
 ## FIXME: switch to using 'parallel' by default with dummy mclapply()
 ##
-methylumIDAT <- function(barcodes=NULL,pdat=NULL,parallel=F,n=T,n.sd=F,oob=T,idatPath=getwd(),...) { # {{{
+methylumIDAT <- function(barcodes=NULL,pdat=NULL,parallel=F,n=T,n.sd=F,oob=T,idatPath=getwd(), with.hg18=FALSE, ...) { # {{{
   if(is(barcodes, 'data.frame')) pdat = barcodes
   if((is.null(barcodes))&(is.null(pdat) | (!('barcode' %in% names(pdat))))){#{{{
     stop('"barcodes" or "pdat" (with pdat$barcode defined) must be supplied.')

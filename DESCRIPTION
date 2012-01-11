@@ -1,15 +1,15 @@
 Package: methylumi
 Type: Package
 Title: Handle Illumina methylation data
-Version: 2.0.1
-Date: 2011-11-07
-Author: Sean Davis, Pan Du, Sven Bilke, Tim Triche, Jr.
+Version: 2.0.4
+Date: 2012-01-10
+Author: Sean Davis, Pan Du, Sven Bilke, Tim Triche, Jr., Moiz Bootwalla
 Depends: Biobase, methods, R (>= 2.13)
 Imports: Biobase, graphics, lattice, annotate, genefilter,
         AnnotationDbi
 Suggests: lumi, lattice, limma, xtable, IlluminaHumanMethylation27k.db
         (>= 1.4.4), IlluminaHumanMethylation450k.db, ggplot2, SQN,
-        MASS, matrixStats, parallel
+        MASS, matrixStats, parallel, IlluminaHumanMethylation450kprobe
 biocViews: DNAMethylation, TwoChannel, Preprocessing, QualityControl,
         CpGIsland
 Maintainer: Sean Davis <sdavis2@mail.nih.gov>
