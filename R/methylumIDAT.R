@@ -345,6 +345,20 @@ IDATtoDF <- function(x, fileExts=list(Cy3="Grn.idat", Cy5="Red.idat"),idatPath) 
   return(probe.data)
 } # }}}
 
+IDATtoMatrix <- function(x, fileExts=list(Cy3="Grn", Cy5="Red"), idatPath){ #{{{
+  processed = lapply(fileExts, function(chan) {
+    ext = paste(chan, 'idat', sep='.')
+    dat = readMethyLumIDAT(file.path(idatPath, paste(x, ext, sep='_')))
+    return(list(Quants=as.data.frame(dat$Quants), 
+                RunInfo=dat$RunInfo,
+                ChipType=dat$ChipType))
+  })
+  probe.data = do.call(cbind, lapply(processed, function(x) x[['Quants']]))
+  attr(probe.data, 'RunInfo') = processed[[1]][['RunInfo']]
+  attr(probe.data, 'ChipType') = processed[[1]][['ChipType']]
+  return(probe.data)
+} # }}}
+
 ## automates the above-mentioned best practices
 ##
 IDATsToDFs <- function(barcodes, fileExts=list(Cy3="Grn.idat", Cy5="Red.idat"), parallel=F, idatPath) { # {{{
@@ -356,6 +370,19 @@ IDATsToDFs <- function(barcodes, fileExts=list(Cy3="Grn.idat", Cy5="Red.idat"), 
   }
   names(listOfDFs) = as.character(barcodes)
   return(listOfDFs)
+} # }}}
+
+## automates the above-mentioned best practices, but much faster and leaner
+##
+IDATsToMatrices <- function(barcodes, fileExts=list(Cy3="Grn.idat", Cy5="Red.idat"), parallel=F, idatPath) { # {{{
+  names(barcodes) = as.character(barcodes)
+  if(parallel) {
+    mats = .mclapply(barcodes,IDATtoMatrix,fileExts=fileExts,idatPath=idatPath)
+  } else {
+    mats = lapply(barcodes, IDATtoMatrix, fileExts=fileExts, idatPath=idatPath)
+  }
+  names(mats) = as.character(barcodes)
+  return(mats)
 } # }}}
 
 ## anything that isn't bead-level comes here first...
