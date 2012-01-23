@@ -606,8 +606,8 @@ setMethod("combine27k450k", signature=c(x="MethyLumiSet", y="MethyLumiSet"), fun
   } # }}}
 
   history.submitted <- as.character(Sys.time())
-  x = subset.common.probes(x)
-  y = subset.common.probes(y)
+  x = subsetCommonProbes(x)
+  y = subsetCommonProbes(y)
   n.x = dim(x)[2]
   n.y = dim(y)[2]
   n.xy = length(unique(sampleNames(x),sampleNames(y)))
