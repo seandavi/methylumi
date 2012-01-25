@@ -2,21 +2,32 @@
 t.submit <- function() as.character(Sys.time())
 t.finish <- function() as.character(format(Sys.time(), "%H:%M:%S"))
 
-# aka 'BAWS'
-normalizeViaSQN <- function(x, N.mix=3, weight=.5, by.CpG=F){ # {{{ 
+# aka 'BAWS' -- uses whatever controls are handy, stratified by CpG or not...
+normalizeViaSQN <- function(x, N.mix=3, weight=.5, by.CpG=F, ctrls=NULL){ # {{{ 
 
   require(SQN)
-  if(by.CpG) require(IlluminaHumanMethylation450probe)
+  if(by.CpG) data(CpGs)
   if( annotation(x) == 'IlluminaHumanMethylation27k' ) 
     stop('Subset quantile normalization should not be used on 27k arrays')
 
-  # why stop?  not strictly necessary for SWaB norm
-  stopifnot( 'methylated.OOB' %in% assayDataNames(x) & 
-             'unmethylated.OOB' %in% assayDataNames(x) )
+  ## FIXME: why stop?  not strictly necessary...
+  if( !('methylated.OOB' %in% assayDataNames(x)) ||
+      !('unmethylated.OOB' %in% assayDataNames(x)) )
   history.submitted <- as.character(Sys.time())
   if(!('DESIGN' %in% fvarLabels(x))) {
     require(IlluminaHumanMethylation450k.db)
     fData(x)$DESIGN = mget(featureNames(x), IlluminaHumanMethylation450kDESIGN)
+  }
+  if(by.CpG == TRUE ) {
+    ## FIXME: use 
+    if(!('CPGS' %in% fvarLabels(x))) {
+      data(Infinium.CpGs)
+      fData(x)$CPGS <- Infinium.CpGs[featureNames(x)]
+    }
+    message('need to actually INSPECT the CpG distribution here... !')
+    browser()
+    ## FIXME: add stratification by 1, 2, 3, 4+ CpGs here
+    ## FIXME2: stratify OOB probes as well
   }
   dII.probes = featureNames(x)[which(fData(x)$DESIGN == 'II')]
   dII = list(Cy3=methylated(x)[dII.probes,], Cy5=unmethylated(x)[dII.probes,])
@@ -118,6 +129,10 @@ normalizeViaControls <- function(x, reference=1) { # {{{ from Kasper
   ctls = list(Cy3=methylated(x@QC), Cy5=unmethylated(x@QC))
   assayDataElement(x@QC,'methylated') <- sweep(ctls$Cy3, 2, FUN='*', Grn.factor)
   assayDataElement(x@QC,'unmethylated') <- sweep(ctls$Cy5,2,FUN='*', Red.factor)
+
+  # now fix the beta values, and set the appropriate ones to NA
+  betas(x) <- methylated(x) / total.intensity(x)
+  is.na(x) <- pvals(x) > 0.05
 
   # and add an entry to the transaction log for this preprocessing step.
   history.command <- deparse(match.call())
