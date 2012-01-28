@@ -92,6 +92,22 @@ normalizeViaSQN <- function(x, N.mix=3, weight=.5, by.CpG=F, ctrls=NULL){ # {{{
 
 } # }}}
 
+# m-value normalization for 27k/450k merging
+normalize27kAnd450k <- function(x.27k, x.450k, id.variable='name', oob=F){ # {{{
+  
+  combined = combine27k450k(x.27k, x.450k)
+  stop('m-value normalization is in development still')
+
+  history.command <- "Applied 27k control normalization to 450k probes"
+  history.finished <- t.finish()
+  x@history<- rbind(x@history,
+                    data.frame(submitted=history.submitted,
+                               finished=history.finished,
+                               command=history.command))
+  return(x)
+
+} # }}}
+
 normalizeViaControls <- function(x, reference=1) { # {{{ from Kasper  
 
   if(is.null(x@QC)) stop('Cannot normalize against controls without controls!')
@@ -132,7 +148,7 @@ normalizeViaControls <- function(x, reference=1) { # {{{ from Kasper
 
   # now fix the beta values, and set the appropriate ones to NA
   betas(x) <- methylated(x) / total.intensity(x)
-  is.na(x) <- pvals(x) > 0.05
+  is.na(betas(x)) <- (pvals(x) > 0.05)
 
   # and add an entry to the transaction log for this preprocessing step.
   history.command <- deparse(match.call())
