@@ -345,11 +345,15 @@ IDATtoDF <- function(x, fileExts=list(Cy3="Grn.idat", Cy5="Red.idat"),idatPath) 
   return(probe.data)
 } # }}}
 
-IDATtoMatrix <- function(x, fileExts=list(Cy3="Grn", Cy5="Red"), idatPath){ #{{{
+IDATtoMatrix <- function(x,fileExts=list(Cy3="Grn",Cy5="Red"),idatPath='.'){#{{{
+  channames = names(fileExts)
+  names(channames) = fileExts
   processed = lapply(fileExts, function(chan) {
     ext = paste(chan, 'idat', sep='.')
     dat = readMethyLumIDAT(file.path(idatPath, paste(x, ext, sep='_')))
-    return(list(Quants=as.data.frame(dat$Quants), 
+    Quants = data.matrix(dat$Quants)
+    colnames(Quants) = paste(channames[chan], colnames(Quants), sep='.')
+    return(list(Quants=Quants, 
                 RunInfo=dat$RunInfo,
                 ChipType=dat$ChipType))
   })
@@ -375,7 +379,7 @@ IDATsToDFs <- function(barcodes, fileExts=list(Cy3="Grn.idat", Cy5="Red.idat"), 
 ## automates the above-mentioned best practices, but much faster and leaner
 ## it might be preferable to use abind() and pvec() instead of mclapply here
 ##
-IDATsToMatrices <- function(barcodes, fileExts=list(Cy3="Grn.idat", Cy5="Red.idat"), parallel=F, idatPath) { # {{{
+IDATsToMatrices <- function(barcodes, fileExts=list(Cy3="Grn", Cy5="Red"), parallel=F, idatPath='.') { # {{{
   names(barcodes) = as.character(barcodes)
   if(parallel) {
     mats = .mclapply(barcodes,IDATtoMatrix,fileExts=fileExts,idatPath=idatPath)
