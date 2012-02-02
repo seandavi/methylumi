@@ -10,24 +10,35 @@ normalizeViaSQN <- function(x, N.mix=3, weight=.5, by.CpG=F, ctrls=NULL){ # {{{
   if( annotation(x) == 'IlluminaHumanMethylation27k' ) 
     stop('Subset quantile normalization should not be used on 27k arrays')
 
+  if( is.null(ctrls) ) { 
+    if(all(c('methylated.OOB','unmethylated.OOB') %in% assayDataElements(x))) {
+
+    } else { 
+      ctrls = negctls(x)
+    }
+  } else {
+    
+  }
+  ## notes to self:
+  #
+  #  1) design I probes are the subset (for SQN)
+  #  2) design II probes are the "non-subset"
+  #  3) bgcorrection is stratified on CpGs:Design
+  #  4) full quantile normalize probes with 5+ CpGs?
+  # 
   ## FIXME: why stop?  not strictly necessary...
-  if( !('methylated.OOB' %in% assayDataNames(x)) ||
-      !('unmethylated.OOB' %in% assayDataNames(x)) )
   history.submitted <- as.character(Sys.time())
-  if(!('DESIGN' %in% fvarLabels(x))) {
+  if(!('DESIGN' %in% fvarLabels(x))) { # {{{
     require(IlluminaHumanMethylation450k.db)
     fData(x)$DESIGN = mget(featureNames(x), IlluminaHumanMethylation450kDESIGN)
-  }
+  } # }}}
   if(by.CpG == TRUE ) {
     ## FIXME: use 
     if(!('CPGS' %in% fvarLabels(x))) {
-      data(Infinium.CpGs)
-      fData(x)$CPGS <- Infinium.CpGs[featureNames(x)]
+      data(CpGs)
+      fData(x)$CPGS <- CpGs[featureNames(x), 'CpGs']
     }
-    message('need to actually INSPECT the CpG distribution here... !')
     browser()
-    ## FIXME: add stratification by 1, 2, 3, 4+ CpGs here
-    ## FIXME2: stratify OOB probes as well
   }
   dII.probes = featureNames(x)[which(fData(x)$DESIGN == 'II')]
   dII = list(Cy3=methylated(x)[dII.probes,], Cy5=unmethylated(x)[dII.probes,])
@@ -92,13 +103,12 @@ normalizeViaSQN <- function(x, N.mix=3, weight=.5, by.CpG=F, ctrls=NULL){ # {{{
 
 } # }}}
 
-# m-value normalization for 27k/450k merging
+# m-value normalization for 27k/450k merging; basically, ape ComBat
 normalize27kAnd450k <- function(x.27k, x.450k, id.variable='name', oob=F){ # {{{
   
   combined = combine27k450k(x.27k, x.450k)
-  stop('m-value normalization is in development still')
-
-  history.command <- "Applied 27k control normalization to 450k probes"
+  stop('27k:450k normalization is in development still')
+  history.command <- "Applied 27k-450k normalization"
   history.finished <- t.finish()
   x@history<- rbind(x@history,
                     data.frame(submitted=history.submitted,
@@ -108,7 +118,7 @@ normalize27kAnd450k <- function(x.27k, x.450k, id.variable='name', oob=F){ # {{{
 
 } # }}}
 
-normalizeViaControls <- function(x, reference=1) { # {{{ from Kasper  
+normalizeViaControls <- function(x, reference=NULL) { # {{{ originally by Kasper
 
   if(is.null(x@QC)) stop('Cannot normalize against controls without controls!')
   else history.submitted <- as.character(Sys.time())
@@ -117,6 +127,9 @@ normalizeViaControls <- function(x, reference=1) { # {{{ from Kasper
   controls <- normctls(x)
   Grn.avg <- colMeans(controls$Cy3)
   Red.avg <- colMeans(controls$Cy5)
+  R.G.ratio = Red.avg/Grn.avg
+  if(is.null(reference)) reference = which.min( abs(R.G.ratio-1) )
+  message(paste('Using sample number', reference, 'as reference level...'))
 
   # this is about the same 
   ref <- (Grn.avg + Red.avg)[reference]/2
