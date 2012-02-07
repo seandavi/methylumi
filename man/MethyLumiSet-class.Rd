@@ -91,9 +91,7 @@ Objects can be created by calls of the form \code{new("MethyLumiSet", assayData,
       sample betas}
     \item{combine}{\code{signature(x = "MethyLumiSet", y = "MethyLumiSet")}}
     \item{corplot}{\code{signature(x = "MethyLumiSet")}}
-    \item{exprs<-}{\code{signature(object = "MethyLumiSet", value =
-	"matrix")}: alias for "<-betas"}
-    \item{exprs}{\code{signature(object = "MethyLumiSet")}: alias for "betas"}
+    \item{exprs}{\code{signature(object = "MethyLumiSet")}: returns m-values}
     \item{getHistory}{\code{signature(object = "MethyLumiSet")}: returns
     a data.frame containing the history for this object}
     \item{hist}{\code{signature(x = "MethyLumiSet")}: histogram of the
