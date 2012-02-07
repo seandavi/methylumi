@@ -606,14 +606,20 @@ setMethod("combine27k450k", signature=c(x="MethyLumiSet", y="MethyLumiSet"), fun
   } # }}}
 
   history.submitted <- as.character(Sys.time())
-  x = subset.common.probes(x)
-  y = subset.common.probes(y)
+  platform.x = gsub('IlluminaHumanMethylation', '', annotation(x))
+  platform.y = gsub('IlluminaHumanMethylation', '', annotation(y))
+  if(any(fvarLabels(x)[-1] %in% fvarLabels(y)[-1]) && platform.x != platform.y){
+    fvarLabels(x) = paste(fvarLabels(x), platform.x, sep='.')
+    fvarLabels(y) = paste(fvarLabels(y), platform.y, sep='.')
+  }
+  x = subsetCommonProbes(x)
+  y = subsetCommonProbes(y)
   n.x = dim(x)[2]
   n.y = dim(y)[2]
   n.xy = length(unique(sampleNames(x),sampleNames(y)))
   if(n.xy<(n.x+n.y)) {
-    sampleNames(x) = paste(sampleNames(x), x$platform, sep='.')
-    sampleNames(y) = paste(sampleNames(y), y$platform, sep='.')
+    sampleNames(x) = paste(sampleNames(x), platform.x, sep='.')
+    sampleNames(y) = paste(sampleNames(y), platform.y, sep='.')
     n.xy = length(unique(sampleNames(x),sampleNames(y)))
   }
   assayData(x) <- combine(assayData(x), assayData(y))
