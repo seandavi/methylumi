@@ -345,6 +345,24 @@ IDATtoDF <- function(x, fileExts=list(Cy3="Grn.idat", Cy5="Red.idat"),idatPath) 
   return(probe.data)
 } # }}}
 
+IDATtoMatrix <- function(x,fileExts=list(Cy3="Grn",Cy5="Red"),idatPath='.'){#{{{
+  channames = names(fileExts)
+  names(channames) = fileExts
+  processed = lapply(fileExts, function(chan) {
+    ext = paste(chan, 'idat', sep='.')
+    dat = readMethyLumIDAT(file.path(idatPath, paste(x, ext, sep='_')))
+    Quants = data.matrix(dat$Quants)
+    colnames(Quants) = paste(channames[chan], colnames(Quants), sep='.')
+    return(list(Quants=Quants, 
+                RunInfo=dat$RunInfo,
+                ChipType=dat$ChipType))
+  })
+  probe.data = do.call(cbind, lapply(processed, function(x) x[['Quants']]))
+  attr(probe.data, 'RunInfo') = processed[[1]][['RunInfo']]
+  attr(probe.data, 'ChipType') = processed[[1]][['ChipType']]
+  return(probe.data)
+} # }}}
+
 ## automates the above-mentioned best practices
 ##
 IDATsToDFs <- function(barcodes, fileExts=list(Cy3="Grn.idat", Cy5="Red.idat"), parallel=F, idatPath) { # {{{
@@ -358,10 +376,95 @@ IDATsToDFs <- function(barcodes, fileExts=list(Cy3="Grn.idat", Cy5="Red.idat"), 
   return(listOfDFs)
 } # }}}
 
-## anything that isn't bead-level comes here first...
+## automates the above-mentioned best practices, but much faster and leaner
+## it might be preferable to use abind() and pvec() instead of mclapply here
 ##
-## FIXME: find out whether this is causing the issues with single-sample batches
-##
+IDATsToMatrices <- function(barcodes, fileExts=list(Cy3="Grn", Cy5="Red"), parallel=F, idatPath='.') { # {{{
+  names(barcodes) = as.character(barcodes)
+  if(parallel) {
+    mats = .mclapply(barcodes,IDATtoMatrix,fileExts=fileExts,idatPath=idatPath)
+  } else {
+    mats = lapply(barcodes, IDATtoMatrix, fileExts=fileExts, idatPath=idatPath)
+  }
+  names(mats) = as.character(barcodes)
+  return(mats)
+} # }}}
+
+## silly but useful ancillary function... should be replaced, perhaps abind()?
+## or might consider doing the following in C++ via Rcpp to avoid copying data
+extractAssayDataFromList <- function(assay, mats, fnames) { # {{{
+  d <- do.call('cbind', lapply(mats, function(x) x[[assay]]))
+  if( !is.matrix(d) ) {
+    message('Coercing data to a matrix... but this should not be necessary!')
+    d <- data.matrix(d)
+  }
+  colnames(d) <- names(mats)
+  rownames(d) <- fnames
+  return(d)
+} # }}}
+
+## a faster rewrite of DFsToNChannelSet() so that I can decommission it...
+## also, resume extracting protocolData() for both 27k and 450k datasets here
+DataToNChannelSet <- function(mats, chans=c(Cy3='GRN',Cy5='RED'), parallel=F, protocol.data=F, IDAT=TRUE){ # {{{
+
+  stopifnot(is(mats, 'list'))
+  cols <- c('Mean','SD')
+  fnames <- rownames(mats[[1]])
+  assayNames = apply(expand.grid(names(chans), cols), 1, paste, collapse='.')
+  names(assayNames) = assayNames
+  assayNames = append(assayNames, 'Cy3.NBeads') # will use this for all beads
+  names(assayNames)[[5]] = 'NBeads'
+  assays = lapply( assayNames, function(assay) 
+                   extractAssayDataFromList(assay, mats, fnames) )
+  obj = new("NChannelSet",
+             assayData=assayDataNew(R=assays[['Cy5.Mean']],
+                                    G=assays[['Cy3.Mean']],
+                                    R.SD=assays[['Cy5.SD']],
+                                    G.SD=assays[['Cy3.SD']],
+                                    N=assays[['NBeads']]))
+  featureNames(obj) = rownames(mats[[1]])
+  if(IDAT) { # {{{
+    message('Attempting to extract protocolData() from list...')
+    ChipType = attr(mats[[1]], 'ChipType')
+    RunInfo = lapply(mats, function(d) attr(d, 'RunInfo'))
+    if(protocol.data) { # {{{
+      scanDates = data.frame(DecodeDate=rep(NA, length(mats)),
+                             ScanDate=rep(NA, length(mats)))
+      rownames(scanDates) = names(mats)
+      for(i in seq_along(mats)) {
+        cat("decoding protocolData for", names(mats)[i], "...\n")
+        if(nrow(RunInfo[[i]]) >= 2) {
+          scanDates$DecodeDate[i] = RunInfo[[i]][1,1]
+          scanDates$ScanDate[i]  =  RunInfo[[i]][2,1]
+        }
+      }
+      protocoldata = new("AnnotatedDataFrame",
+                          data=scanDates,
+                          varMetadata=data.frame(
+                            labelDescription=colnames(scanDates),
+                            row.names=colnames(scanDates)
+                           )
+                          )
+      protocolData(obj) = protocoldata
+    } # }}}
+  
+    message('Determining chip type from IDAT protocolData...')
+    if(ChipType == "BeadChip 12x1") {
+      annotation(obj) = 'IlluminaHumanMethylation27k'
+    } else if(ChipType == "BeadChip 12x8") {
+      annotation(obj) = 'IlluminaHumanMethylation450k'
+    }
+
+  } # }}}
+  if(is.null(annotation(obj))) { # {{{
+    if(dim(obj)[1] == 55300) annotation(obj) = 'IlluminaHumanMethylation27k'
+    else annotation(obj) = 'IlluminaHumanMethylation450k'
+  } # }}}
+  return(obj)
+
+} # }}}
+
+## the workhorse, although it's slow and an absolute a pig about memory usage
 DFsToNChannelSet <- function(listOfDFs,chans=c(Cy3='GRN',Cy5='RED'),parallel=F, IDAT=F, protocol.data=F){ # {{{ tidy up the data 
 
   stopifnot(is(listOfDFs, 'list'))
@@ -717,7 +820,7 @@ NChannelSetToMethyLumiSet <- function(NChannelSet, parallel=F, normalize=F, pval
 
 ## FIXME: switch to using 'parallel' by default with dummy mclapply()
 ##
-methylumIDAT <- function(barcodes=NULL,pdat=NULL,parallel=F,n=T,n.sd=F,oob=T,idatPath=getwd(), with.hg18=FALSE, ...) { # {{{
+methylumIDAT <- function(barcodes=NULL,pdat=NULL,parallel=F,n=F,n.sd=F,oob=T,idatPath=getwd(), with.hg18=FALSE, ...) { # {{{
   if(is(barcodes, 'data.frame')) pdat = barcodes
   if((is.null(barcodes))&(is.null(pdat) | (!('barcode' %in% names(pdat))))){#{{{
     stop('"barcodes" or "pdat" (with pdat$barcode defined) must be supplied.')
@@ -783,8 +886,76 @@ methylumIDAT <- function(barcodes=NULL,pdat=NULL,parallel=F,n=T,n.sd=F,oob=T,ida
   return(mlumi[ sort(featureNames(mlumi)), ])
 
 } # }}}
-
 lumIDAT <- function(barcodes, pdat=NULL, parallel=F, n=T, idatPath=getwd(), ...){ # {{{ 
   as(methylumIDAT(barcodes=barcodes,pdat=pdat,parallel=parallel,n=n,oob=F,idatPath=idatPath),
      'MethyLumiM')
+} # }}}
+
+## FIXME: finish transitioning to matrices as intermediate data type
+##
+methylumIDAT2 <- function(barcodes=NULL,pdat=NULL,parallel=F,n=T,n.sd=F,oob=T,idatPath=getwd(), with.hg18=FALSE, ...) { # {{{
+  if(is(barcodes, 'data.frame')) pdat = barcodes
+  if((is.null(barcodes))&(is.null(pdat) | (!('barcode' %in% names(pdat))))){#{{{
+    stop('"barcodes" or "pdat" (with pdat$barcode defined) must be supplied.')
+  } # }}}
+  if(!is.null(pdat) && 'barcode' %in% tolower(names(pdat))) { # {{{
+    names(pdat)[ which(tolower(names(pdat))=='barcode') ] = 'barcode'
+    barcodes = pdat$barcode
+    if(any(grepl('idat',ignore.case=T,barcodes))) { 
+      message('Warning: filtering out raw filenames') 
+      barcodes = gsub('_(Red|Grn)','', barcodes, ignore=TRUE)
+      barcodes = gsub('.idat', '', barcodes, ignore=TRUE)
+    }
+    if(any(duplicated(barcodes))) {  
+      message('Warning: filtering out duplicates') 
+      pdat = pdat[ -which(duplicated(barcodes)), ] 
+      barcodes = pdat$barcode
+    } # }}}
+  } else { # {{{
+    if(any(grepl('idat',ignore.case=T,barcodes))) { 
+      message('Warning: filtering out raw filenames') 
+      barcodes = unique(gsub('_(Red|Grn)','', barcodes, ignore.case=TRUE))
+      barcodes = unique(gsub('.idat','', barcodes, ignore.case=TRUE))
+    }
+    if(any(duplicated(barcodes))) { 
+      message('Warning: filtering out duplicate barcodes')
+      barcodes = barcodes[ which(!duplicated(barcodes)) ] 
+    } 
+  } # }}}
+  files.present = rep(TRUE, length(barcodes)) # {{{
+  idats = sapply(barcodes, function(b) paste(b,c('_Red','_Grn'),'.idat',sep=''))
+  for(i in colnames(idats)) for(j in idats[,i]) if(!(j %in% list.files(idatPath))) {
+    message(paste('Error: file', j, 'is missing for sample', i))
+    files.present = FALSE
+  }
+  stopifnot(all(files.present)) # }}}
+  hm27 = hm450 = 0 # {{{
+  hm27 = sum(grepl('_[ABCDEFGHIJKL]', barcodes)) 
+  message(paste(hm27, 'HumanMethylation27 samples found'))
+  hm450 = sum(grepl('_R0[123456]C0[12]', barcodes))
+  message(paste(hm450, 'HumanMethylation450 samples found'))
+  if( hm27 > 0 && hm450 > 0 ) {
+    stop('Cannot process both platforms simultaneously; please run separately.')
+  } # }}}
+
+  mlumi = NChannelSetToMethyLumiSet(
+    DataToNChannelSet(
+      IDATsToMatrices(barcodes,parallel=parallel,idatPath=idatPath), IDAT=TRUE,
+    parallel=parallel),
+  parallel=parallel, n=n, oob=oob, caller=deparse(match.call()))
+
+  if(is.null(pdat)) { # {{{
+    pdat = data.frame(barcode=as.character(barcodes))
+    rownames(pdat) = pdat$barcode
+    pData(mlumi) = pdat # }}}
+  } else { # {{{
+    pData(mlumi) = pdat
+  } # }}}
+  if(!is.null(mlumi@QC)) { #{{{ should be gratuitous now
+    sampleNames(mlumi@QC) = sampleNames(mlumi)
+  } # }}}
+
+  # finally
+  return(mlumi[ sort(featureNames(mlumi)), ])
+
 } # }}}

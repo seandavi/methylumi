@@ -17,7 +17,8 @@ importFrom(lattice,
            dotplot,
            parallel)
 
-export(methylumiR, extractBarcodeAndPosition, normalizeMethyLumiSet, getAssayDataNameSubstitutions, estimateM, methylumIDAT, lumIDAT, methylumiCSV, lumiCSV, methylumi.diagnostics, qc.probe.plot, cy3, cy5, getBarcodes, stripBeadNs, stripBeadSDs, stripMethyLumiSet, psummary, negctls.stderr, methylumi.bgcorr, IDATtoDF, IDATsToDFs, readMethyLumIDAT, designItoMandU, designIItoMandU, mergeProbeDesigns, NChannelSetToMethyLumiSet, subset450kas27k, subset27kas450k, subsetCommonProbes, stripOOB, plotNegOob, compare.chips)
+export(methylumiR, extractBarcodeAndPosition, normalizeMethyLumiSet, getAssayDataNameSubstitutions, estimateM, methylumIDAT, lumIDAT, methylumiCSV, lumiCSV, methylumi.diagnostics, qc.probe.plot, cy3, cy5, getBarcodes, stripBeadNs, stripBeadSDs, stripMethyLumiSet, psummary, negctls.stderr, methylumi.bgcorr, IDATtoMatrix, IDATtoDF, IDATsToMatrices, IDATsToDFs, readMethyLumIDAT, designItoMandU, designIItoMandU, mergeProbeDesigns, NChannelSetToMethyLumiSet, subset450kas27k, subset27kas450k, subsetCommonProbes, stripOOB, plotNegOob, compare.chips, .mclapply)
+
 exportClasses("MethyLumiSet","MethyLumiQC","MethyLumi", "MethyLumiM","methylData")
 exportMethods("getHistory","betas","pvals","exprs","summary",
               "show","combine","hist","boxplot","pairs","[",
