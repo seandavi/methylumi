@@ -272,18 +272,19 @@ compare.chips <- function(x, by.design=F, by.channel=F, what='betas', how=NULL, 
 } # }}}
 
 ## FIXME: export these qc.probe.plot() cleanly and replace qcplot()?
-# if(require('ggplot2')) { # {{{
-  #setMethod('qcplot', signature(object='MethyLumiQC'), # {{{
-    #function(object,controlType,...) qc.probe.plot(object,controlType,...))#}}}
-  #setMethod('qcplot', signature(object='MethyLumiSet'), # {{{
-    #function(object, controlType, ...) {
-      #if( sampleNames(object@QC) != sampleNames(object) ) {
-        #sampleNames(object@QC) <- sampleNames(object) 
-      #}
-      #qc.probe.plot(QCdata(object), controlType, ...) 
-    #}) # }}}
-  #setMethod('qcplot', signature(object='MethyLumiM'), # {{{
-    #function(object,controlType,...) {
-      #qc.probe.plot(QCdata(object), controlType, ...) 
+#if(require('ggplot2')) { # {{{
+#  setMethod('qcplot', signature(object='MethyLumiQC'), # {{{
+#    function(object,controlType,...) qc.probe.plot(object,controlType,...))#}}}
+  # setMethod('qcplot', signature(object='MethyLumiSet'), # {{{
+  #  function(object, controlType, ...) {
+  #    if( length(annotation(object) == 0) ) qcplot(object, controlType)
+  #    if( sampleNames(object@QC) != sampleNames(object) ) {
+  #      sampleNames(object@QC) <- sampleNames(object) 
+  #    }
+  #    qc.probe.plot(QCdata(object), controlType, ...) 
+  #  }) # }}}
+  # setMethod('qcplot', signature(object='MethyLumiM'), # {{{
+  #  function(object,controlType,...) {
+  #    qc.probe.plot(QCdata(object), controlType, ...) 
   #}) # }}}
-# } # }}}
+#} # }}}
