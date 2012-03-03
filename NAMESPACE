@@ -1,5 +1,7 @@
 import(Biobase)
 
+importFrom(stats4, plot, summary)
+
 importFrom(annotate,
            getAnnMap)
 
@@ -13,8 +15,7 @@ importFrom(BiocGenerics, boxplot)
 importFrom(graphics,
            hist,
            image,
-           pairs,
-           plot)
+           pairs)
 
 importFrom(lattice,
            dotplot,
