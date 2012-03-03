@@ -6,8 +6,11 @@ importFrom(annotate,
 importMethodsFrom(AnnotationDbi,
                   mget)
 
+importFrom(stats4, summary)
+
+importFrom(BiocGenerics, boxplot)
+
 importFrom(graphics,
-           boxplot,
            hist,
            image,
            pairs,
