@@ -109,9 +109,6 @@ setReplaceMethod("controlData", signature(object="MethyLumiSet",value="MethyLumi
 setMethod("getHistory",signature(object="MethyLumiSet"), function(object) {# {{{
     object@history
 }) # }}}
-if (is.null(getGeneric("summary"))) { # {{{
-  setGeneric("summary", function(object,...) standardGeneric("summary"))
-} # }}}
 
 setMethod("unmethylated",signature(object="MethyLumiSet"),function(object){# {{{
             return(assayDataElement(object,"unmethylated"))
@@ -146,7 +143,7 @@ setMethod("show",signature(object="MethyLumiSet"), function(object) { # {{{
 	print(getHistory(object)) 
 }) # }}}
 
-setMethod("summary",signature(object="MethyLumi"), function(object) { # {{{
+setMethod("summary",signature(object="MethyLumi"), function(object, ...) { # {{{
 	show(object)
 }) # }}}
 
