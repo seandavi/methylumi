@@ -1,14 +1,12 @@
 import(Biobase)
 
-importFrom(stats4, plot, summary)
-
 importFrom(annotate,
            getAnnMap)
 
 importMethodsFrom(AnnotationDbi,
                   mget)
 
-importFrom(stats4, summary)
+importFrom(stats4, plot, summary)
 
 importFrom(BiocGenerics, boxplot)
 
