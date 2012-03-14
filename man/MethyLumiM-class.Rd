@@ -2,6 +2,7 @@
 \Rdversion{1.1}
 \docType{class}
 \alias{MethyLumiM-class}
+\alias{MethyLumiM}
 \alias{QCdata,MethyLumiM-method}
 \alias{[,MethyLumiM-method}
 \alias{betas,MethyLumiM-method}
