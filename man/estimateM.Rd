@@ -8,7 +8,7 @@ Estimate methylation M-value matrix
 Estimate methylation M-value matrix from MethyLumiM-class object or eSet-class object, which include methylated and unmethylated probe intensities
 }
 \usage{
-estimateM(methyLumiM, returnType=c("ExpressionSet", "matrix"), offset=1)
+estimateM(methyLumiM, returnType=c("ExpressionSet", "matrix"), offset=100)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
