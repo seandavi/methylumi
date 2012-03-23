@@ -289,37 +289,37 @@ setMethod("intensities.U",signature(x="MethyLumiSet", channel="missing"), # {{{
   function(x) lapply(list(Cy3='Cy3',Cy5='Cy5'),function(y) intensities.U(x,y))
 ) # }}}
 
-if(is.null(getGeneric('boxplot'))) {  # {{{
-  setGeneric('boxplot',function(x,...) standardGeneric('boxplot'))
-} # }}}
-setMethod("boxplot",signature(x="MethyLumiSet"), function(x, range=0, main, logMode=TRUE, ...) { # {{{ 
-  tmp <- description(x)
-  if (missing(main) && (is(tmp, "MIAME")))
-    main <- tmp@title
-  exprs <- exprs(x)
-  if (nrow(x) > 5000) {
-	  	index <- seq(1, nrow(x), len=5000)
-              } else {
-		index <- 1:nrow(x)
-              }
-  if (logMode & max(exprs(x), na.rm=TRUE) > 50) {
-    exprs <- log2(exprs)
-  } 
-  dataMatrix <- exprs[index,]
-  labels <- colnames(dataMatrix)
-  if (is.null(labels)) labels <- as.character(1:ncol(dataMatrix))
-  ## set the margin of the plot
-  mar <- c(max(nchar(labels))/2 + 4.5, 5, 5, 3)
-  old.mar <- par('mar')
-  old.xaxt <- par('xaxt')
-  par(xaxt='n')
-  par(mar=mar)
-  boxplot(dataMatrix ~ col(dataMatrix), main=main, range=range, xlab='', ylab='amplitude', ...)
-  par(xaxt='s')
-  axis(1, at=1:ncol(dataMatrix), labels=labels, tick=TRUE, las=2)
-  par(mar=old.mar)
-  par(xaxt=old.xaxt)
-}) # }}}
+#if(is.null(getGeneric('boxplot'))) {  # {{{
+  #setGeneric('boxplot',function(x,...) standardGeneric('boxplot'))
+#} # }}}
+#setMethod("boxplot",signature(x="MethyLumiSet"), function(x, range=0, main, logMode=TRUE, ...) { # {{{ 
+  #tmp <- description(x)
+  #if (missing(main) && (is(tmp, "MIAME")))
+    #main <- tmp@title
+  #exprs <- exprs(x)
+  #if (nrow(x) > 5000) {
+			#index <- seq(1, nrow(x), len=5000)
+              #} else {
+		#index <- 1:nrow(x)
+              #}
+  #if (logMode & max(exprs(x), na.rm=TRUE) > 50) {
+    #exprs <- log2(exprs)
+  #} 
+  #dataMatrix <- exprs[index,]
+  #labels <- colnames(dataMatrix)
+  #if (is.null(labels)) labels <- as.character(1:ncol(dataMatrix))
+  ### set the margin of the plot
+  #mar <- c(max(nchar(labels))/2 + 4.5, 5, 5, 3)
+  #old.mar <- par('mar')
+  #old.xaxt <- par('xaxt')
+  #par(xaxt='n')
+  #par(mar=mar)
+  #boxplot(dataMatrix ~ col(dataMatrix), main=main, range=range, xlab='', ylab='amplitude', ...)
+  #par(xaxt='s')
+  #axis(1, at=1:ncol(dataMatrix), labels=labels, tick=TRUE, las=2)
+  #par(mar=old.mar)
+  #par(xaxt=old.xaxt)
+#}) # }}}
 
 if (is.null(getGeneric("pairs"))) { # {{{
   setGeneric("pairs", function(x,...) standardGeneric("pairs"))

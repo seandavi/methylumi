@@ -1,6 +1,5 @@
 \name{methylumIDAT}
 \alias{methylumIDAT}
-%- Also NEED an '\alias' for EACH other topic documented here.
 \title{
 methylumIDAT
 }
@@ -8,7 +7,7 @@ methylumIDAT
 Read a directory of methylumi idat files and return a \code{MethylumiSet}.
 }
 \usage{
-methylumIDAT(barcodes = NULL, pdat = NULL, parallel = F, n = T, n.sd =
+methylumIDAT(barcodes = NULL, pdat = NULL, parallel = F, n = F, n.sd =
 F, oob = T, idatPath=getwd(), ...)
 }
 %- maybe also 'usage' for other objects documented here.
