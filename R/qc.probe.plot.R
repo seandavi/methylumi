@@ -4,6 +4,9 @@ setClassUnion("ND", c('character','missing'))
 # fix for QC plots in methylumi (hard to read on Infinium arrays) using ggplot2
 qc.probe.plot <- function(obj,controltype="negnorm",log2=T,by.type=F,...){ # {{{
   require("ggplot2")
+  require("reshape2")
+  require("scales")
+  log2_trans = log_trans(base=2)
   if( class(obj) %in% c('MethyLumiSet','MethyLumiM') ) {
     qc <- controlData(obj)
     if(!identical(sampleNames(qc), sampleNames(obj))) {
@@ -95,13 +98,13 @@ qc.probe.plot <- function(obj,controltype="negnorm",log2=T,by.type=F,...){ # {{{
                         x = variable, y = value, geom = 'boxplot', main=a.title,
                         xlab="Sample", ylab="Intensities") + 
                         coord_flip() 
-    if (log2) p <- p + scale_y_log2()
+    if (log2) p <- p + scale_y_continuous(trans='log2')
   } else {
     p <- ggplot2::qplot(data = qc, colour = type, shape = type, 
                         x = value, y = variable, geom = geometry,
                         main=a.title, ylab="Sample", xlab="Intensities")
     p <- p + scale_y_discrete( limits=rev(sampleNames(obj)) ) # more readable
-    if (log2) p <- p + scale_x_log2()
+    if (log2) p <- p + scale_x_continuous(trans='log2')
   }
   if( by.type ) {
     p <- p + facet_grid( type ~ channel)
@@ -109,8 +112,8 @@ qc.probe.plot <- function(obj,controltype="negnorm",log2=T,by.type=F,...){ # {{{
     p <- p + facet_grid( . ~ channel)
   }
   if( tolower(controltype) == 'negnorm' ) {
-    p <- p + scale_colour_manual( value=colour.settings )
-    p <- p + scale_shape_manual( value=shape.settings )
+    p <- p + scale_colour_manual( values=colour.settings )
+    p <- p + scale_shape_manual( values=shape.settings )
   }
   p <- p + theme_bw()
   return( p )

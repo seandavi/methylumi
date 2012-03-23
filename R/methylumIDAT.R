@@ -820,7 +820,7 @@ NChannelSetToMethyLumiSet <- function(NChannelSet, parallel=F, normalize=F, pval
 
 ## FIXME: switch to using 'parallel' by default with dummy mclapply()
 ##
-methylumIDAT <- function(barcodes=NULL,pdat=NULL,parallel=F,n=F,n.sd=F,oob=T,idatPath=getwd(), with.hg18=FALSE, ...) { # {{{
+methylumIDAT <- function(barcodes=NULL,pdat=NULL,parallel=F,n=F,n.sd=F,oob=T,idatPath=getwd(), ...) { # {{{
   if(is(barcodes, 'data.frame')) pdat = barcodes
   if((is.null(barcodes))&(is.null(pdat) | (!('barcode' %in% names(pdat))))){#{{{
     stop('"barcodes" or "pdat" (with pdat$barcode defined) must be supplied.')
@@ -893,7 +893,7 @@ lumIDAT <- function(barcodes, pdat=NULL, parallel=F, n=T, idatPath=getwd(), ...)
 
 ## FIXME: finish transitioning to matrices as intermediate data type
 ##
-methylumIDAT2 <- function(barcodes=NULL,pdat=NULL,parallel=F,n=T,n.sd=F,oob=T,idatPath=getwd(), with.hg18=FALSE, ...) { # {{{
+methylumIDAT2 <- function(barcodes=NULL,pdat=NULL,parallel=F,n=T,n.sd=F,oob=T,idatPath=getwd(), ...) { # {{{
   if(is(barcodes, 'data.frame')) pdat = barcodes
   if((is.null(barcodes))&(is.null(pdat) | (!('barcode' %in% names(pdat))))){#{{{
     stop('"barcodes" or "pdat" (with pdat$barcode defined) must be supplied.')
