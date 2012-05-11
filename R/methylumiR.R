@@ -16,7 +16,7 @@
 ###
 .getFileType <- function(filename) {
   f <- toupper(readLines(filename,n=1))
-  if(f[1] == '[HEADER]') {
+  if(length(grep('^\\[HEADER\\]', f)) > 0) {
     return("finalreport")
   } else {
     return("goldengate")
@@ -30,9 +30,16 @@
 	potentialSep <- c('\t', ',', '`', ' ')
 	info <- readLines(filename, n=20)    # take the first 20 lines to have a taste
 
-	## Use "ProbeID" as an indicator of Where the metaData stops
+	## Use "ProbeID or TargetID" as an indicator of Where the metaData stops
 	##   intelligently find nMetaDataLines  
-	nMetaDataLines <- grep('ProbeID', info, ignore.case=TRUE) - 1
+	nMetaDataLines <- grep('ProbeID', info, ignore.case=TRUE) 
+	if (length(nMetaDataLines) == 0) {
+		nMetaDataLines <- grep('TargetID', info, ignore.case=TRUE) 
+	} 
+	if (length(nMetaDataLines) == 0) {
+		stop('Cannot determine separator used in the file, please manually set the "sep" parameter!')
+	}	
+	nMetaDataLines <- nMetaDataLines - 1
 	sep <- NULL
     for (sep.i in potentialSep) {
 	    ## Find out the separator (sep) by taking the first two line of data, and comparing them.
@@ -92,7 +99,7 @@ getAssayDataNameSubstitutions <- function() {
   datcnSplit <- do.call(rbind,strsplit(datcn,datcolsep))
 
   dattypes <- data.frame(original=unique(datcnSplit[,2]),
-                        newnames=.doAssayDataNameSubstitutions(unique(datcnSplit[,2])), stringsAsFactors = F)  ## turn off stringAsFactors
+                        newnames=.doAssayDataNameSubstitutions(unique(datcnSplit[,2])), stringsAsFactors = FALSE)  ## turn off stringAsFactors
  #                        newnames=.doAssayDataNameSubstitutions(unique(datcnSplit[,2]))) # changed by Pan Du, July 1, 2010
   
 	## added by Pan Du, July 1, 2010
@@ -194,8 +201,9 @@ getAssayDataNameSubstitutions <- function() {
 
 .readFinalReportMethylationFile <- function(filename, sep=sep, ...) {
   tmpdat <- readLines(filename)
-  tmp <- grep('\\[.*\\]$',tmpdat)
-  blocks <- data.frame(start=tmp,nrows=c(tmp[2:length(tmp)],length(tmpdat)+1)-tmp-1,block=toupper(tmpdat[tmp]))
+  pattern <- paste('\\[.*\\]', sep, '*$', sep='')  ## added on 05/10/2012
+  tmp <- grep(pattern,tmpdat)
+  blocks <- data.frame(start=tmp,nrows=c(tmp[2:length(tmp)],length(tmpdat)+1)-tmp-1,block=gsub(sep, "", toupper(tmpdat[tmp])))
   header <- .getFinalReportHeader(filename,blocks, sep=sep)
   datblock <- .getFinalReportMethylationProfile(filename,blocks=blocks, blockname="[SAMPLE METHYLATION PROFILE]", required=TRUE,header=TRUE,fill=FALSE, sep=sep)
   qcblock <- .getFinalReportMethylationProfile(filename,blocks=blocks,blockname="[CONTROL PROBE PROFILE]",
