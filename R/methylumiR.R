@@ -95,8 +95,19 @@ getAssayDataNameSubstitutions <- function() {
   cn <- colnames(dat)
   datcnidx <- grep(datcolsep,cn)
   datcn <- cn[datcnidx]
-  cnSplit <- do.call(rbind,strsplit(cn,datcolsep))
-  datcnSplit <- do.call(rbind,strsplit(datcn,datcolsep))
+  ## updated on 06/13/2012
+  cnSplit <- do.call(rbind, lapply(strsplit(cn,datcolsep), function(x) {
+	  if (length(x) > 2) {
+		  x <- c(paste(x[-length(x)], collapse='.'), x[length(x)])
+	  }
+		return(x)
+  }))
+  datcnSplit <- do.call(rbind, lapply(strsplit(datcn,datcolsep), function(x) {
+		  if (length(x) > 2) {
+			  x <- c(paste(x[-length(x)], collapse='.'), x[length(x)])
+		  }
+			return(x)
+	  }))
 
   dattypes <- data.frame(original=unique(datcnSplit[,2]),
                         newnames=.doAssayDataNameSubstitutions(unique(datcnSplit[,2])), stringsAsFactors = FALSE)  ## turn off stringAsFactors

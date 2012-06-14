@@ -31,6 +31,10 @@
 \alias{unmethylated.N<-,MethyLumiM,ANY-method}
 \alias{unmethylated,MethyLumiM-method}
 \alias{unmethylated<-,MethyLumiM,ANY-method}
+\alias{dataType,MethyLumiM-method}
+\alias{dataType<-,MethyLumiM,ANY-method}
+\alias{dataType<-,MethyLumiM-method}
+
 \title{Class "MethyLumiM": for Illumina Methylation microarray data
   using logRatios}
 \description{
@@ -44,6 +48,7 @@ The "exprs" is a matrix of M-values, which is the log2 ratio of methylated and u
   \describe{
     \item{\code{history}:}{Object of class \code{"data.frame"} recording the operation history of the LumiBatch object.}
     \item{\code{controlData}:}{Object of class \code{"MethyLumiQC"} to keep the QC probe measurement information.}
+    \item{\code{dataType}:}{The type of data stored in the "exprs" data matrix in "assayData". It can be "M" (M-value), "Beta" (Beta-value") or "Intensity" (Intensity of CpG-site)}
     \item{\code{assayData}:}{Object of class \code{"AssayData"}, which includes "exprs", "methylated", "unmethylated", "detection", "methylated.N" and "unmethylated.N" data matrix}
     \item{\code{phenoData}:}{Object of class \code{"AnnotatedDataFrame"}, See \code{\link[Biobase]{eSet-class}} }
     \item{\code{featureData}:}{Object of class \code{"AnnotatedDataFrame"}, See \code{\link[Biobase]{eSet-class}} }
@@ -77,6 +82,8 @@ Class \code{"\link{Versioned}"}, by class "ExpressionSet", distance 4.
     \item{detection<-}{\code{signature(object = "MethyLumiM")}: set \code{detection} data matrix in \code{AssayData-class}  }
     \item{controlData}{\code{signature(object = "MethyLumiM")}: retrieve the \code{controlData} in \code{MethyLumiQC-class} }
     \item{controlData<-}{\code{signature(object = "MethyLumiM")}: set \code{controlData} in \code{MethyLumiQC-class}  }
+    \item{dataType}{\code{signature(object = "MethyLumiM")}: retrieve the dataType, by default it is "M", it can also be "Beta" or "Intensity" }
+    \item{dataType<-}{\code{signature(object = "MethyLumiM")}: set \code{dataType} in \code{MethyLumiM-class}, the value can be "M", "Beta" or "Intensity"}
 	 }
 }
 \references{
