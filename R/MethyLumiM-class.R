@@ -1,7 +1,7 @@
 ## ---------------------------------------------------------------
 ## define a new class lumiMethyM
 setClass('MethyLumiM', 
-	representation(controlData='QCDataOrNULL', history='data.frame'), 
+	representation(controlData='QCDataOrNULL', history='data.frame', dataType='character'), 
 	prototype=list(controlData = NULL, history=data.frame(
 		submitted   = I(vector()),
 		finished    = I(vector()),
@@ -18,6 +18,7 @@ setMethod('initialize', 'MethyLumiM', function(.Object,
 	detection = new('matrix'),  # detection pvalues
 	methylated.N = new('matrix'),  # number of M beads
 	unmethylated.N = new('matrix'),  # number of U beads
+	dataType = 'M',
 	controlData = NULL,
     ...,
     assayData)
@@ -270,6 +271,24 @@ setReplaceMethod("controlData", signature(object="MethyLumiM"), function(object,
 })	
 
 
+setMethod("dataType", signature(object="MethyLumiM"), function(object) {
+	
+	if ('dataType' %in% slotNames(object)) {
+		return(object@dataType)
+	} else {
+		return(NA)
+	}
+
+})
+
+
+setReplaceMethod("dataType", signature(object="MethyLumiM"), function(object, value) {
+	object@dataType <- as.character(value)
+  return(object)
+})	
+
+
+
 setMethod("getHistory",signature(object="MethyLumiM"), function(object) object@history)
 
 
@@ -358,6 +377,7 @@ estimateM <- function(methyLumiM, returnType=c("ExpressionSet", "matrix"), offse
 	if (returnType == "matrix") {
 		return(M)
 	} else {
+		dataType(methyLumiM) <- 'M'
 		exprs(methyLumiM) <- M
 		return(methyLumiM)
 	}

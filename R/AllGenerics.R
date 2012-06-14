@@ -35,6 +35,8 @@ if (is.null(getGeneric("controlData"))) setGeneric("controlData", function(objec
 if (is.null(getGeneric("controlData<-"))) setGeneric("controlData<-", function(object, value) standardGeneric("controlData<-"))
 if (is.null(getGeneric("detection"))) setGeneric("detection", function(object) standardGeneric("detection"))
 if (is.null(getGeneric("detection<-"))) setGeneric("detection<-", function(object, value) standardGeneric("detection<-"))
+if (is.null(getGeneric("dataType"))) setGeneric("dataType", function(object) standardGeneric("dataType"))
+if (is.null(getGeneric("dataType<-"))) setGeneric("dataType<-", function(object, value) standardGeneric("dataType<-"))
 
 
 if (is.null(getGeneric("featureFilter"))) # {{{

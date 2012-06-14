@@ -34,4 +34,4 @@ exportMethods("getHistory","betas","pvals","exprs","summary",
               "methylated.N","methylated.N<-", "featureFilter","varFilter",
               "intensities.OOB","intensities.IB","negnorm","Cy3<-","Cy5<-",
               "intensities.OOB.allelic", "intensitiesByChannel","intensities.M",
-              "intensities.U","combine27k450k")
+              "intensities.U","combine27k450k", "dataType", "dataType<-")
