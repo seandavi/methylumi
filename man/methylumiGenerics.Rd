@@ -52,6 +52,8 @@
 \alias{total.intensity}
 \alias{unmethylated.N}
 \alias{unmethylated.N<-}
+\alias{dataType}
+\alias{dataType<-}
 
 \title{
   Generics defined in methylumi
