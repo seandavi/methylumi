@@ -30,7 +30,7 @@ setReplaceMethod('pval.detect', signature(object="methylData", value="numeric"),
 
   # instead of a normal approximation, use the ECDF of the negative controls
   ecdfs <- lapply(sampleNames(object), function(i) { # {{{
-    per.channel <- lapply(channels, function(ch) ecdf(negctls(object, ch)[, i]))
+    per.channel <- lapply(channels, function(ch) ecdf(negctls(object, ch)[, i, drop=FALSE]))
     names(per.channel) <- names(channels)
     return(per.channel)
   }) # }}}

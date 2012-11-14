@@ -142,7 +142,7 @@ readMethyLumIDAT <- function(idatFile){ # {{{
   }
 
   ## Patch from KDH's code 
-  fields <- fields[order(fields[, "Byte Offset"]),]
+  fields <- fields[order(fields[, "Byte Offset"]),,drop=FALSE]
 
   seek(tempCon, fields["nSNPsRead", "Byte Offset"])
   nSNPsRead <- readBin(tempCon, "integer", n=1, size=4, endian="little")
@@ -540,11 +540,11 @@ getControlProbes <- function(NChannelSet) { # {{{
         'Reporter group ID for this bead'
       ))
   fDat <- new("AnnotatedDataFrame", data=fD, varMetadata=fvD)
-  methylated <- assayDataElement(NChannelSet,'G')[ctls,] # Cy3
-  unmethylated <- assayDataElement(NChannelSet,'R')[ctls,] # Cy5
-  methylated.SD <- assayDataElement(NChannelSet,'G.SD')[ctls,] # Cy3
-  unmethylated.SD <- assayDataElement(NChannelSet,'R.SD')[ctls,] # Cy5
-  NBeads <- assayDataElement(NChannelSet,'N')[ctls,]
+  methylated <- assayDataElement(NChannelSet,'G')[ctls,,drop=FALSE] # Cy3
+  unmethylated <- assayDataElement(NChannelSet,'R')[ctls,,drop=FALSE] # Cy5
+  methylated.SD <- assayDataElement(NChannelSet,'G.SD')[ctls,,drop=FALSE] # Cy3
+  unmethylated.SD <- assayDataElement(NChannelSet,'R.SD')[ctls,,drop=FALSE] # Cy5
+  NBeads <- assayDataElement(NChannelSet,'N')[ctls,,drop=FALSE]
 
   rownames(methylated) <- rownames(unmethylated) <- ctlnames
   rownames(methylated.SD) <- rownames(unmethylated.SD) <- ctlnames
@@ -571,27 +571,27 @@ designItoMandU <- function(NChannelSet, parallel=F, n=T, n.sd=F, oob=T) { # {{{
   names(channels) <- channels
 
   getIntCh <- function(NChannelSet, ch, al) { # {{{
-    a = assayDataElement(NChannelSet,ch)[as.character(probes[[ch]][[al]]),]
+    a = assayDataElement(NChannelSet,ch)[as.character(probes[[ch]][[al]]),,drop=FALSE]
     rownames(a) = as.character(probes[[ch]][['Probe_ID']])
     return(a)
   } # }}}
 
   getSDCh <- function(NChannelSet, ch, al) { # {{{
     ch.sd <- paste(ch, 'SD', sep='.')
-    a = assayDataElement(NChannelSet, ch.sd)[as.character(probes[[ch]][[al]]),]
+    a = assayDataElement(NChannelSet, ch.sd)[as.character(probes[[ch]][[al]]),,drop=FALSE]
     rownames(a) = as.character(probes[[ch]][['Probe_ID']])
     a
   } # }}}
 
   getOOBCh <- function(NChannelSet, ch, al) { # {{{
     ch.oob <- ifelse(ch == 'R', 'G', 'R')
-    a = assayDataElement(NChannelSet,ch.oob)[as.character(probes[[ch]][[al]]),]
+    a = assayDataElement(NChannelSet,ch.oob)[as.character(probes[[ch]][[al]]),,drop=FALSE]
     rownames(a) = as.character(probes[[ch]][['Probe_ID']])
     return(a)
   } # }}}
 
   getNbeadCh <- function(NChannelSet, ch, al) { # {{{
-    n = assayDataElement(NChannelSet,'N')[as.character(probes[[ch]][[al]]),]
+    n = assayDataElement(NChannelSet,'N')[as.character(probes[[ch]][[al]]),,drop=FALSE]
     rownames(n) = as.character(probes[[ch]][['Probe_ID']])
     return(n)
   } # }}}
@@ -645,14 +645,14 @@ designIItoMandU <- function(NChannelSet, parallel=F, n=T, n.sd=F, oob=T) { # {{{
 
   getNbeadCh <- function(NChannelSet, ch=NULL, al) { # {{{
     ch <- ifelse(al=='M', 'G', 'R')
-    n <- assayDataElement(NChannelSet,'N')[as.character(probes2[[al]]),]
+    n <- assayDataElement(NChannelSet,'N')[as.character(probes2[[al]]),,drop=FALSE]
     rownames(n) <- as.character(probes2[['Probe_ID']])
     n
   } # }}}
 
   getIntCh <- function(NChannelSet, ch=NULL, al) { # {{{
     ch <- ifelse(al=='M', 'G', 'R')
-    a <- assayDataElement(NChannelSet,ch)[as.character(probes2[[al]]),]
+    a <- assayDataElement(NChannelSet,ch)[as.character(probes2[[al]]),,drop=FALSE]
     rownames(a) <- as.character(probes2[['Probe_ID']])
     a
   } # }}}
@@ -660,7 +660,7 @@ designIItoMandU <- function(NChannelSet, parallel=F, n=T, n.sd=F, oob=T) { # {{{
   getSDCh <- function(NChannelSet, ch=NULL, al) { # {{{
     ch <- ifelse(al=='M', 'G', 'R')
     a <- assayDataElement(NChannelSet,paste(ch,'SD',sep='.'))[
-                                     as.character(probes2[[al]]),]
+                                     as.character(probes2[[al]]),,drop=FALSE]
     rownames(a) <- as.character(probes2[['Probe_ID']])
     a
   } # }}}
