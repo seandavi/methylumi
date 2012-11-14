@@ -1,0 +1,21 @@
+Changes in 1.0.18 (penultimate version prior to methylumi merge):
+
+ o  Fixed a bug in normexp() (aka mcsv.normexp()) which was causing problems.
+
+Changes in 1.0.17:
+
+ o  Better handling of HumanMethylation450k control probes, along with some 
+    suggested improvements from Lavinia Gordon at MCRI Australia (thank you!)
+    and implementation of empirical CDF based detection p-values for both chips
+
+Changes in 1.0.14:
+
+ o  Default qcplot method will jitter the negative and normalization controls,
+    to give some idea of the degree to which the latter separate from the former
+    and thus some indication of how successful the assay was for each sample.
+
+Changes in 1.0.13:
+
+ o  Incorporate bugfix from Andrew Jaffe so that full path names could be used
+    for the 'vignette' (450k data import testing and casting to MethyLumiM).
+    Thanks Andrew!

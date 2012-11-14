@@ -1,0 +1,37 @@
+import(Biobase)
+import(BiocGenerics)
+
+importFrom(annotate,
+           getAnnMap)
+
+importMethodsFrom(AnnotationDbi,
+                  mget)
+
+importFrom(stats4, plot, summary)
+
+
+importFrom(graphics,
+           hist,
+           image,
+           pairs)
+
+importFrom(lattice,
+           dotplot,
+           parallel)
+
+export(methylumiR, extractBarcodeAndPosition, normalizeMethyLumiSet, getAssayDataNameSubstitutions, estimateM, methylumIDAT, lumIDAT, methylumiCSV, lumiCSV, methylumi.diagnostics, qc.probe.plot, cy3, cy5, getBarcodes, stripBeadNs, stripBeadSDs, stripMethyLumiSet, psummary, negctls.stderr, methylumi.bgcorr, IDATtoDF, IDATsToDFs, readMethyLumIDAT, designItoMandU, designIItoMandU, mergeProbeDesigns, NChannelSetToMethyLumiSet, subset450kas27k, subset27kas450k, subsetCommonProbes, stripOOB, plotNegOob, compare.chips, .mclapply)
+
+exportClasses("MethyLumiSet","MethyLumiQC","MethyLumi", "MethyLumiM","methylData")
+exportMethods("getHistory","betas","pvals","exprs","summary",
+              "show","combine","hist","pairs","[",
+              "QCdata","plotSampleIntensities","qcplot","total.intensity",
+              "methylated","unmethylated","unmethylated<-",
+              "methylated<-","QCdata<-","exprs<-","diagnostics","Cy3.N","Cy5.N",
+              "pvals<-","betas<-","controlTypes","corplot", "negctls.stderr",
+              "controlData", "controlData<-", "detection", "detection<-", 
+              "unmethylated.N","unmethylated.N<-","pval.detect<-","pval.detect",
+              "sampleNAs","probeNAs","plotNAs","normctls","negctls", 
+              "methylated.N","methylated.N<-", "featureFilter","varFilter",
+              "intensities.OOB","intensities.IB","negnorm","Cy3<-","Cy5<-",
+              "intensities.OOB.allelic", "intensitiesByChannel","intensities.M",
+              "intensities.U","combine27k450k", "dataType", "dataType<-")

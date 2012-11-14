@@ -1,0 +1,10 @@
+"regex"	"result"
+"AVG_Beta"	"betas"
+"Detection Pval"	"pvals"
+"Signal CY3"	"unmethylated"
+"Signal CY5"	"methylated"
+"Signal_Red"	"unmethylated"
+"Signal_Grn"	"methylated"
+"Signal_A"	"unmethylated"
+"Signal_B"	"methylated"
+
