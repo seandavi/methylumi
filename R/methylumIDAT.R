@@ -955,6 +955,9 @@ methylumIDAT2 <- function(barcodes=NULL,pdat=NULL,parallel=F,n=T,n.sd=F,oob=T,id
     sampleNames(mlumi@QC) = sampleNames(mlumi)
   } # }}}
 
+  # prevents some issues with combine()
+  sampleNames(mlumi) <- sampleNames(assayData(mlumi))
+
   # finally
   return(mlumi[ sort(featureNames(mlumi)), ])
 
