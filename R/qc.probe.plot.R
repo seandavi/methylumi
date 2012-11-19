@@ -104,7 +104,8 @@ qc.probe.plot <- function(obj,controltype="negnorm",log2=T,by.type=F,...){ # {{{
                         x = value, y = variable, geom = geometry,
                         main=a.title, ylab="Sample", xlab="Intensities")
     p <- p + scale_y_discrete( limits=rev(sampleNames(obj)) ) # more readable
-    if (log2) p <- p + scale_x_continuous(trans='log2')
+    if (log2) p <- p + scale_x_continuous(trans='log2', limits=c(2**4, 2**16))
+    else p <- p + scale_x_continuous(limits=c(2**4, 2**16))
   }
   if( by.type ) {
     p <- p + facet_grid( type ~ channel)

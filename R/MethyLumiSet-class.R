@@ -68,8 +68,9 @@ setValidity("MethyLumiQC", function(object) { # {{{
     if (is.null(msg)) TRUE else msg
 }) # }}}
 
-setGeneric('betas', # {{{
-    function(object) standardGeneric('betas')) # }}} 
+if(!isGeneric('betas')) {
+  setGeneric('betas', function(object) standardGeneric('betas')) 
+}
 setMethod("betas", signature(object="MethyLumiSet"), # {{{
           function(object) assayDataElement(object,"betas")) # }}}
 setGeneric('betas<-', # {{{
@@ -518,6 +519,8 @@ setMethod("combine", signature=c(x="MethyLumiQC", y="MethyLumiQC"), function(x,y
   if (any(sort(featureNames(x)) != sort(featureNames(y)))) { # {{{
     stop('The two data sets have different row names!')
   } # }}}
+  sampleNames(x) <- sampleNames(assayData(x)) ## fixes an old glitch
+  sampleNames(y) <- sampleNames(assayData(y)) ## fixes an old glitch
   history.submitted <- as.character(Sys.time())
   n.x = dim(x)[2]
   n.y = dim(y)[2]
