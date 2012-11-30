@@ -368,7 +368,7 @@ estimateM <- function(methyLumiM, returnType=c("ExpressionSet", "matrix"), offse
 	
 	unmethy <- assayDataElement(methyLumiM, 'unmethylated') 
 	methy <- assayDataElement(methyLumiM, 'methylated') 
-	mm <- min(c(unmethy, methy))
+  mm <- min(c(unmethy, methy), na.rm=TRUE)
 	if (mm < 0.01) {
 		unmethy[unmethy < 0.01] <- 0.01 
 		methy[methy < 0.01] <- 0.01 
@@ -377,7 +377,9 @@ estimateM <- function(methyLumiM, returnType=c("ExpressionSet", "matrix"), offse
 	if (returnType == "matrix") {
 		return(M)
 	} else {
-		dataType(methyLumiM) <- 'M'
+		if ('dataType' %in% slotNames(methyLumiM)) {
+			dataType(methyLumiM) <- 'M'
+		}
 		exprs(methyLumiM) <- M
 		return(methyLumiM)
 	}
