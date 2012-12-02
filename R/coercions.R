@@ -125,12 +125,12 @@ if(require('GenomicRanges')) {
       return(assayDataElement(object,"Meth"))) # }}}
     setMethod("unmethylated",signature(object="MethylSet"),function(object)# {{{
       return(assayDataElement(object,"Unmeth"))) # }}}
-    setMethod("betas",signature(object="MethylSet"), function(object)# {{{
-      return(methylated(object)/(methylated(object)+unmethylated(object))))# }}}
+    setMethod("betas",signature(object="MethylSet"), function(object) # {{{
+      return(minfi::getBeta(object))) # }}}
     setMethod("betas", signature(object="SummarizedExperiment"), # {{{
            function(object) assays(object)$betas ) # }}}
     setMethod("betas", signature(object="GenomicMethylSet"), # {{{
-           function(object) getBetas(object)) # }}} 
+           function(object) minfi::getBeta(object)) # }}} 
 
     setAs("SummarizedExperiment", "GenomicMethylSet", function(from) { # {{{
       message('This function is almost solely for TCGA use... beware...')
@@ -168,17 +168,45 @@ if(require('GenomicRanges')) {
     setAs("MethyLumiSet", "RGChannelSet", function(from) methylumiToMinfi(from))
     setAs("MethyLumiM", "RGChannelSet", function(from) methylumiToMinfi(from))
     setAs("MethyLumiSet", "MethylSet", function(from) { # {{{
-      annotation(from) <- c(array=annotation(from), annotation='ilmn.v1.2')
-      MethylSet(Meth=methylated(from), Unmeth=unmethylated(from))
+      pre <- c('methylumi')
+      if(any(grepl('bgcorr', as.character(getHistory(from)$command)))) 
+        pre <- c(pre, 'background corrected')
+      if(any(grepl('ormalize', as.character(getHistory(from)$command))))
+        pre <- c(pre, 'dye bias equalized')
+      to <- MethylSet(Meth=methylated(from), Unmeth=unmethylated(from))
+      to@annotation <- c(array=annotation(from), annotation='ilmn.v1.2')
+      to@preprocessMethod <- c(rg.norm=paste(pre, collapse=', '),
+                               minfi=paste(packageVersion('minfi'),
+                                           collapse='.'), 
+                               manifest='0.4')
+      pData(to) <- pData(from)
+      fData(to) <- fData(from)
+      return(to)
     }) # }}}
     setAs("MethyLumiM", "MethylSet", function(from) { # {{{
-      annotation(from) <- c(array=annotation(from), annotation='ilmn.v1.2')
-      MethylSet(Meth=methylated(from), Unmeth=unmethylated(from))
+      pre <- c('methylumi')
+      if(any(grepl('bgcorr', as.character(getHistory(from)$command)))) 
+        pre <- c(pre, 'background corrected')
+      if(any(grepl('ormalize', as.character(getHistory(from)$command))))
+        pre <- c(pre, 'dye bias equalized')
+      to <- MethylSet(Meth=methylated(from), Unmeth=unmethylated(from))
+      to@annotation <- c(array=annotation(from), annotation='ilmn.v1.2')
+      to@preprocessMethod <- c(rg.norm=paste(pre, collapse=', '),
+                               minfi=paste(packageVersion('minfi'),
+                                           collapse='.'), 
+                               manifest='0.4')
+      pData(to) <- pData(from)
+      fData(to) <- fData(from)
+      return(to)
     }) # }}}
     setMethod("mapToGenome", signature(object="MethyLumiSet"), # {{{
-          function(object, ...) mapToGenome(as(object, 'MethylSet'))) # }}}
+          function(object, ...) {
+            mapToGenome(as(object, 'MethylSet'))
+          }) # }}}
     setMethod("mapToGenome", signature(object="MethyLumiM"), # {{{
-          function(object, ...) mapToGenome(as(object, 'MethylSet'))) # }}}
+          function(object, ...) {
+            mapToGenome(as(object, 'MethylSet'))
+          }) # }}}
 
   } # }}}
 
