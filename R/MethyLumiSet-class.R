@@ -542,7 +542,7 @@ setMethod("combine", signature=c(x="MethyLumiQC", y="MethyLumiQC"), function(x,y
     submitted=history.submitted,
     finished=as.character(Sys.time()),
     command=paste('Added',dim(y)[2],'samples (',dim(x)[2],'unique samples).')
-  )
+  ))
 	return(x)
 }  # }}}
 setMethod("combine",signature=c(x="MethyLumiSet",y="MethyLumiSet"),function(x,y){ # {{{
