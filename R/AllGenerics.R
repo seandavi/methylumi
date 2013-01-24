@@ -251,11 +251,13 @@ setMethod('negctls', signature(object="MethyLumiM",channel='missing'), # {{{
           }) # }}}
 setMethod('negctls', signature(object="MethyLumiQC",channel='character'), # {{{
           function(object, channel) {
-            negs <- grep('negative', tolower(featureNames(object)))
+            negs0 <- grep('negative', tolower(featureNames(object)))
+            negs1 <- grep('-99', fData(object)$Color_Channel) ## can change
+            negs <- setdiff(negs0, negs1)
             if(channel %in% c('Cy3','Grn','G')) {
-              return(methylated(object)[negs,,drop=FALSE])
+              return(methylated(object)[negs, , drop=FALSE])
             } else if(channel %in% c('Cy5','Red','R')) {
-              return(unmethylated(object)[negs,,drop=FALSE])
+              return(unmethylated(object)[negs, , drop=FALSE])
             }
           }) #}}}
 setMethod('negctls', signature(object="MethyLumiQC",channel='missing'), # {{{
