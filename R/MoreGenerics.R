@@ -21,16 +21,14 @@ setReplaceMethod('sampleNames', signature(object="methylData",value='character')
       object@controlData = cDat
       # }}}
     }
-    if('OOB' %in% slotNames(object)) { # {{{
-      if(!is.null(object@OOB)) { 
-        oob = object@OOB
-        sampleNames(oob) <- value
-        object@OOB = oob 
-      } 
-    } # }}}
     object@phenoData <- pd
     object@protocolData <- prd
-    Biobase:::unsafeSetSlot(object, "assayData", ad)
+   if(identical(sampleNames(ad), sampleNames(object))) {
+      Biobase:::unsafeSetSlot(object, "assayData", ad)
+    } else {
+      message("Something is wrong... returning the object unchanged.")
+      return(object)
+    }
   }) #}}}
 
 # mostly QC and annotation functions
