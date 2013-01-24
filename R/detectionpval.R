@@ -29,8 +29,17 @@ setReplaceMethod('pval.detect', signature(object="methylData", value="numeric"),
   rm(colorchan)
 
   # instead of a normal approximation, use the ECDF of the negative controls
+  # interestingly, this can come in handy when dealing with FFPE samples 
   ecdfs <- lapply(sampleNames(object), function(i) { # {{{
-    per.channel <- lapply(channels, function(ch) ecdf(negctls(object, ch)[, i, drop=FALSE]))
+    per.channel <- lapply(channels, 
+                          function(ch) { # {{{ ECDF of true negative controls
+                            ids <- rownames(negctls(object, ch))
+                            color <- fData(QCdata(object))[ids,'Color_Channel']
+                            keep <- which(color != '-99')
+                            background <- negctls(object, ch)[keep, i, drop=F]
+                            ecdf(background)
+                          } # }}}
+    )
     names(per.channel) <- names(channels)
     return(per.channel)
   }) # }}}
