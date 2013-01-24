@@ -98,7 +98,8 @@ qc.probe.plot <- function(obj,controltype="negnorm",log2=T,by.type=F,...){ # {{{
                         x = variable, y = value, geom = 'boxplot', main=a.title,
                         xlab="Sample", ylab="Intensities") + 
                         coord_flip() 
-    if (log2) p <- p + scale_y_continuous(trans='log2')
+    if (log2) p <- p + scale_x_continuous(trans='log2', limits=c(2**4, 2**16))
+    else p <- p + scale_x_continuous(limits=c(2**4, 2**16))
   } else {
     p <- ggplot2::qplot(data = qc, colour = type, shape = type, 
                         x = value, y = variable, geom = geometry,
