@@ -1,4 +1,3 @@
-if(require('GenomicRanges')) {
 
   setAs("MIAME", "SimpleList", function(from) { # {{{
     to = list()
@@ -34,9 +33,56 @@ if(require('GenomicRanges')) {
   setAs("MethyLumiSet", "SummarizedExperiment", function(from) msetToSE(from))
   setAs("MethyLumiM", "SummarizedExperiment", function(from) msetToSE(from))
 
-  if(require(minfi)) {
 
     require(FDb.InfiniumMethylation.hg19) ## and/or IlluminaManifest.foo.bar?
+    getPlatform <- function(platform="HM450", genome="hg19") { ## {{{ 
+      require(Biostrings)
+      require(rtracklayer)
+      if (genome == "hg19") {
+        message("Fetching coordinates for hg19...")
+        require(FDb.InfiniumMethylation.hg19)
+        GR <- features(FDb.InfiniumMethylation.hg19)
+      } else if (genome == "hg18") {
+        message("Fetching coordinates for hg18...")
+        require(FDb.InfiniumMethylation.hg18)
+        GR <- features(FDb.InfiniumMethylation.hg18)
+      } else {
+        stop("Only hg18 and hg19 are currently supported.")
+      }
+      GR <- keepSeqlevels(GR, paste0("chr", c(1:22, "X", "Y")))
+      if ("name" %in% names(mcols(GR))) names(GR) <- mcols(GR)$name
+      if (is.na(unique(genome(GR)))) genome(GR) <- genome
+      seqinfo(GR) <- SeqinfoForBSGenome(unique(genome(GR)))[seqlevels(GR)]
+      platform <- toupper(platform)
+      if (platform %in% c("HM450", "ILLUMINAHUMANMETHYLATION450")) {
+        hm450.controls <- NULL
+        data(hm450.controls)
+        GR <- GR[which(mcols(GR)$platform %in% c("HM450", "BOTH"))]
+        mcols(GR)$channel <- Rle(as.factor(mcols(GR)$channel450))
+        mcols(GR)$addressA <- as.character(mcols(GR)$addressA_450)
+        mcols(GR)$addressB <- as.character(mcols(GR)$addressB_450)
+        attr(GR, "controls") <- hm450.controls
+      } else if (platform == "HM27") {
+        hm27.controls <- NULL
+        data(hm27.controls)
+        GR <- GR[which(mcols(GR)$platform %in% c("HM27", "BOTH"))]
+        mcols(GR)$channel <- Rle(as.factor(mcols(GR)$channel27))
+        mcols(GR)$addressA <- as.character(mcols(GR)$addressA_27)
+        mcols(GR)$addressB <- as.character(mcols(GR)$addressB_27)
+        attr(GR, "controls") <- hm27.controls
+      } else {
+        stop("You need to specify either HM27 or HM450 as platform to run")
+      }
+      mcols(GR)$percentGC <- as.numeric(mcols(GR)$percentGC)
+      mcols(GR)$probeType <- Rle(as.factor(mcols(GR)$probeType))
+      mcols(GR)$platform <- Rle(as.factor(mcols(GR)$platform))
+      mcols(GR)$sourceSeq <- DNAStringSet(mcols(GR)$sourceSeq)
+      kept = c("addressA", "addressB", "channel", "platform", "percentGC", 
+               "sourceSeq","probeType","probeStart","probeEnd","probeTarget")
+      val <- mcols(GR)[, intersect(names(mcols(GR)), kept)]
+      mcols(GR) <- val
+      return(GR)
+    } # }}}
 
     byChannel.Both <- function(mset, annot) { # {{{
       probes <- names(split(annot, values(annot)$channel)[['Both']])
@@ -44,7 +90,7 @@ if(require('GenomicRanges')) {
       addrs <- values(annot[probes])$addressA
       Green = methylated(mset)[probes, ]
       Red = unmethylated(mset)[probes, ]
-      rownames(Green) = rownames(Red) = addrs
+      rownames(Green) = rownames(Red) = as.character(addrs)
       return(list(Green=Green, Red=Red))
     } # }}}
     byChannel.Grn <- function(mset, annot) { # {{{
@@ -54,15 +100,15 @@ if(require('GenomicRanges')) {
       addrsB <- values(annot[probes])$addressB
 
       Grn.M = methylated(mset)[probes, ]
-      rownames(Grn.M) = addrsB
+      rownames(Grn.M) = as.character(addrsB)
       Grn.U = unmethylated(mset)[probes, ]
-      rownames(Grn.U) = addrsA
+      rownames(Grn.U) = as.character(addrsA)
       Green = rbind(Grn.M, Grn.U)
 
       Red.M = mOOB(mset)[probes, ]
-      rownames(Red.M) = addrsB
+      rownames(Red.M) = as.character(addrsB)
       Red.U = uOOB(mset)[probes, ]
-      rownames(Red.U) = addrsA
+      rownames(Red.U) = as.character(addrsA)
       Red = rbind(Red.M, Red.U)
 
       return(list(Green=Green, Red=Red))
@@ -201,13 +247,10 @@ if(require('GenomicRanges')) {
     }) # }}}
     setMethod("mapToGenome", signature(object="MethyLumiSet"), # {{{
           function(object, ...) {
-            mapToGenome(as(object, 'MethylSet'))
+            minfi::mapToGenome(as(object, 'MethylSet'))
           }) # }}}
     setMethod("mapToGenome", signature(object="MethyLumiM"), # {{{
           function(object, ...) {
-            mapToGenome(as(object, 'MethylSet'))
+            minfi::mapToGenome(as(object, 'MethylSet'))
           }) # }}}
 
-  } # }}}
-
-}
