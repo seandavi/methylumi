@@ -47,15 +47,10 @@
           stop()
         }
       } else if (genome == "hg18") {
-        message("Fetching coordinates for hg18...")
-        if(require(FDb.InfiniumMethylation.hg18)) {
-          GR <- features(FDb.InfiniumMethylation.hg18)
-        } else {
-          message("The FDb.InfiniumMethylation.hg18 package appears to be unavailable.  Please install it to use hg18 coordinates")
-          stop()
-        }
+        # FDb.InfiniumMethyulation.hg18 is gone as of bioc 2.12
+        stop('hg18 is no longer supported')
       } else {
-        stop("Only hg18 and hg19 are currently supported.")
+        stop("Only hg19 is currently supported.")
       }
       GR <- keepSeqlevels(GR, paste0("chr", c(1:22, "X", "Y")))
       if ("name" %in% names(mcols(GR))) names(GR) <- mcols(GR)$name
