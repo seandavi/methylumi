@@ -40,12 +40,20 @@
       require(rtracklayer)
       if (genome == "hg19") {
         message("Fetching coordinates for hg19...")
-        require(FDb.InfiniumMethylation.hg19)
-        GR <- features(FDb.InfiniumMethylation.hg19)
+        if(require(FDb.InfiniumMethylation.hg19)) {
+          GR <- features(FDb.InfiniumMethylation.hg19)
+        } else {
+          message("The FDb.InfiniumMethylation.hg19 package appears to be unavailable.  Please install it to use hg19 coordinates")
+          stop()
+        }
       } else if (genome == "hg18") {
         message("Fetching coordinates for hg18...")
-        require(FDb.InfiniumMethylation.hg18)
-        GR <- features(FDb.InfiniumMethylation.hg18)
+        if(require(FDb.InfiniumMethylation.hg18)) {
+          GR <- features(FDb.InfiniumMethylation.hg18)
+        } else {
+          message("The FDb.InfiniumMethylation.hg18 package appears to be unavailable.  Please install it to use hg18 coordinates")
+          stop()
+        }
       } else {
         stop("Only hg18 and hg19 are currently supported.")
       }
