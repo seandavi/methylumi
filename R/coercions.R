@@ -34,7 +34,6 @@
   setAs("MethyLumiM", "SummarizedExperiment", function(from) msetToSE(from))
 
 
-    require(FDb.InfiniumMethylation.hg19) ## and/or IlluminaManifest.foo.bar?
     getPlatform <- function(platform="HM450", genome="hg19") { ## {{{ 
       require(Biostrings)
       require(rtracklayer)
