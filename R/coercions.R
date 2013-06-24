@@ -33,7 +33,6 @@
   setAs("MethyLumiSet", "SummarizedExperiment", function(from) msetToSE(from))
   setAs("MethyLumiM", "SummarizedExperiment", function(from) msetToSE(from))
 
-
     getPlatform <- function(platform="HM450", genome="hg19") { ## {{{ 
       require(Biostrings)
       require(rtracklayer)
@@ -87,19 +86,19 @@
     } # }}}
 
     byChannel.Both <- function(mset, annot) { # {{{
-      probes <- names(split(annot, values(annot)$channel)[['Both']])
+      probes <- names(split(annot, as.vector(values(annot)$channel))[['Both']])
       probes <- intersect(probes, featureNames(mset))
-      addrs <- values(annot[probes])$addressA
+      addrs <- as.vector(values(annot[probes])$addressA)
       Green = methylated(mset)[probes, ]
       Red = unmethylated(mset)[probes, ]
       rownames(Green) = rownames(Red) = as.character(addrs)
       return(list(Green=Green, Red=Red))
     } # }}}
     byChannel.Grn <- function(mset, annot) { # {{{
-      probes <- names(split(annot, values(annot)$channel)[['Grn']])
+      probes <- names(split(annot, as.vector(values(annot)$channel))[['Grn']])
       probes <- intersect(probes, featureNames(mset))
-      addrsA <- values(annot[probes])$addressA
-      addrsB <- values(annot[probes])$addressB
+      addrsA <- as.vector(values(annot[probes])$addressA)
+      addrsB <- as.vector(values(annot[probes])$addressB)
 
       Grn.M = methylated(mset)[probes, ]
       rownames(Grn.M) = as.character(addrsB)
@@ -116,10 +115,10 @@
       return(list(Green=Green, Red=Red))
     } # }}}
     byChannel.Red <- function(mset, annot) { # {{{
-      probes <- names(split(annot, values(annot)$channel)[['Red']])
+      probes <- names(split(annot, as.vector(values(annot)$channel))[['Red']])
       probes <- intersect(probes, featureNames(mset))
-      addrsA <- values(annot[probes])$addressA
-      addrsB <- values(annot[probes])$addressB
+      addrsA <- as.vector(values(annot[probes])$addressA)
+      addrsB <- as.vector(values(annot[probes])$addressB)
 
       Grn.M = mOOB(mset)[probes, ]
       rownames(Grn.M) = addrsB
@@ -136,13 +135,15 @@
       return(list(Green=Green, Red=Red))
     } # }}}
     byChannel <- function(mset, channel, annot) { # {{{
-      stopifnot(channel %in% levels(as.factor(values(annot)$channel)))
+      stopifnot(channel %in% 
+                levels(as.factor(as.vector(values(annot)$channel))))
       if(channel=='Both') byChannel.Both(mset, annot)
       else if(channel=='Grn') byChannel.Grn(mset, annot)
       else if(channel=='Red') byChannel.Red(mset, annot)
     } # }}}
 
     methylumiToMinfi <- function(from, annot=NULL) { # {{{
+      require(minfi)
       if(!all(c('methylated','unmethylated','methylated.OOB','unmethylated.OOB')
               %in% assayDataElementNames(from))){
         stop('Cannot construct an RGChannelSet without full (OOB) intensities')
@@ -150,7 +151,7 @@
       chip=gsub('^IlluminaHumanMethylation','HM',gsub('k$','',annotation(from)))
       if(is.null(annot)) annot <- getPlatform(chip)
     
-      chs <- levels(as.factor(values(annot)$channel))
+      chs <- levels(as.factor(as.vector(values(annot)$channel)))
       names(chs) <- chs
       chans <- lapply(chs, byChannel, mset=from, annot=annot)
       Grn.ctls <- methylated(QCdata(from))
@@ -256,3 +257,41 @@
             minfi::mapToGenome(as(object, 'MethylSet'))
           }) # }}}
 
+setAs("SummarizedExperiment", "MethyGenoSet", 
+      function(from) {
+
+        stopifnot(any(c('M','Beta','exprs','betas') %in% names(assays(from))))
+        logit2 <- function(x) { # {{{
+          log2(x) - log2(1 - x)
+        } # }}}
+        getM <- function(from) { # {{{
+          if('M' %in% names(assays(from))) assays(from)$M
+          else if('Beta' %in% names(assays(from))) logit2(assays(from)$Beta)
+          else if('betas' %in% names(assays(from))) logit2(assays(from)$betas)
+          else if('exprs' %in% names(assays(from))) assays(from)$exprs
+          else stop('Cannot find a summary measure of methylation in assays()')
+        } # }}}
+        getMeth <- function(from) { # {{{
+         if('methylated' %in% names(assays(from))) {
+            return(assays(from)$methylated)
+          } else {
+            return(matrix(NA_real_, ncol=ncol(from), nrow=nrow(from), 
+                          dimnames=dimnames(from)))
+          }
+        } # }}}
+        getUnmeth <- function(from) { # {{{
+         if('unmethylated' %in% names(assays(from))) {
+            return(assays(from)$unmethylated)
+          } else {
+            return(matrix(NA_real_, ncol=ncol(from), nrow=nrow(from), 
+                          dimnames=dimnames(from)))
+          }
+        } # }}}
+        require('methyAnalysis')
+        MethyGenoSet(locData=as(rowData(from), 'RangedData'),
+                     exprs=getM(from),
+                     methylated=getMeth(from),
+                     unmethylated=getUnmeth(from),
+                     pData=as.data.frame(colData(from)),
+                     annotation=annotation(from))
+      })

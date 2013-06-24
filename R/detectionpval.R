@@ -67,12 +67,12 @@ setReplaceMethod('pval.detect', signature(object="methylData", value="numeric"),
     }
   } # }}}
   if(class(object) == 'MethyLumiSet') { # {{{
-    betas(object) <- pmax(methylated(object),1)/pmax(total.intensity(object),1)
+    betas(object) <- pmax(methylated(object),1)/pmax(total.intensity(object),2)
     pvals(object) <- pvals.scratch
     is.na(betas(object))[which(pvals(object) > value, arr.ind=TRUE)] <- TRUE
   } # }}}
   if(class(object) == 'MethyLumiM') { # {{{
-    exprs(object)<-log2(pmax(methylated(object),1)/pmax(unmethylated(object),1))
+    exprs(object)<-log2(pmax(methylated(object),1)/pmax(unmethylated(object),2))
     detection(object) <- pvals.scratch
     is.na(exprs(object))[which(detection(object) > value, arr.ind=TRUE)] <- TRUE
   } # }}}
