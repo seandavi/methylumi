@@ -518,7 +518,7 @@ DFsToNChannelSet <- function(listOfDFs,chans=c(Cy3='GRN',Cy5='RED'),parallel=F, 
       annotation(obj) = 'IlluminaHumanMethylation450k'
     }
   } # }}}
-  if(is.null(annotation(obj))) { # {{{
+  if(is.null(annotation(obj)) || length(annotation(obj) < 1)) { # {{{
     if(dim(obj)[1] == 55300) annotation(obj) = 'IlluminaHumanMethylation27k'
     else annotation(obj) = 'IlluminaHumanMethylation450k'
   } # }}}
@@ -720,6 +720,7 @@ mergeProbeDesigns <- function(NChannelSet, parallel=F, n=T, n.sd=F, oob=T){ #{{{
 NChannelSetToMethyLumiSet <- function(NChannelSet, parallel=F, normalize=F, pval=0.05, n=T, n.sd=F, oob=F, caller=NULL){ # {{{
 
   history.submitted = as.character(Sys.time())
+
   results = mergeProbeDesigns(NChannelSet,parallel=parallel,n.sd=n.sd,oob=oob)
   if(oob && (n|n.sd)) {
     aDat <- with(results,
