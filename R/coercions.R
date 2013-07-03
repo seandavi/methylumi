@@ -86,19 +86,19 @@
     } # }}}
 
     byChannel.Both <- function(mset, annot) { # {{{
-      probes <- names(split(annot, as.vector(values(annot)$channel))[['Both']])
+      probes <- names(split(annot, as(annot$channel, 'vector'))[['Both']])
       probes <- intersect(probes, featureNames(mset))
-      addrs <- as.vector(values(annot[probes])$addressA)
+      addrs <- as(values(annot[probes])$addressA, 'vector')
       Green = methylated(mset)[probes, ]
       Red = unmethylated(mset)[probes, ]
       rownames(Green) = rownames(Red) = as.character(addrs)
       return(list(Green=Green, Red=Red))
     } # }}}
     byChannel.Grn <- function(mset, annot) { # {{{
-      probes <- names(split(annot, as.vector(values(annot)$channel))[['Grn']])
+      probes <- names(split(annot, as(annot$channel, 'vector'))[['Grn']])
       probes <- intersect(probes, featureNames(mset))
-      addrsA <- as.vector(values(annot[probes])$addressA)
-      addrsB <- as.vector(values(annot[probes])$addressB)
+      addrsA <- as(values(annot[probes])$addressA, 'vector')
+      addrsB <- as(values(annot[probes])$addressB, 'vector')
 
       Grn.M = methylated(mset)[probes, ]
       rownames(Grn.M) = as.character(addrsB)
@@ -115,10 +115,10 @@
       return(list(Green=Green, Red=Red))
     } # }}}
     byChannel.Red <- function(mset, annot) { # {{{
-      probes <- names(split(annot, as.vector(values(annot)$channel))[['Red']])
+      probes <- names(split(annot, as(annot$channel, 'vector'))[['Red']])
       probes <- intersect(probes, featureNames(mset))
-      addrsA <- as.vector(values(annot[probes])$addressA)
-      addrsB <- as.vector(values(annot[probes])$addressB)
+      addrsA <- as(values(annot[probes])$addressA, 'vector')
+      addrsB <- as(values(annot[probes])$addressB, 'vector')
 
       Grn.M = mOOB(mset)[probes, ]
       rownames(Grn.M) = addrsB
@@ -136,7 +136,7 @@
     } # }}}
     byChannel <- function(mset, channel, annot) { # {{{
       stopifnot(channel %in% 
-                levels(as.factor(as.vector(values(annot)$channel))))
+                levels(values(annot)$channel))
       if(channel=='Both') byChannel.Both(mset, annot)
       else if(channel=='Grn') byChannel.Grn(mset, annot)
       else if(channel=='Red') byChannel.Red(mset, annot)
@@ -151,7 +151,7 @@
       chip=gsub('^IlluminaHumanMethylation','HM',gsub('k$','',annotation(from)))
       if(is.null(annot)) annot <- getPlatform(chip)
     
-      chs <- levels(as.factor(as.vector(values(annot)$channel)))
+      chs <- levels(values(annot)$channel)
       names(chs) <- chs
       chans <- lapply(chs, byChannel, mset=from, annot=annot)
       Grn.ctls <- methylated(QCdata(from))
