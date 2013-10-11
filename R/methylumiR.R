@@ -16,13 +16,46 @@
 ###
 .getFileType <- function(filename) {
   f <- toupper(readLines(filename,n=1))
-  if(f[1]=="[HEADER]") {
+  if(length(grep('^\\[HEADER\\]', f)) > 0) {
     return("finalreport")
   } else {
     return("goldengate")
   }
 }
-  
+ 
+
+## added by Pan Du to automatically check the separation character 
+.getFileSeparator <- function(filename) {
+	
+	potentialSep <- c('\t', ',', '`', ' ')
+	info <- readLines(filename, n=20)    # take the first 20 lines to have a taste
+
+	## Use "ProbeID or TargetID" as an indicator of Where the metaData stops
+	##   intelligently find nMetaDataLines  
+	nMetaDataLines <- grep('ProbeID', info, ignore.case=TRUE) 
+	if (length(nMetaDataLines) == 0) {
+		nMetaDataLines <- grep('TargetID', info, ignore.case=TRUE) 
+	} 
+	if (length(nMetaDataLines) == 0) {
+		stop('Cannot determine separator used in the file, please manually set the "sep" parameter!')
+	}	
+	nMetaDataLines <- nMetaDataLines - 1
+	sep <- NULL
+    for (sep.i in potentialSep) {
+	    ## Find out the separator (sep) by taking the first two line of data, and comparing them.
+    	titleLine <- info[nMetaDataLines + 1]
+	    dataLine1 <- info[nMetaDataLines + 2]
+		dataLine2 <- info[nMetaDataLines + 3]
+		sepNum1 <- gregexpr(sep.i, dataLine1)[[1]]
+		sepNum2 <- gregexpr(sep.i, dataLine2)[[1]]
+		if (sepNum1[1] > 0 && length(sepNum1) == length(sepNum2)) {
+			sep <- sep.i
+			break
+		}
+	}
+	if (is.null(sep)) stop('Please sepecify the seperator used in the file!\n')
+	return(sep)
+}
 
 ###
 ### Params:
@@ -62,11 +95,22 @@ getAssayDataNameSubstitutions <- function() {
   cn <- colnames(dat)
   datcnidx <- grep(datcolsep,cn)
   datcn <- cn[datcnidx]
-  cnSplit <- do.call(rbind,strsplit(cn,datcolsep))
-  datcnSplit <- do.call(rbind,strsplit(datcn,datcolsep))
+  ## updated on 06/13/2012
+  cnSplit <- do.call(rbind, lapply(strsplit(cn,datcolsep), function(x) {
+	  if (length(x) > 2) {
+		  x <- c(paste(x[-length(x)], collapse='.'), x[length(x)])
+	  }
+		return(x)
+  }))
+  datcnSplit <- do.call(rbind, lapply(strsplit(datcn,datcolsep), function(x) {
+		  if (length(x) > 2) {
+			  x <- c(paste(x[-length(x)], collapse='.'), x[length(x)])
+		  }
+			return(x)
+	  }))
 
   dattypes <- data.frame(original=unique(datcnSplit[,2]),
-                        newnames=.doAssayDataNameSubstitutions(unique(datcnSplit[,2])), stringsAsFactors = F)  ## turn off stringAsFactors
+                        newnames=.doAssayDataNameSubstitutions(unique(datcnSplit[,2])), stringsAsFactors = FALSE)  ## turn off stringAsFactors
  #                        newnames=.doAssayDataNameSubstitutions(unique(datcnSplit[,2]))) # changed by Pan Du, July 1, 2010
   
 	## added by Pan Du, July 1, 2010
@@ -85,11 +129,13 @@ getAssayDataNameSubstitutions <- function() {
   assaydata <- new.env(hash=TRUE,parent=emptyenv())
   featurenames <- make.unique(as.character(dat$TargetID))
   for (i in 1:nrow(dattypes)) {
-    colsOfInterest <- grep(dattypes$original[i],cn)
-    tmpmat <- as.matrix(dat[,colsOfInterest])
-    colnames(tmpmat) <- cnSplit[colsOfInterest,1]
-    rownames(tmpmat) <- featurenames
-    assaydata[[as.character(dattypes$newnames[i])]] <- tmpmat
+    if (dattypes$original[i] != '') {
+      colsOfInterest <- grep(dattypes$original[i],cn)
+      tmpmat <- as.matrix(dat[,colsOfInterest])
+      colnames(tmpmat) <- cnSplit[colsOfInterest,1]
+      rownames(tmpmat) <- featurenames
+      assaydata[[as.character(dattypes$newnames[i])]] <- tmpmat
+    }
   }
 
   ## added by Pan Du, July 1, 2010
@@ -124,7 +170,7 @@ getAssayDataNameSubstitutions <- function() {
 ### Returns:
 ###    A data frame for the data between the block start and end
 ###
-.getFinalReportBlock <- function(filename,blockname,blocks,required,header=FALSE,...) {
+.getFinalReportBlock <- function(filename,blockname,blocks,required,header=FALSE, sep='\t',...) {
   if (!(blockname %in% blocks$block) & required) {
     stop(sprintf('The block called "%s" in the file "%s" is not present and needs to be.  Please re-export from beadstudio',blockname,filename))
   }
@@ -134,7 +180,7 @@ getAssayDataNameSubstitutions <- function() {
   skip=blocks[blocks$block==blockname,'start']
   nrows=blocks[blocks$block==blockname,'nrows']
   if(header) nrows=nrows-1
-  dat <- read.table(filename,skip=skip,nrows=nrows,sep="\t",
+  dat <- read.table(filename,skip=skip,nrows=nrows,sep=sep,
                     header=header,comment.char="",quote="",fill=TRUE,...)
   return(dat)
 }
@@ -148,15 +194,15 @@ getAssayDataNameSubstitutions <- function() {
 ### Returns:
 ###    A data frame with two columns, Tag and Value
 ###
-.getFinalReportHeader <- function(filename,blocks,...) {
-  tmp <- .getFinalReportBlock(filename,blockname="[HEADER]",blocks,required=TRUE,header=FALSE)
+.getFinalReportHeader <- function(filename,blocks, sep, ...) {
+  tmp <- .getFinalReportBlock(filename,blockname="[HEADER]",blocks,required=TRUE,header=FALSE, sep=sep)
   colnames(tmp) <- c("Tag","Value")
   return(tmp)
 }
 
-.getFinalReportMethylationProfile <- function(filename,blocks,blockname,required,...) {
+.getFinalReportMethylationProfile <- function(filename,blocks,blockname,required, sep, ...) {
   dat <- .getFinalReportBlock(filename,blockname=blockname,blocks=blocks,
-                              required=required,header=TRUE,check.names=FALSE)
+                              required=required,header=TRUE,check.names=FALSE, sep=sep)
   if(is.null(dat)) {
     return(NULL)
   }
@@ -164,13 +210,15 @@ getAssayDataNameSubstitutions <- function() {
 }
 
 
-.readFinalReportMethylationFile <- function(filename,...) {
+.readFinalReportMethylationFile <- function(filename, sep=sep, ...) {
   tmpdat <- readLines(filename)
-  tmp <- grep('\\[.*\\]$',tmpdat)
-  blocks <- data.frame(start=tmp,nrows=c(tmp[2:length(tmp)],length(tmpdat)+1)-tmp-1,block=toupper(tmpdat[tmp]))
-  header <- .getFinalReportHeader(filename,blocks)
-  datblock <- .getFinalReportMethylationProfile(filename,blocks=blocks,blockname="[SAMPLE METHYLATION PROFILE]",required=TRUE,header=TRUE,fill=FALSE)
-  qcblock <- .getFinalReportMethylationProfile(filename,blocks=blocks,blockname="[CONTROL PROBE PROFILE]",required=FALSE,header=TRUE)
+  pattern <- paste('\\[.*\\]', sep, '*$', sep='')  ## added on 05/10/2012
+  tmp <- grep(pattern,tmpdat)
+  blocks <- data.frame(start=tmp,nrows=c(tmp[2:length(tmp)],length(tmpdat)+1)-tmp-1,block=gsub(sep, "", toupper(tmpdat[tmp])))
+  header <- .getFinalReportHeader(filename,blocks, sep=sep)
+  datblock <- .getFinalReportMethylationProfile(filename,blocks=blocks, blockname="[SAMPLE METHYLATION PROFILE]", required=TRUE,header=TRUE,fill=FALSE, sep=sep)
+  qcblock <- .getFinalReportMethylationProfile(filename,blocks=blocks,blockname="[CONTROL PROBE PROFILE]",
+  	required=FALSE,header=TRUE, sep=sep)
   return(list(header=header,datblock=datblock,qcblock=qcblock))
 }
 
@@ -185,13 +233,13 @@ getAssayDataNameSubstitutions <- function() {
 ### that does not have data blocks but is simply tab-
 ### delimited text.
 ###
-.readOldMethylationFile <- function(filename,qcfile=NULL,...) {
-  dat <- read.delim(filename,check.names=FALSE,...)
-  datblock <- .extractMethylationFdataAndAssayData(dat,...)
+.readOldMethylationFile <- function(filename,qcfile=NULL, sep, ...) {
+  dat <- read.delim(filename,check.names=FALSE, sep=sep, ...)
+  datblock <- .extractMethylationFdataAndAssayData(dat, ...)
   qcblock <- NULL
   if(!(is.null(qcfile))) {
     dat <- read.delim(qcfile,check.names=FALSE,...)
-    qcblock <- .extractMethylationFdataAndAssayData(dat,...)
+    qcblock <- .extractMethylationFdataAndAssayData(dat, ...)
   }
   return(list(datblock=datblock,qcblock=qcblock,header=NULL))
 }
@@ -205,11 +253,15 @@ getAssayDataNameSubstitutions <- function() {
 ### appropriately, and returns a MethyLumiSet object
 ###
 methylumiR <-
-  function(filename,qcfile=NULL,sampleDescriptions=NULL,...) {
+  function(filename,qcfile=NULL,sampleDescriptions=NULL, sep=NULL, ...) {
 
     history.submitted <- as.character(Sys.time())
     ## Determine the file type from the file itself
     ftype <- .getFileType(filename)
+    
+    ## added by Pan on 09/08/2011
+    if (is.null(sep))  sep <- .getFileSeparator(filename)
+      
     fulldat <- NULL
     ## Parse the files
     ## and return a list with three members:
@@ -220,9 +272,9 @@ methylumiR <-
       if(!(is.null(qcfile))) {
         warning("qcfile specification is not supported for Final Report type BeadStudio Export files")
       }
-      fulldat <- .readFinalReportMethylationFile(filename)
+      fulldat <- .readFinalReportMethylationFile(filename, sep=sep)
     } else {
-      fulldat <- .readOldMethylationFile(filename,qcfile)
+      fulldat <- .readOldMethylationFile(filename,qcfile, sep=sep)
     }
     
     sampleName <-  sampleNames(fulldat$datblock$assaydata)

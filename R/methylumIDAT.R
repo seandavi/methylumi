@@ -142,7 +142,7 @@ readMethyLumIDAT <- function(idatFile){ # {{{
   }
 
   ## Patch from KDH's code 
-  fields <- fields[order(fields[, "Byte Offset"]),]
+  fields <- fields[order(fields[, "Byte Offset"]),,drop=FALSE]
 
   seek(tempCon, fields["nSNPsRead", "Byte Offset"])
   nSNPsRead <- readBin(tempCon, "integer", n=1, size=4, endian="little")
@@ -518,7 +518,7 @@ DFsToNChannelSet <- function(listOfDFs,chans=c(Cy3='GRN',Cy5='RED'),parallel=F, 
       annotation(obj) = 'IlluminaHumanMethylation450k'
     }
   } # }}}
-  if(is.null(annotation(obj))) { # {{{
+  if(is.null(annotation(obj)) || length(annotation(obj) < 1)) { # {{{
     if(dim(obj)[1] == 55300) annotation(obj) = 'IlluminaHumanMethylation27k'
     else annotation(obj) = 'IlluminaHumanMethylation450k'
   } # }}}
@@ -540,11 +540,11 @@ getControlProbes <- function(NChannelSet) { # {{{
         'Reporter group ID for this bead'
       ))
   fDat <- new("AnnotatedDataFrame", data=fD, varMetadata=fvD)
-  methylated <- assayDataElement(NChannelSet,'G')[ctls,] # Cy3
-  unmethylated <- assayDataElement(NChannelSet,'R')[ctls,] # Cy5
-  methylated.SD <- assayDataElement(NChannelSet,'G.SD')[ctls,] # Cy3
-  unmethylated.SD <- assayDataElement(NChannelSet,'R.SD')[ctls,] # Cy5
-  NBeads <- assayDataElement(NChannelSet,'N')[ctls,]
+  methylated <- assayDataElement(NChannelSet,'G')[ctls,,drop=FALSE] # Cy3
+  unmethylated <- assayDataElement(NChannelSet,'R')[ctls,,drop=FALSE] # Cy5
+  methylated.SD <- assayDataElement(NChannelSet,'G.SD')[ctls,,drop=FALSE] # Cy3
+  unmethylated.SD <- assayDataElement(NChannelSet,'R.SD')[ctls,,drop=FALSE] # Cy5
+  NBeads <- assayDataElement(NChannelSet,'N')[ctls,,drop=FALSE]
 
   rownames(methylated) <- rownames(unmethylated) <- ctlnames
   rownames(methylated.SD) <- rownames(unmethylated.SD) <- ctlnames
@@ -571,27 +571,27 @@ designItoMandU <- function(NChannelSet, parallel=F, n=T, n.sd=F, oob=T) { # {{{
   names(channels) <- channels
 
   getIntCh <- function(NChannelSet, ch, al) { # {{{
-    a = assayDataElement(NChannelSet,ch)[as.character(probes[[ch]][[al]]),]
+    a = assayDataElement(NChannelSet,ch)[as.character(probes[[ch]][[al]]),,drop=FALSE]
     rownames(a) = as.character(probes[[ch]][['Probe_ID']])
     return(a)
   } # }}}
 
   getSDCh <- function(NChannelSet, ch, al) { # {{{
     ch.sd <- paste(ch, 'SD', sep='.')
-    a = assayDataElement(NChannelSet, ch.sd)[as.character(probes[[ch]][[al]]),]
+    a = assayDataElement(NChannelSet, ch.sd)[as.character(probes[[ch]][[al]]),,drop=FALSE]
     rownames(a) = as.character(probes[[ch]][['Probe_ID']])
     a
   } # }}}
 
   getOOBCh <- function(NChannelSet, ch, al) { # {{{
     ch.oob <- ifelse(ch == 'R', 'G', 'R')
-    a = assayDataElement(NChannelSet,ch.oob)[as.character(probes[[ch]][[al]]),]
+    a = assayDataElement(NChannelSet,ch.oob)[as.character(probes[[ch]][[al]]),,drop=FALSE]
     rownames(a) = as.character(probes[[ch]][['Probe_ID']])
     return(a)
   } # }}}
 
   getNbeadCh <- function(NChannelSet, ch, al) { # {{{
-    n = assayDataElement(NChannelSet,'N')[as.character(probes[[ch]][[al]]),]
+    n = assayDataElement(NChannelSet,'N')[as.character(probes[[ch]][[al]]),,drop=FALSE]
     rownames(n) = as.character(probes[[ch]][['Probe_ID']])
     return(n)
   } # }}}
@@ -645,14 +645,14 @@ designIItoMandU <- function(NChannelSet, parallel=F, n=T, n.sd=F, oob=T) { # {{{
 
   getNbeadCh <- function(NChannelSet, ch=NULL, al) { # {{{
     ch <- ifelse(al=='M', 'G', 'R')
-    n <- assayDataElement(NChannelSet,'N')[as.character(probes2[[al]]),]
+    n <- assayDataElement(NChannelSet,'N')[as.character(probes2[[al]]),,drop=FALSE]
     rownames(n) <- as.character(probes2[['Probe_ID']])
     n
   } # }}}
 
   getIntCh <- function(NChannelSet, ch=NULL, al) { # {{{
     ch <- ifelse(al=='M', 'G', 'R')
-    a <- assayDataElement(NChannelSet,ch)[as.character(probes2[[al]]),]
+    a <- assayDataElement(NChannelSet,ch)[as.character(probes2[[al]]),,drop=FALSE]
     rownames(a) <- as.character(probes2[['Probe_ID']])
     a
   } # }}}
@@ -660,7 +660,7 @@ designIItoMandU <- function(NChannelSet, parallel=F, n=T, n.sd=F, oob=T) { # {{{
   getSDCh <- function(NChannelSet, ch=NULL, al) { # {{{
     ch <- ifelse(al=='M', 'G', 'R')
     a <- assayDataElement(NChannelSet,paste(ch,'SD',sep='.'))[
-                                     as.character(probes2[[al]]),]
+                                     as.character(probes2[[al]]),,drop=FALSE]
     rownames(a) <- as.character(probes2[['Probe_ID']])
     a
   } # }}}
@@ -720,6 +720,7 @@ mergeProbeDesigns <- function(NChannelSet, parallel=F, n=T, n.sd=F, oob=T){ #{{{
 NChannelSetToMethyLumiSet <- function(NChannelSet, parallel=F, normalize=F, pval=0.05, n=T, n.sd=F, oob=F, caller=NULL){ # {{{
 
   history.submitted = as.character(Sys.time())
+
   results = mergeProbeDesigns(NChannelSet,parallel=parallel,n.sd=n.sd,oob=oob)
   if(oob && (n|n.sd)) {
     aDat <- with(results,
@@ -820,7 +821,7 @@ NChannelSetToMethyLumiSet <- function(NChannelSet, parallel=F, normalize=F, pval
 
 ## FIXME: switch to using 'parallel' by default with dummy mclapply()
 ##
-methylumIDAT <- function(barcodes=NULL,pdat=NULL,parallel=F,n=F,n.sd=F,oob=T,idatPath=getwd(), with.hg18=FALSE, ...) { # {{{
+methylumIDAT <- function(barcodes=NULL,pdat=NULL,parallel=F,n=F,n.sd=F,oob=T,idatPath=getwd(), ...) { # {{{
   if(is(barcodes, 'data.frame')) pdat = barcodes
   if((is.null(barcodes))&(is.null(pdat) | (!('barcode' %in% names(pdat))))){#{{{
     stop('"barcodes" or "pdat" (with pdat$barcode defined) must be supplied.')
@@ -893,7 +894,7 @@ lumIDAT <- function(barcodes, pdat=NULL, parallel=F, n=T, idatPath=getwd(), ...)
 
 ## FIXME: finish transitioning to matrices as intermediate data type
 ##
-methylumIDAT2 <- function(barcodes=NULL,pdat=NULL,parallel=F,n=T,n.sd=F,oob=T,idatPath=getwd(), with.hg18=FALSE, ...) { # {{{
+methylumIDAT2 <- function(barcodes=NULL,pdat=NULL,parallel=F,n=T,n.sd=F,oob=T,idatPath=getwd(), ...) { # {{{
   if(is(barcodes, 'data.frame')) pdat = barcodes
   if((is.null(barcodes))&(is.null(pdat) | (!('barcode' %in% names(pdat))))){#{{{
     stop('"barcodes" or "pdat" (with pdat$barcode defined) must be supplied.')
@@ -954,6 +955,9 @@ methylumIDAT2 <- function(barcodes=NULL,pdat=NULL,parallel=F,n=T,n.sd=F,oob=T,id
   if(!is.null(mlumi@QC)) { #{{{ should be gratuitous now
     sampleNames(mlumi@QC) = sampleNames(mlumi)
   } # }}}
+
+  # prevents some issues with combine()
+  sampleNames(mlumi) <- sampleNames(assayData(mlumi))
 
   # finally
   return(mlumi[ sort(featureNames(mlumi)), ])

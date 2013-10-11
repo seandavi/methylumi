@@ -35,6 +35,8 @@ if (is.null(getGeneric("controlData"))) setGeneric("controlData", function(objec
 if (is.null(getGeneric("controlData<-"))) setGeneric("controlData<-", function(object, value) standardGeneric("controlData<-"))
 if (is.null(getGeneric("detection"))) setGeneric("detection", function(object) standardGeneric("detection"))
 if (is.null(getGeneric("detection<-"))) setGeneric("detection<-", function(object, value) standardGeneric("detection<-"))
+if (is.null(getGeneric("dataType"))) setGeneric("dataType", function(object) standardGeneric("dataType"))
+if (is.null(getGeneric("dataType<-"))) setGeneric("dataType<-", function(object, value) standardGeneric("dataType<-"))
 
 
 if (is.null(getGeneric("featureFilter"))) # {{{
@@ -127,7 +129,7 @@ setMethod('intensitiesByChannel', signature(object="MethyLumiSet"), # {{{
     names(perallele) <- alleles
     return(perallele)
   } # }}}
-    return(assayDataElement(object,allele)[getProbesByChannel(object,channel),])
+    return(assayDataElement(object,allele)[getProbesByChannel(object,channel),,drop=FALSE])
   }) # }}}
 setMethod('intensitiesByChannel', signature(object="MethyLumiM"), # {{{
   function(object, channel=NULL, allele=NULL, 
@@ -144,7 +146,7 @@ setMethod('intensitiesByChannel', signature(object="MethyLumiM"), # {{{
     names(perallele) <- alleles
     return(perallele)
   } # }}}
-    return(assayDataElement(object,allele)[getProbesByChannel(object,channel),])
+    return(assayDataElement(object,allele)[getProbesByChannel(object,channel),,drop=FALSE])
   }) # }}}
 setMethod('intensitiesByChannel', signature(object="MethyLumiQC"), # {{{
   function(object, channel=NULL, channels=c('Cy3','Cy5')) {
@@ -249,11 +251,13 @@ setMethod('negctls', signature(object="MethyLumiM",channel='missing'), # {{{
           }) # }}}
 setMethod('negctls', signature(object="MethyLumiQC",channel='character'), # {{{
           function(object, channel) {
-            negs <- grep('negative', tolower(featureNames(object)))
+            negs0 <- grep('negative', tolower(featureNames(object)))
+            negs1 <- grep('-99', fData(object)$Color_Channel) ## can change
+            negs <- setdiff(negs0, negs1)
             if(channel %in% c('Cy3','Grn','G')) {
-              return(methylated(object)[negs,])
+              return(methylated(object)[negs, , drop=FALSE])
             } else if(channel %in% c('Cy5','Red','R')) {
-              return(unmethylated(object)[negs,])
+              return(unmethylated(object)[negs, , drop=FALSE])
             }
           }) #}}}
 setMethod('negctls', signature(object="MethyLumiQC",channel='missing'), # {{{
@@ -272,9 +276,9 @@ setMethod('negctls.SD', signature(object="MethyLumiQC",channel='character'),#{{{
           function(object, channel) {
             negs <- grep('negative', tolower(featureNames(object)))
             if(channel %in% c('Cy3','Grn','G')) {
-              return(Cy3.SD(object)[negs,])
+              return(Cy3.SD(object)[negs,,drop=FALSE])
             } else if(channel %in% c('Cy5','Red','R')) {
-              return(Cy5.SD(object)[negs,])
+              return(Cy5.SD(object)[negs,,drop=FALSE])
             }
           }) #}}}
 setMethod('negctls.SD', signature(object="MethyLumiQC",channel='missing'),#{{{
@@ -291,9 +295,9 @@ setMethod('negctls.stderr', signature(object="MethyLumiQC",channel='character'),
           function(object, channel) {
             negs <- grep('negative', tolower(featureNames(object)))
             if(channel %in% c('Cy3','Grn','G')) {
-              return( (Cy3.SD(object)/sqrt(Cy3.N(object)))[negs,] )
+              return( (Cy3.SD(object)/sqrt(Cy3.N(object)))[negs,,drop=FALSE] )
             } else if(channel %in% c('Cy5','Red','R')) {
-              return( (Cy5.SD(object)/sqrt(Cy5.N(object)))[negs,] )
+              return( (Cy5.SD(object)/sqrt(Cy5.N(object)))[negs,,drop=FALSE] )
             }
           }) #}}}
 setMethod('negctls.stderr', signature(object="MethyLumiSet", channel='missing'),  # {{{
@@ -322,7 +326,7 @@ setMethod('negnorm', signature(object="MethyLumiQC",channel='character'), # {{{
             } else if(channel %in% c('Cy5','Red','R')) {
               negs = grep('negative',tolower(featureNames(object))) 
               norms = grep('norm.*?(g|c|green)',tolower(featureNames(object))) 
-              return(Cy5(object)[c(negs,norms),])
+              return(Cy5(object)[c(negs,norms),,drop=FALSE])
             }
           }) #}}}
 setMethod('negnorm', signature(object="MethyLumiSet",channel='missing'), # {{{
@@ -372,9 +376,9 @@ setMethod('normctls', signature(object="MethyLumiQC"), # {{{
 
             probes <- grep(tolower(searchfor), tolower(featureNames(object)))
             if(channel %in% c('Cy3','Grn','G','C')) {
-              return(methylated(object)[probes,])
+              return(methylated(object)[probes,,drop=FALSE])
             } else if(channel %in% c('Cy5','Red','A','T')) {
-              return(unmethylated(object)[probes,])
+              return(unmethylated(object)[probes,,drop=FALSE])
             }
             
           }) #}}}

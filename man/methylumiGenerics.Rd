@@ -52,6 +52,13 @@
 \alias{total.intensity}
 \alias{unmethylated.N}
 \alias{unmethylated.N<-}
+\alias{dataType}
+\alias{dataType<-}
+\alias{betas,SummarizedExperiment-method}
+\alias{methylated,MethylSet-method}
+\alias{unmethylated,MethylSet-method}
+\alias{betas,GenomicMethylSet-method}
+\alias{betas,MethylSet-method}
 
 \title{
   Generics defined in methylumi

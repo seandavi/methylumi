@@ -68,8 +68,9 @@ setValidity("MethyLumiQC", function(object) { # {{{
     if (is.null(msg)) TRUE else msg
 }) # }}}
 
-setGeneric('betas', # {{{
-    function(object) standardGeneric('betas')) # }}} 
+if(!isGeneric('betas')) { # {{{
+  setGeneric('betas', function(object) standardGeneric('betas')) 
+} # }}}
 setMethod("betas", signature(object="MethyLumiSet"), # {{{
           function(object) assayDataElement(object,"betas")) # }}}
 setGeneric('betas<-', # {{{
@@ -109,9 +110,6 @@ setReplaceMethod("controlData", signature(object="MethyLumiSet",value="MethyLumi
 setMethod("getHistory",signature(object="MethyLumiSet"), function(object) {# {{{
     object@history
 }) # }}}
-if (is.null(getGeneric("summary"))) { # {{{
-  setGeneric("summary", function(object,...) standardGeneric("summary"))
-} # }}}
 
 setMethod("unmethylated",signature(object="MethyLumiSet"),function(object){# {{{
             return(assayDataElement(object,"unmethylated"))
@@ -145,8 +143,7 @@ setMethod("show",signature(object="MethyLumiSet"), function(object) { # {{{
 	cat('Major Operation History:\n')
 	print(getHistory(object)) 
 }) # }}}
-
-setMethod("summary",signature(object="MethyLumi"), function(object) { # {{{
+setMethod("summary",signature(object="MethyLumi"), function(object, ...) { # {{{
 	show(object)
 }) # }}}
 
@@ -292,37 +289,37 @@ setMethod("intensities.U",signature(x="MethyLumiSet", channel="missing"), # {{{
   function(x) lapply(list(Cy3='Cy3',Cy5='Cy5'),function(y) intensities.U(x,y))
 ) # }}}
 
-if(is.null(getGeneric('boxplot'))) {  # {{{
-  setGeneric('boxplot',function(x,...) standardGeneric('boxplot'))
-} # }}}
-setMethod("boxplot",signature(x="MethyLumiSet"), function(x, range=0, main, logMode=TRUE, ...) { # {{{ 
-  tmp <- description(x)
-  if (missing(main) && (is(tmp, "MIAME")))
-    main <- tmp@title
-  exprs <- exprs(x)
-  if (nrow(x) > 5000) {
-	  	index <- seq(1, nrow(x), len=5000)
-              } else {
-		index <- 1:nrow(x)
-              }
-  if (logMode & max(exprs(x), na.rm=TRUE) > 50) {
-    exprs <- log2(exprs)
-  } 
-  dataMatrix <- exprs[index,]
-  labels <- colnames(dataMatrix)
-  if (is.null(labels)) labels <- as.character(1:ncol(dataMatrix))
-  ## set the margin of the plot
-  mar <- c(max(nchar(labels))/2 + 4.5, 5, 5, 3)
-  old.mar <- par('mar')
-  old.xaxt <- par('xaxt')
-  par(xaxt='n')
-  par(mar=mar)
-  boxplot(dataMatrix ~ col(dataMatrix), main=main, range=range, xlab='', ylab='amplitude', ...)
-  par(xaxt='s')
-  axis(1, at=1:ncol(dataMatrix), labels=labels, tick=TRUE, las=2)
-  par(mar=old.mar)
-  par(xaxt=old.xaxt)
-}) # }}}
+#if(is.null(getGeneric('boxplot'))) {  # {{{
+  #setGeneric('boxplot',function(x,...) standardGeneric('boxplot'))
+#} # }}}
+#setMethod("boxplot",signature(x="MethyLumiSet"), function(x, range=0, main, logMode=TRUE, ...) { # {{{ 
+  #tmp <- description(x)
+  #if (missing(main) && (is(tmp, "MIAME")))
+    #main <- tmp@title
+  #exprs <- exprs(x)
+  #if (nrow(x) > 5000) {
+			#index <- seq(1, nrow(x), len=5000)
+              #} else {
+		#index <- 1:nrow(x)
+              #}
+  #if (logMode & max(exprs(x), na.rm=TRUE) > 50) {
+    #exprs <- log2(exprs)
+  #} 
+  #dataMatrix <- exprs[index,]
+  #labels <- colnames(dataMatrix)
+  #if (is.null(labels)) labels <- as.character(1:ncol(dataMatrix))
+  ### set the margin of the plot
+  #mar <- c(max(nchar(labels))/2 + 4.5, 5, 5, 3)
+  #old.mar <- par('mar')
+  #old.xaxt <- par('xaxt')
+  #par(xaxt='n')
+  #par(mar=mar)
+  #boxplot(dataMatrix ~ col(dataMatrix), main=main, range=range, xlab='', ylab='amplitude', ...)
+  #par(xaxt='s')
+  #axis(1, at=1:ncol(dataMatrix), labels=labels, tick=TRUE, las=2)
+  #par(mar=old.mar)
+  #par(xaxt=old.xaxt)
+#}) # }}}
 
 if (is.null(getGeneric("pairs"))) { # {{{
   setGeneric("pairs", function(x,...) standardGeneric("pairs"))
@@ -479,12 +476,23 @@ if(is.null(getGeneric("combine"))) { # {{{
     stop(paste("objects must be the same class, but are ", 
                class(x), ", ", class(y), sep=""))
   } # }}}
-  if (any(sort(featureNames(x)) != sort(featureNames(y)))) { # {{{
-    stop('The two data sets have different row names!')
+  sampleNames(x) <- sampleNames(assayData(x)) ## fixes an old glitch
+  sampleNames(y) <- sampleNames(assayData(y)) ## fixes an old glitch
+  if(!identical(sort(featureNames(x)), sort(featureNames(y)))) { # {{{
+    feats <- intersect(featureNames(x), featureNames(y))
+    if(length(feats) > 0) {
+      message('Using the shared subset of ',length(feats),' QCdata features...')
+      x <- x[feats,]
+      featureData(x) <- combine(featureData(x[feats,]), featureData(y[feats,]))
+      assayData(x) <- combine(assayData(x[feats,]), assayData(y[feats,]))
+    } else {
+      stop('No QCdata features in common were found!')
+    } # }}}
+  } else { # {{{
+    assayData(x) <- combine(assayData(x), assayData(y))
+    featureData(x) <- combine(featureData(x), featureData(y))
   } # }}}
-  assayData(x) <- combine(assayData(x), assayData(y))
   phenoData(x) <- combine(phenoData(x), phenoData(y))
-  featureData(x) <- combine(featureData(x), featureData(y))
   protocolData(x) <- combine(protocolData(x), protocolData(y))
   experimentData(x) <- combine(experimentData(x), experimentData(y))
 	return(x)
@@ -493,67 +501,51 @@ if(is.null(getGeneric("combine"))) { # {{{
 setMethod("combine", signature=c(x="MethyLumiQC", y="MethyLumiQC"), function(x,y) { # {{{
   .combine.methylumiQC(x,y)
 }) # }}}
-#.combine.methylumiOOB <- function(x,y) { # {{{
-
-  #if (class(x)!=class(y)) { # {{{
-    #stop(paste("objects must be the same class, but are ", 
-               #class(x), ", ", class(y), sep=""))
-  #} # }}}
-  #if (any(sort(featureNames(x)) != sort(featureNames(y)))) { # {{{
-    #stop('The two data sets have different row names!')
-  #} # }}}
-  #assayData(x) <- combine(assayData(x), assayData(y))
-  #phenoData(x) <- combine(phenoData(x), phenoData(y))
-  #featureData(x) <- combine(featureData(x), featureData(y))
-  #protocolData(x) <- combine(protocolData(x), protocolData(y))
-  #experimentData(x) <- combine(experimentData(x), experimentData(y))
-	#return(x)
-
-#}  # }}}
-#setMethod("combine", signature=c(x="MethyLumiOOB", y="MethyLumiOOB"), function(x,y) { # {{{
-#  .combine.methylumiOOB(x,y)
-# }) # }}}
 .combine.methylumiSets <- function(x,y) { # {{{
-  if (class(x)!=class(y)) { # {{{
-    stop(paste("objects must be the same class, but are ", 
-               class(x), ", ", class(y), sep=""))
+  if (class(x)!=class(y)) stop(paste("Classes differ:",class(x),"!=",class(y)))
+  sampleNames(x) <- sampleNames(assayData(x)) ## fixes an old glitch
+  sampleNames(y) <- sampleNames(assayData(y)) ## fixes an old glitch
+  history.submitted <- as.character(Sys.time()) ## start logging here
+  if(!identical(sort(featureNames(x)), sort(featureNames(y)))) { # {{{
+    feats <- intersect(featureNames(x), featureNames(y))
+    if(length(feats) > 0) {
+      message('Using the shared subset of', length(feats), 'features...')
+      x <- x[feats,]
+      assayData(x) <- combine(assayData(x[feats,]), assayData(y[feats,]))
+      featureData(x) <- combine(featureData(x[feats,]), featureData(y[feats,]))
+    } # }}}
+  } else { # {{{
+    assayData(x) <- combine(assayData(x), assayData(y))
+    featureData(x) <- combine(featureData(x), featureData(y))
   } # }}}
-  if (any(sort(featureNames(x)) != sort(featureNames(y)))) { # {{{
-    stop('The two data sets have different row names!')
-  } # }}}
-  history.submitted <- as.character(Sys.time())
-  n.x = dim(x)[2]
-  n.y = dim(y)[2]
-  assayData(x) <- combine(assayData(x), assayData(y))
-  phenoData(x) <- combine(phenoData(x), phenoData(y))
-  featureData(x) <- combine(featureData(x), featureData(y))
+  pdat <- try(combine(pData(x), pData(y)), silent=TRUE)
+  if(inherits(pdat, "try-error")) {
+    message('Attempting to coerce phenoData columns into usable types...')
+    sharedCols <- intersect(colnames(pData(x)), colnames(pData(y)))
+    for(i in sharedCols) {
+      class(pData(y)[,i]) <- class(c(pData(x)[,i], pData(y)[,i]))
+      class(pData(x)[,i]) <- class(pData(y)[,i])
+    }
+    pdat <- try(combine(pData(x), pData(y)), silent=TRUE)
+    if(inherits(pdat, "try-error")) browser()
+  } 
+  pData(x) <- pdat
   protocolData(x) <- combine(protocolData(x), protocolData(y))
   experimentData(x) <- combine(experimentData(x), experimentData(y))
-	if (!is.null(x@QC) & !is.null(y@QC)) { # {{{
+	if (is.null(x@QC) | is.null(y@QC)) { # {{{
+    message('Dropped control probes: any(is.null(QCdata(x),QCdata(y))) == TRUE')
+  } else {
     QCdata(x) = .combine.methylumiQC(QCdata(x), QCdata(y))
-  } else if(!is.null(y@QC)) {
-    warning("Warning: discarding control probe data for additional samples")
-  } else if(!is.null(x@QC)) {
-    warning("Warning: discarding control probe data for existing samples")
-  } # }}}
-#  if (!is.null(x@OOB)|!is.null(y@OOB)) { # {{{
-#    OOB(x) = .combine.methylumiOOB(OOB(x), OOB(y))
-#  } else if(!is.null(y@OOB)) {
-#    warning("Warning: discarding out-of-band data for additional samples")
-#  } else if(!is.null(x@OOB)) {
-#    warning("Warning: discarding out-of-band data for existing samples")
-#  } # }}}
-  history.finished <- as.character(Sys.time())
-  history.command <- paste('Combined', n.x, 'existing samples',
-                           'with', n.y, 'additional samples.')
+  }# }}}
   x@history <- rbind(x@history, y@history)
-  x@history <- rbind(x@history, 
-                     data.frame(submitted=history.submitted,
-                                finished=history.finished,
-                                command=history.command))
+  x@history <- rbind(x@history,  data.frame(
+    submitted=history.submitted,
+    finished=as.character(Sys.time()),
+    command=paste('Added',dim(y)[2],'samples (',dim(x)[2],'unique samples).')
+  ))
 	return(x)
 }  # }}}
-setMethod("combine", signature=c(x="MethyLumiSet", y="MethyLumiSet"), function(x,y) { # {{{
+setMethod("combine",signature=c(x="MethyLumiSet",y="MethyLumiSet"),function(x,y){ # {{{
   .combine.methylumiSets(x,y)
 }) # }}}
 
@@ -581,24 +573,6 @@ if(is.null(getGeneric("combine27k450k"))) { # {{{
 	return(x)
 
 }  # }}}
-#.combine.methylumiOOB.27k.450k <- function(x,y,...) { # {{{
-
-  #message("This method needs polishing -- should subset and/or impute both...")
-  #if (class(x)!=class(y)) { # {{{
-    #stop(paste("objects must be the same class, but are ", 
-               #class(x), ", ", class(y), sep=""))
-  #} # }}}
-  #if (any(sort(featureNames(x)) != sort(featureNames(y)))) { # {{{
-    #stop('The two data sets have different row names!')
-  #} # }}}
-  #assayData(x) <- combine(assayData(x), assayData(y))
-  #phenoData(x) <- combine(phenoData(x), phenoData(y))
-  #featureData(x) <- combine(featureData(x), featureData(y))
-  #protocolData(x) <- combine(protocolData(x), protocolData(y))
-  #experimentData(x) <- combine(experimentData(x), experimentData(y))
-	#return(x)
-
-#}  # }}}
 setMethod("combine27k450k", signature=c(x="MethyLumiSet", y="MethyLumiSet"), function(x,y) { # {{{
   if (class(x)!=class(y)) { # {{{
     stop(paste("objects must be the same class, but are ", 
