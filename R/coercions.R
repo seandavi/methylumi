@@ -29,7 +29,58 @@
                          colData=as(pData(from), 'DataFrame'),
                          exptData=as(experimentData(from), 'SimpleList'))
   } # }}}
+  mlumiToMset <- function(from) { # {{{
 
+    stopifnot(is(from, 'MethyLumiM'))
+    adatnames <- assayDataElementNames(from)
+    stopifnot( ('exprs' %in% adatnames) ||
+               (all(c('methylated','unmethylated') %in% adatnames)) )
+
+    ## got everything (more or less)?
+    if(all(c('methylated','unmethylated') %in% assayDataElementNames(from))){
+      if('detection' %in% adatnames) {
+        pvals <- assayDataElement(from, 'detection')
+      } else { 
+        warning('Detection p-values not found, using a matrix of NAs instead')
+        pvals <- matrix(NA_real_, nrow=dim(from)[1], ncol=dim(from)[2],
+                        dimnames=list(featureNames(from), sampleNames(from)))
+      }
+      aDat <- assayDataNew(betas=(assayDataElement(from, 'methylated')/
+                                  (assayDataElement(from, 'methylated')+
+                                   assayDataElement(from, 'unmethylated'))),
+                           methylated=assayDataElement(from, 'methylated'),
+                           unmethylated=assayDataElement(from, 'unmethylated'),
+                           pvals=pvals)
+    } else { 
+      warning('Methylated and/or unmethylated signals missing.  Dye bias equalization cannot be applied.')
+      if('detection' %in% adatnames) {
+        pvals <- assayDataElement(from, 'detection')
+      } else { 
+        warning('Detection p-values not found, using a matrix of NAs instead')
+        pvals <- matrix(NA_real_, nrow=dim(from)[1], ncol=dim(from)[2],
+                        dimnames=list(featureNames(from), sampleNames(from)))
+      }
+      expit2 <- function(x) (2**x)/(1+(2**x))
+      aDat <- assayDataNew(betas=expit2(assayDataElement(from, 'exprs')), 
+                           pvals=pvals)
+    }
+    mset <- new("MethyLumiSet", assayData=aDat)
+    if(!is.null(QCdata(from))) {
+      mset@QC <- QCdata(from)
+      mset@QC@annotation <- annotation(from)
+    } else {
+      warning('Control probe data not found, some operations will not work')
+    }
+    mset@protocolData <- protocolData(from)
+    mset@annotation <- annotation(from)
+    mset@history <- from@history
+    pData(mset) <- pData(from)
+    fData(mset) <- fData(from)
+    return(mset)
+
+  } # }}}
+
+  setAs("MethyLumiM", "MethyLumiSet", function(from) mlumiToMset(from))
   setAs("MethyLumiSet", "SummarizedExperiment", function(from) msetToSE(from))
   setAs("MethyLumiM", "SummarizedExperiment", function(from) msetToSE(from))
 
@@ -223,7 +274,7 @@
       if(any(grepl('ormalize', as.character(getHistory(from)$command))))
         pre <- c(pre, 'dye bias equalized')
       to <- MethylSet(Meth=methylated(from), Unmeth=unmethylated(from))
-      to@annotation <- c(array=annotation(from), annotation='ilmn.v1.2')
+      to@annotation <- c(array=annotation(from), annotation='ilmn12.hg19')
       to@preprocessMethod <- c(rg.norm=paste(pre, collapse=', '),
                                minfi=paste(packageVersion('minfi'),
                                            collapse='.'), 
@@ -248,6 +299,11 @@
       fData(to) <- fData(from)
       return(to)
     }) # }}}
+   
+    if(!existsMethod('mapToGenome')) { # {{{
+      setGeneric("mapToGenome", 
+                 function(object, ...) standardGeneric("mapToGenome"))
+    } # }}}
     setMethod("mapToGenome", signature(object="MethyLumiSet"), # {{{
           function(object, ...) {
             minfi::mapToGenome(as(object, 'MethylSet'))
@@ -257,41 +313,41 @@
             minfi::mapToGenome(as(object, 'MethylSet'))
           }) # }}}
 
-setAs("SummarizedExperiment", "MethyGenoSet", 
-      function(from) {
-
-        stopifnot(any(c('M','Beta','exprs','betas') %in% names(assays(from))))
-        logit2 <- function(x) { # {{{
-          log2(x) - log2(1 - x)
-        } # }}}
-        getM <- function(from) { # {{{
-          if('M' %in% names(assays(from))) assays(from)$M
-          else if('Beta' %in% names(assays(from))) logit2(assays(from)$Beta)
-          else if('betas' %in% names(assays(from))) logit2(assays(from)$betas)
-          else if('exprs' %in% names(assays(from))) assays(from)$exprs
-          else stop('Cannot find a summary measure of methylation in assays()')
-        } # }}}
-        getMeth <- function(from) { # {{{
-         if('methylated' %in% names(assays(from))) {
-            return(assays(from)$methylated)
-          } else {
-            return(matrix(NA_real_, ncol=ncol(from), nrow=nrow(from), 
-                          dimnames=dimnames(from)))
-          }
-        } # }}}
-        getUnmeth <- function(from) { # {{{
-         if('unmethylated' %in% names(assays(from))) {
-            return(assays(from)$unmethylated)
-          } else {
-            return(matrix(NA_real_, ncol=ncol(from), nrow=nrow(from), 
-                          dimnames=dimnames(from)))
-          }
-        } # }}}
-        require('methyAnalysis')
-        MethyGenoSet(locData=as(rowData(from), 'RangedData'),
-                     exprs=getM(from),
-                     methylated=getMeth(from),
-                     unmethylated=getUnmeth(from),
-                     pData=as.data.frame(colData(from)),
-                     annotation=annotation(from))
-      })
+    if(!is.na(tryCatch(getClass('MethyGenoSet'),error=function(e) return(NA)))){
+      setAs("SummarizedExperiment", "MethyGenoSet", 
+        function(from) { # {{{
+          stopifnot(any(c('M','Beta','exprs','betas') %in% names(assays(from))))
+          logit2 <- function(x) { # {{{
+            log2(x) - log2(1 - x)
+          } # }}}
+          getM <- function(from) { # {{{
+            if('M' %in% names(assays(from))) assays(from)$M
+            else if('Beta' %in% names(assays(from))) logit2(assays(from)$Beta)
+            else if('betas' %in% names(assays(from))) logit2(assays(from)$betas)
+            else if('exprs' %in% names(assays(from))) assays(from)$exprs
+            else stop('Cannot find a summary measure of methylation in assays')
+          } # }}}
+          getMeth <- function(from) { # {{{
+           if('methylated' %in% names(assays(from))) {
+              return(assays(from)$methylated)
+            } else {
+              return(matrix(NA_real_, ncol=ncol(from), nrow=nrow(from), 
+                            dimnames=dimnames(from)))
+            }
+          } # }}}
+          getUnmeth <- function(from) { # {{{
+           if('unmethylated' %in% names(assays(from))) {
+              return(assays(from)$unmethylated)
+            } else {
+              return(matrix(NA_real_, ncol=ncol(from), nrow=nrow(from), 
+                            dimnames=dimnames(from)))
+            }
+          } # }}}
+          MethyGenoSet(locData=as(rowData(from), 'RangedData'),
+                       exprs=getM(from),
+                       methylated=getMeth(from),
+                       unmethylated=getUnmeth(from),
+                       pData=as.data.frame(colData(from)),
+                       annotation=annotation(from))
+        }) # }}}
+    }
