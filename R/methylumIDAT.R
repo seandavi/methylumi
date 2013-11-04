@@ -858,7 +858,7 @@ methylumIDAT <- function(barcodes=NULL,pdat=NULL,parallel=F,n=F,n.sd=F,oob=T,ida
   }
   stopifnot(all(files.present)) # }}}
   hm27 = hm450 = 0 # {{{
-  hm27 = sum(grepl('_[ABCDEFGHIJKL]', barcodes)) 
+  hm27 = sum(!grepl('_R0[123456]C0[12]', barcodes)) 
   message(paste(hm27, 'HumanMethylation27 samples found'))
   hm450 = sum(grepl('_R0[123456]C0[12]', barcodes))
   message(paste(hm450, 'HumanMethylation450 samples found'))

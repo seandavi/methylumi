@@ -101,7 +101,7 @@ setReplaceMethod("QCdata", signature(object="MethyLumiSet",value="MethyLumiQC"),
     return(object)
   }) # }}}
 setMethod("controlData", signature(object="MethyLumiSet"), # {{{
-          function(object) object@QC) # }}}
+          function(object) return(object@QC)) # }}}
 setReplaceMethod("controlData", signature(object="MethyLumiSet",value="MethyLumiQC"), function(object, value) { # {{{
   object@QC <- value
   return(object)

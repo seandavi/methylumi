@@ -236,11 +236,11 @@ setMethod('Cy5.N', signature(object="MethyLumiQC"), # {{{
 setGeneric('negctls', # {{{
            function(object, channel) standardGeneric('negctls')) # }}}
 setMethod('negctls', signature(object="MethyLumiSet",channel='character'), # {{{
-          function(object,channel) return(negctls(controlData(object),channel)))# }}}
+          function(object,channel) return(negctls(QCdata(object),channel)))# }}}
 setMethod('negctls', signature(object="MethyLumiSet",channel='missing'), # {{{
           function(object) {
             channels = list(Cy3='Cy3',Cy5='Cy5')
-            lapply(channels, function(channel) negctls(controlData(object), channel))
+            lapply(channels, function(channel) negctls(QCdata(object), channel))
           }) # }}}
 setMethod('negctls', signature(object="MethyLumiM",channel='character'), # {{{
           function(object,channel) return(negctls(controlData(object),channel)))# }}}
