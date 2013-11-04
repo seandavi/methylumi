@@ -102,6 +102,7 @@ require(lumi)
 mset450k.lumi <- as(mset450k.proc, 'MethyLumiM')
 show(mset450k.lumi)
 @ 
+\clearpage
 
 Coercing back to a MethyLumiSet:
 
@@ -110,6 +111,7 @@ mset450k.andBack <- as(mset450k.lumi, 'MethyLumiSet')
 show(mset450k.andBack)
 @
 
+\clearpage
 The genomicRatioSet class in minfi is particularly useful.  
 
 <<coerceMinfi, eval=T>>=
@@ -119,6 +121,7 @@ grSet450k <- mapToGenome(mset450k.andBack)
 show(grSet450k)
 @
 
+\clearpage
 MethyLumiSet objects with OOB matrices can be coerced to RGChannelSet objects.
 
 <<coerceMinfi, eval=T>>=
