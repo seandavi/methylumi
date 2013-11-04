@@ -1,7 +1,10 @@
 % -*- mode: noweb; noweb-default-code-mode: R-mode; -*-
 %\VignetteIndexEntry{Working with Illumina 450k Arrays using methylumi}
 %\VignetteDepends{IlluminaHumanMethylation450k.db}
+%\VignetteDepends{FDb.InfiniumMethylation.hg19}
 %\VignetteDepends{TCGAMethylation450k}
+%\VignetteDepends{minfi}
+%\VignetteDepends{lumi}
 %\VignettePackage{methylumi}
 \documentclass{article}
 \usepackage{amsmath}
@@ -17,7 +20,7 @@
 \begin{document}
 \setkeys{Gin}{width=0.8\textwidth} 
 \author{Tim Triche, Jr. & Sean Davis}
-\title{Working with Illumina 450k Arrays using methylumi}
+\title{Working with Illumina 450k Arrays using methylumi, lumi, and minfi}
 \maketitle
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -27,19 +30,24 @@
 
 \section{Creating a MethyLumiSet object from IDATs}
 
+This is essentially the first step in the TCGA processing pipeline.
+The complete pipeline is available on GitHub as the EGC.tools project.
+
 <<setup,eval=true,hide=true,echo=false>>=
 options('width'=55)
 @ 
 
 <<load libraries and data for analysis, eval=T>>=
-library('methylumi')
-library('IlluminaHumanMethylation450k.db')
+require('methylumi')
+require('IlluminaHumanMethylation450k.db')
 require('TCGAMethylation450k')
-barcodes <- c('6005486014_R04C02',
-              '6005486023_R05C01')
-lumi450k <- methylumIDAT(barcodes,idatPath=system.file('extdata/idat',package='TCGAMethylation450k')) # no normalization done
-sampleNames(lumi450k) <- c('TCGA1','TCGA2')
-show(lumi450k)
+
+## read in 10 BRCA IDATs 
+idatPath <- system.file('extdata/idat',package='TCGAMethylation450k')
+setwd(idatPath)
+mset450k <- methylumIDAT(getBarcodes()) 
+sampleNames(mset450k) <- paste0('TCGA', seq_along(sampleNames(mset450k)))
+show(mset450k)
 @
 
 \clearpage
@@ -51,18 +59,82 @@ Plot the negative and normalization controls:
 \centering
 <<controls, fig=true, width=6.5, height=8, quiet=T, echo=T, cache=FALSE>>=
 library(ggplot2)
-p <- qc.probe.plot(lumi450k, by.type=TRUE)
+p <- qc.probe.plot(mset450k, by.type=TRUE)
 print(p)
 @
 \caption{Some of the controls on the 450k chip}
 \label{fig:controlplot}
 \end{figure}            
 
+\section{Preprocessing the data}
+
+The second step in the TCGA pipeline is to background correct and dye bias 
+equalize the data (which is then stripped of OOB (opposite-channel) intensities)
+
+<<preprocess, eval=T>>=
+mset450k.proc <- stripOOB(normalizeMethyLumiSet(methylumi.bgcorr(mset450k)))
+@
+
+Compare the post-processing controls with those from figure 1.
+
+<<controls2, fig=true, width=6.5, height=8, quiet=T, echo=T, cache=FALSE>>=
+library(ggplot2)
+p2 <- qc.probe.plot(mset450k.proc, by.type=TRUE)
+print(p2)
+@
+\caption{Controls after preprocessing}
+\label{fig:controlplot}
+
+\clearpage
+
+\section{Coercions to other data structures from other packages}
+
+Coercions are provided to and from various data structures from the lumi and 
+minfi packages.  Each provides various functionality and exhibits different 
+design decisions.  One may be more appropriate than the other for some needs.
+Preprocessing in methylumi retains SNP probes, which can identify label swaps,
+but is less efficient than preprocessing in minfi and cannot use shinyMethyl.
+
+Coercing to lumi (e.g. for lumiMethyN or similar):
+
+<<coerceLumi, eval=T>>=
+require(lumi)
+mset450k.lumi <- as(mset450k.proc, 'MethyLumiM')
+show(mset450k.lumi)
+@ 
+
+Coercing back to a MethyLumiSet:
+
+<<coerceBack, eval=T>>=
+mset450k.andBack <- as(mset450k.lumi, 'MethyLumiSet')
+show(mset450k.andBack)
+@
+
+The genomicRatioSet class in minfi is particularly useful.  
+
+<<coerceMinfi, eval=T>>=
+require(minfi)
+require(IlluminaHumanMethylation450kanno.ilmn12.hg19)
+grSet450k <- mapToGenome(mset450k.andBack)
+show(grSet450k)
+@
+
+MethyLumiSet objects with OOB matrices can be coerced to RGChannelSet objects.
+
+<<coerceMinfi, eval=T>>=
+require(FDb.InfiniumMethylation.hg19)
+rgSet450k <- as(mset450k, 'RGChannelSet')
+show(rgSet450k)
+@
+
+The above will not work for the processed data, but only because we called 
+stripOOB() on the resulting object to reduce its size.  If you plan on using
+a preprocessed MethyLumiSet in minfi for further processing, don't strip it.
+
 \clearpage
 \section{sessionInfo}
-<<results=tex,echo=false>>=
-#save(lumi450k, file="lumi450k.rda")
-toLatex(sessionInfo())
+<<sessioninfo, eval=T>>=
+sessionInfo()
 @ 
 
 \end{document}
