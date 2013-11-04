@@ -16,7 +16,7 @@
 \newcommand{\Rclass}[1]{{\textit{#1}}}
 \newcommand{\Rmethod}[1]{{\textit{#1}}}
 
-\SweaveOpts{keep.source=TRUE,cache=TRUE}
+\SweaveOpts{keep.source=TRUE}
 \begin{document}
 \setkeys{Gin}{width=0.8\textwidth} 
 \author{Tim Triche, Jr. & Sean Davis}
@@ -83,7 +83,7 @@ p2 <- qc.probe.plot(mset450k.proc, by.type=TRUE)
 print(p2)
 @
 \caption{Controls after preprocessing}
-\label{fig:controlplot}
+\label{fig:controlplot2}
 
 \clearpage
 
