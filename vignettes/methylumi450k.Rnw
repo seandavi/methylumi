@@ -17,10 +17,10 @@
 \newcommand{\Rclass}[1]{{\textit{#1}}}
 \newcommand{\Rmethod}[1]{{\textit{#1}}}
 
-\SweaveOpts{keep.source=TRUE}
+\SweaveOpts{keep.source=TRUE,cache=TRUE}
 \begin{document}
 \setkeys{Gin}{width=0.8\textwidth} 
-\author{Tim Triche, Jr. & Sean Davis}
+\author{Tim Triche, Jr. \& Sean Davis}
 \title{Working with Illumina 450k Arrays using methylumi, lumi, and minfi}
 \maketitle
 

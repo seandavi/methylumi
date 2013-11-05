@@ -5,3 +5,4 @@
 *.out
 *.tex
 .build.timestamp
+cacheSweaveStorage*
