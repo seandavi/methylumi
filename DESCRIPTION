@@ -13,7 +13,7 @@ Suggests: lumi, lattice, limma, xtable, IlluminaHumanMethylation27k.db
           MASS, matrixStats, parallel, rtracklayer, Biostrings, methyAnalysis,
 	  FDb.InfiniumMethylation.hg19, TCGAMethylation450k,
 	  TxDb.Hsapiens.UCSC.hg19.knownGene, IlluminaHumanMethylation450kanno.ilmn12.hg19,
-	  Homo.sapiens
+	  Homo.sapiens, knitr
 biocViews: DNAMethylation, TwoChannel, Preprocessing, QualityControl, CpGIsland
 Maintainer: Sean Davis <sdavis2@mail.nih.gov>
 Description: This package provides classes for holding and manipulating
@@ -25,4 +25,5 @@ Description: This package provides classes for holding and manipulating
        HumanMethylation27 and HumanMethylation450 microarrays.  Normalization,
        background correction, and quality control features for GoldenGate,
        Infinium, and Infinium HD arrays are also included.
+VignetteBuilder: knitr
 License: GPL-2
