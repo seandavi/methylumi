@@ -1,5 +1,5 @@
-% -*- mode: noweb; noweb-default-code-mode: R-mode; -*-
 %\VignetteIndexEntry{Working with Illumina 450k Arrays using methylumi}
+%\VignetteEngine{knitr::knitr}
 %\VignetteDepends{IlluminaHumanMethylation450k.db}
 %\VignetteDepends{FDb.InfiniumMethylation.hg19}
 %\VignetteDepends{TCGAMethylation450k}
@@ -21,7 +21,7 @@
 \begin{document}
 \setkeys{Gin}{width=0.8\textwidth} 
 \author{Tim Triche, Jr. \& Sean Davis}
-\title{Working with Illumina 450k Arrays using methylumi, lumi, and minfi}
+\title{Working with Illumina 450k Methylation Arrays}
 \maketitle
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -177,9 +177,8 @@ the presence or absence of DNA methylation may help determine their activity).
 require(Homo.sapiens)
 txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene ## from Homo.sapiens
 
-## org.Hs.egSYMBOL2EG[['KDM6A']]
-## [1] "7403"
-txs.KDM6A <- transcriptsBy(txdb, 'gene')[["7403"]]
+KDM6AEntrezID=org.Hs.egSYMBOL2EG[['KDM6A']]
+txs.KDM6A <- transcriptsBy(txdb, 'gene')[[KDM6AEntrezID]]
 tss.KDM6A <- unique(resize(txs.KDM6A, 1, fix='start')) ## two start sites
 promoters.KDM6A <- flank(tss.KDM6A, 100) ## an arbitrary distance upstream
 show( subsetByOverlaps(grSet450k, promoters.KDM6A) ) ## probes in this window
