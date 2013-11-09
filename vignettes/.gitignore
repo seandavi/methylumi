@@ -6,3 +6,4 @@
 *.tex
 .build.timestamp
 cacheSweaveStorage*
+cache
