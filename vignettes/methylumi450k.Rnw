@@ -7,8 +7,9 @@
 %\VignetteDepends{minfi}
 %\VignetteDepends{lumi}
 %\VignettePackage{methylumi}
-\documentclass{article}
+\documentclass[12pt]{article}
 \usepackage{amsmath}
+\usepackage{fullpage}
 \usepackage{hyperref}
 \usepackage[authoryear,round]{natbib}
 \newcommand{\Rfunction}[1]{{\texttt{#1}}}
@@ -17,7 +18,11 @@
 \newcommand{\Rclass}[1]{{\textit{#1}}}
 \newcommand{\Rmethod}[1]{{\textit{#1}}}
 
-\SweaveOpts{keep.source=TRUE,cache=TRUE}
+
+<<include=FALSE>>=
+opts_chunk$set(tidy=FALSE,cache=TRUE,size='scriptsize')
+@
+
 \begin{document}
 \setkeys{Gin}{width=0.8\textwidth} 
 \author{Tim Triche, Jr. \& Sean Davis}
@@ -36,15 +41,17 @@ The complete pipeline is available on GitHub as the EGC.tools project.
 Ten samples from the TCGA breast cancer (BRCA) project are included in 
 the TCGAMethylation450k package, which should be installed for this step.
 
-<<setup,eval=true,hide=true,echo=false>>=
-options('width'=55)
+<<setup,eval=TRUE,hide=TRUE,echo=FALSE>>=
+options('width'=50)
 @ 
 
-<<load libraries and data for analysis, eval=T>>=
-require('methylumi')
-require('IlluminaHumanMethylation450k.db')
-require('TCGAMethylation450k')
+<<loadLibraries, eval=TRUE>>=
+suppressPackageStartupMessages(require('methylumi'))
+suppressPackageStartupMessages(require('IlluminaHumanMethylation450k.db'))
+suppressPackageStartupMessages(require('TCGAMethylation450k'))
+@ 
 
+<<loadData, eval=TRUE>>=
 ## read in 10 BRCA IDATs 
 idatPath <- system.file('extdata/idat',package='TCGAMethylation450k')
 mset450k <- methylumIDAT(getBarcodes(path=idatPath), idatPath=idatPath)
@@ -65,7 +72,7 @@ Plot the negative and normalization controls:
 
 \begin{figure}[h!]
 \centering
-<<controls, fig=true, width=6.5, height=8, quiet=T, echo=T, cache=FALSE>>=
+<<controls, fig.width=5, fig.height=7, quiet=TRUE, echo=TRUE, cache=FALSE>>=
 library(ggplot2)
 ## for larger datasets, the by.type argument be set to FALSE 
 ## positional effects will manifest as a wave-like pattern
@@ -91,7 +98,7 @@ After preprocessing, we can reduce the size of the resulting MethyLumiSet
 substantially by dropping the out-of-band intensities with stripOOB().  This 
 frees up some memory, but precludes later coercion to an RGChannelSet.
 
-<<preprocess, eval=T>>=
+<<preprocess, eval=TRUE>>=
 mset450k.proc <- stripOOB(normalizeMethyLumiSet(methylumi.bgcorr(mset450k)))
 @
 
@@ -99,7 +106,7 @@ Now we compare the post-processing controls with those from figure 1.
 
 \begin{figure}[h!]
 \centering
-<<controls2, fig=true, width=6.5, height=8, quiet=T, echo=T, cache=FALSE>>=
+<<controls2, fig.width=5, fig.height=7, quiet=TRUE, echo=TRUE, cache=FALSE>>=
 library(ggplot2)
 p2 <- qc.probe.plot(mset450k.proc, by.type=TRUE)
 print(p2)
@@ -120,8 +127,8 @@ but is less efficient than preprocessing in minfi, and cannot use shinyMethyl.
 
 Coercing to lumi (e.g. for lumiMethyN or similar):
 
-<<coerceLumi, eval=T>>=
-require(lumi)
+<<coerceLumi, eval=TRUE>>=
+suppressPackageStartupMessages(require(lumi))
 mset450k.lumi <- as(mset450k.proc, 'MethyLumiM')
 show(mset450k.lumi)
 @ 
@@ -129,7 +136,7 @@ show(mset450k.lumi)
 
 Coercing back to a MethyLumiSet:
 
-<<coerceBack, eval=T>>=
+<<coerceBack, eval=TRUE>>=
 mset450k.andBack <- as(mset450k.lumi, 'MethyLumiSet')
 show(mset450k.andBack)
 @
@@ -138,8 +145,8 @@ show(mset450k.andBack)
 MethyLumiSet objects with OOB matrices can be coerced to RGChannelSet objects
 for further processing using functions found in the minfi or ChAMP packages.
 
-<<coerceMinfi, eval=T>>=
-require(FDb.InfiniumMethylation.hg19)
+<<coerceMinfi, eval=TRUE>>=
+suppressPackageStartupMessages(require(FDb.InfiniumMethylation.hg19))
 rgSet450k <- as(mset450k, 'RGChannelSet')
 show(rgSet450k)
 @
@@ -151,9 +158,9 @@ a preprocessed MethyLumiSet in minfi for further processing, don't strip it.
 The GenomicMethylSet and GenomicRatioSet classes in minfi inherit from the 
 SummarizedExperiment class, which has some particularly useful features:
 
-<<coerceMinfi, eval=T>>=
-require(minfi)
-require(IlluminaHumanMethylation450kanno.ilmn12.hg19)
+<<coerceMinfi2, eval=TRUE>>=
+suppressPackageStartupMessages(require(minfi))
+suppressPackageStartupMessages(require(IlluminaHumanMethylation450kanno.ilmn12.hg19))
 grSet450k <- mapToGenome(mset450k.andBack)
 
 sexChroms <- GRanges( seqnames=c('chrX','chrY'),
@@ -172,9 +179,9 @@ one could just as easily use AnnotationHub resources to find CTCF peaks or, say,
 H3K4me1 peaks in ChIP-seq data (often associated with transcriptional enhancers;
 the presence or absence of DNA methylation may help determine their activity).
 
-<<subsetMinfi, eval=T>>=
+<<subsetMinfi, eval=TRUE>>=
 ## perhaps more topical:
-require(Homo.sapiens)
+suppressPackageStartupMessages(require(Homo.sapiens))
 txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene ## from Homo.sapiens
 
 KDM6AEntrezID=org.Hs.egSYMBOL2EG[['KDM6A']]
@@ -192,7 +199,7 @@ may want to familiarize yourself with them as well.
 \clearpage
 \section{sessionInfo}
 
-<<results=tex>>=
+<<results='asis'>>=
 toLatex(sessionInfo())
 @ 
 
