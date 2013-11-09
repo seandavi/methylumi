@@ -25,6 +25,7 @@
 
 <<init, echo=FALSE>>=
 options(width=50)
+library(knitr)
 library(lattice)
 library(xtable)
 @ 
