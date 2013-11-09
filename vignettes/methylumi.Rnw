@@ -1,9 +1,6 @@
-% NOTE -- ONLY EDIT THE .Rnw FILE!!!  The .tex file is
-% likely to be overwritten.
-%
 %\VignetteIndexEntry{An Introduction to the methylumi package}
 %\VignetteKeywords{tutorial, graphics, methylation}
-%
+%\VignetteEngine{knitr::knitr}
 %\VignetteDepends{Biobase, lattice, limma, xtable}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \documentclass[12pt]{article}
@@ -49,7 +46,7 @@ After exporting the data from BeadStudio, \Rpackage{methylumi} can read them in 
 Two different formats can be read by \Rpackage{methylumi}.  The ``Final Report'' format includes all the data in a single file.  The package will look ``[Header]'' in the file to determine when that file format is to be used.  The data block ``[Sample Methylation Profile]'' needs to be present in the ``Final Report'' format.  If the data block ``[Control Probe Profile]'' is present, these data will be included in the \Rmethod{QCdata} of the resulting \Rclass{MethyLumiSet} object.  The second format can be a simple tab-delimited text file with headers from BeadStudio.  If this format is used, the sample data and the QC data can be in separate files.  The QC data need not be present for either format, but it can be helpful for quality control of data.  For the examples in this vignette, a small sample set run on the Illumina GoldenGate platform will be used and the file format is the tab-delimited format.
 
 <<cache=TRUE>>=
-library(methylumi)
+suppressPackageStartupMessages(library(methylumi,quietly=TRUE))
 samps <- read.table(system.file("extdata/samples.txt",
                                 package = "methylumi"),sep="\t",header=TRUE)
 mldat <- methylumiR(system.file('extdata/exampledata.samples.txt',package='methylumi'),
@@ -78,13 +75,13 @@ The data that are included with the methylumi package are all normal samples fro
 md <- cmdscale(dist(t(exprs(mldat)[fData(mldat)$CHROMOSOME=='X',])),2)
 @ 
 
-<<fig=TRUE,cache=FALSE>>=
+<<cache=FALSE>>=
 plot(md,pch=c('F','M')[pData(mldat)$Gender],col=c('red','blue')[pData(mldat)$Gender])
 @ 
 
 The MDS plot shows that the males and females are quite distinct except for a single male that groups with the females.  Upon consultation with the laboratory investigator, the sample was found to be mislabeled.  Also, it is worth noting that the males do not cluster nearly as tightly as the females.  A quick evaluation of the p-values for detection for the samples will show what the problem is:
 
-<<fig=TRUE,cache=FALSE>>=
+<<cache=FALSE>>=
 avgPval <- colMeans(pvals(mldat))
 par(las=2)
 barplot(avgPval,ylab="Average P-Value")
@@ -100,7 +97,7 @@ controlTypes(mldat)
 
 Looking more closely at the hybridization controls (``FIRST HYBRIDIZATION'') is telling here:
 
-<<cache=FALSE,fig=TRUE>>=
+<<cache=FALSE>>=
 qcplot(mldat,"FIRST HYBRIDIZATION")
 @
 
@@ -133,7 +130,7 @@ x <- aggregate(tt$adj.P.Val,by=list(tt$CHROMOSOME),median)
 colnames(x) <- c('Chromosome','Median adjusted P-value')
 @ 
 
-<<results=tex>>=
+<<results='asis'>>=
 library(xtable)
 xt <- xtable(x,label="tab:chromosomepvals",caption="The median adjusted p-value for each chromosome showing that the X-chromosome is highly significantly different between males and females")
 digits(xt) <- 6
@@ -142,24 +139,21 @@ print(xt,include.rownames=FALSE,align="cr")
 
 Looking at the median adjusted p-values for the resulting differences (calculated using limma), one can quickly see that the X chromosome is, indeed, quite significantly different, on the whole, between males and females.  The actual p-values are plotted to show the distribution.
 
-<<fig=FALSE>>=
-pdf('gender_probes_by_chrom.pdf')
-print(xyplot(-log10(adj.P.Val)~CHROMOSOME,
-       tt,ylab="-log10(Adjusted P-value)",
-       main="P-values for probes\ndistinguising males from females"))
-invisible(dev.off())
-@ 
 
 \begin{figure}[h]
   \begin{center}
-    \includegraphics[width=0.8\textwidth ]{gender_probes_by_chrom}
+<<genderProbesByChrom,fig.keep='high'>>=
+print(xyplot(-log10(adj.P.Val)~CHROMOSOME,
+       tt,ylab="-log10(Adjusted P-value)",
+       main="P-values for probes\ndistinguising males from females"))
+@ 
   \end{center}
   \caption{Probes differentially methylated plotted by chromosome.  Note that the p-values plotted here are based on a linear model.  Since the underlying data are not normally distributed, the p-values representing the outcomes of the linear models are not exact.}
 \end{figure}
 
 \section{sessionInfo}
 
-<<results=tex>>=
+<<results='asis'>>=
 toLatex(sessionInfo())
 @ 
 
