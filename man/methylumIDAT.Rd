@@ -25,13 +25,13 @@ If TRUE, an attempt will be made to process using multiple cores on a
 multicore machine.
 }
   \item{n}{
-%%     ~~Describe \code{n} here~~
+  Retain bead numbers?  Generally this is a waste of memory.
 }
   \item{n.sd}{
-%%     ~~Describe \code{n.sd} here~~
+  Retain probe-level standard deviations?  This is also usually a waste of RAM.
 }
   \item{oob}{
-%%     ~~Describe \code{oob} here~~
+  Retain out-of-band intensities for Infinium I (paired) probes?  This is useful for methylumi.bgcorr, which defaults to a normal-exponential out-of-band model.
 }
 \item{idatPath}{
   The path to the directory containing the idat files.
@@ -42,6 +42,11 @@ multicore machine.
 }
 \details{
 Read a set of .idat files and return a \code{MethylumiSet} object.
+
+NOTE: The default for computing detection p-values is to use the empirical CDF
+of the negative control probes. This method makes no assumptions about the shape
+of the control probe distribution, but may result in more aggressive filtering. The granularity of the resulting p-values is limited by the number of control 
+probes on the platform being processed (finer on 450k, coarser on 27k).
 }
 \value{
 A \code{MethylumiSet} object.
@@ -57,9 +62,9 @@ Tim Triche, Jr.
 if(require('IlluminaHumanMethylation450k.db')) {
   barcodes <- c('6005486014_R04C02',
               '6005486023_R05C01')
-  lumi450k <- methylumIDAT(barcodes,idatPath=system.file('extdata/idat',package='methylumi')) # no normalization done
-  sampleNames(lumi450k) <- c('TCGA1','TCGA2')
-  show(lumi450k)
+  mlumi450k <- methylumIDAT(barcodes,idatPath=system.file('extdata/idat',package='methylumi')) # no normalization done
+  sampleNames(mlumi450k) <- c('TCGA1','TCGA2')
+  show(mlumi450k)
 }
 }
 }
