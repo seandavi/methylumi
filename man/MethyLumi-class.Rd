@@ -38,7 +38,7 @@ Class \code{"\linkS4class{Versioned}"}, by class "eSet", distance 3.
 }
 \section{Methods}{
   \describe{
-    \item{pvals<-}{\code{signature(object = "MethyLumi", value = "matrix")}: Set the assayData slot of the same name and stores the P-values from BeadStudio}
+    \item{pvals<-}{\code{signature(object = "MethyLumi", value = "matrix")}: Set the assayData slot of the same name and stores the P-values from BeadStudio or as computed by methylumIDAT (using the empirical CDF of the negative controls)}
     \item{pvals}{\code{signature(object = "MethyLumi")}: Get the assayData slot of the same name}
     \item{betas<-}{\code{signature(object = "MethyLumi", value = "matrix")}: Set the assayData slot of the same name and represents the methylation values for the samples, analogous to exprs() in gene expression data.}
     \item{betas}{\code{signature(object = "MethyLumi")}: Get the assayData slot of the same name}
