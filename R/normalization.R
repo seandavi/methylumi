@@ -118,7 +118,7 @@ normalize27kAnd450k <- function(x.27k, x.450k, id.variable='name', oob=F){ # {{{
 
 } # }}}
 
-normalizeViaControls <- function(x, reference=NULL) { # {{{ originally by Kasper
+normalizeViaControls <- function(x, reference=NULL) { # {{{ adapted from Kasper
 
   if(is.null(x@QC)) stop('Cannot normalize against controls without controls!')
   else history.submitted <- as.character(Sys.time())
@@ -127,7 +127,18 @@ normalizeViaControls <- function(x, reference=NULL) { # {{{ originally by Kasper
   controls <- normctls(x)
   Grn.avg <- colMeans(controls$Cy3)
   Red.avg <- colMeans(controls$Cy5)
-  R.G.ratio = Red.avg/Grn.avg
+  R.G.ratio <- Red.avg/Grn.avg
+
+  # an improvement here would be to normalize each sample internally:
+  # 
+  # R.G.factor <- Red.avg/Grn.avg 
+  # Grn <- lapply(Grn, function(y) sweep(y, 2, FUN="*", R.G.factor))
+  # 
+  # Might not need to do anything further, although 
+  # leaving the intensities un-normalized could screw with CN.  
+  #
+  # Default is to use the nearest chip to unbiased as the referent:
+  #
   if(is.null(reference)) reference = which.min( abs(R.G.ratio-1) )
   message(paste('Using sample number', reference, 'as reference level...'))
 
@@ -175,5 +186,5 @@ normalizeViaControls <- function(x, reference=NULL) { # {{{ originally by Kasper
 } # }}}
 
 normalizeViaRUV2 <- function(x) { # {{{ Terry Speed's factor extractor
-  stop('Terry Speed\'s method has not yet been patched into methylumi')
+  stop('Kasper is working on this for minfi, so we stopped bothering here')
 } # }}}
