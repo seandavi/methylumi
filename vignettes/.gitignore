@@ -1,0 +1,9 @@
+*.log
+*.eps
+*.pdf
+*.aux
+*.out
+*.tex
+.build.timestamp
+cacheSweaveStorage*
+cache

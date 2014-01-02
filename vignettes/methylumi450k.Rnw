@@ -1,0 +1,208 @@
+%\VignetteIndexEntry{Working with Illumina 450k Arrays using methylumi}
+%\VignetteEngine{knitr::knitr}
+%\VignetteDepends{IlluminaHumanMethylation450k.db}
+%\VignetteDepends{FDb.InfiniumMethylation.hg19}
+%\VignetteDepends{TCGAMethylation450k}
+%\VignetteDepends{Homo.sapiens}
+%\VignetteDepends{minfi}
+%\VignetteDepends{lumi}
+%\VignettePackage{methylumi}
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{fullpage}
+\usepackage{hyperref}
+\usepackage[authoryear,round]{natbib}
+\newcommand{\Rfunction}[1]{{\texttt{#1}}}
+\newcommand{\Robject}[1]{{\texttt{#1}}}
+\newcommand{\Rpackage}[1]{{\textit{#1}}}
+\newcommand{\Rclass}[1]{{\textit{#1}}}
+\newcommand{\Rmethod}[1]{{\textit{#1}}}
+
+
+<<include=FALSE>>=
+library(knitr)
+opts_chunk$set(tidy=FALSE,cache=TRUE,size='scriptsize')
+@
+
+\begin{document}
+\setkeys{Gin}{width=0.8\textwidth} 
+\author{Tim Triche, Jr. \& Sean Davis}
+\title{Working with Illumina 450k Methylation Arrays}
+\maketitle
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\tableofcontents
+\clearpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Creating a MethyLumiSet object from IDATs}
+
+This also happens to be the first step in the TCGA processing pipeline.
+The complete pipeline is available on GitHub as the EGC.tools project.
+Ten samples from the TCGA breast cancer (BRCA) project are included in 
+the TCGAMethylation450k package, which should be installed for this step.
+
+<<setup,eval=TRUE,hide=TRUE,echo=FALSE>>=
+options('width'=50)
+@ 
+
+<<loadLibraries, eval=TRUE>>=
+suppressPackageStartupMessages(require('methylumi'))
+suppressPackageStartupMessages(require('IlluminaHumanMethylation450k.db'))
+suppressPackageStartupMessages(require('TCGAMethylation450k'))
+@ 
+
+<<loadData, eval=TRUE>>=
+## read in 10 BRCA IDATs 
+idatPath <- system.file('extdata/idat',package='TCGAMethylation450k')
+mset450k <- methylumIDAT(getBarcodes(path=idatPath), idatPath=idatPath)
+sampleNames(mset450k) <- paste0('TCGA', seq_along(sampleNames(mset450k)))
+show(mset450k)
+@
+
+Note that the default is to collect opposite-channel fluorescence from Type I 
+methylation probes (which are paired and designed to fluoresce in one channel)
+in the matrices 'methylated.OOB' and 'unmethylated.OOB' (OOB, as in out-of-band)
+for use in background correction and perhaps additional steps.  This also allows
+a user to coerce the resulting object into minfi's RGChannelSet if desired since
+all of the signal information in the IDATs is thus retained. 
+\clearpage
+
+\section{Negative and normalization controls}
+Plot the negative and normalization controls:
+
+\begin{figure}[h!]
+\centering
+<<controls, fig.width=5, fig.height=7, quiet=TRUE, echo=TRUE, cache=FALSE>>=
+library(ggplot2)
+## for larger datasets, the by.type argument be set to FALSE 
+## positional effects will manifest as a wave-like pattern
+p <- qc.probe.plot(mset450k, by.type=TRUE)
+print(p)
+@
+\caption{Some of the controls on the 450k chip}
+\label{fig:controlplot}
+\end{figure}            
+
+\clearpage
+\section{Preprocessing the raw data}
+
+After importing the data from IDATs, the next step is to background correct and 
+dye bias equalize the data.  The default for background correction is a normal-
+exponential model which uses the out-of-band intensities as control probes. Dye 
+bias correction is performed by picking the least-biased sample, and using it as
+a reference for red:green intensity ratio adjustments based on the normalization
+controls.  Other approaches to preprocessing (as implemented in minfi and lumi) 
+include various flavors of quantile normalization and smoothing spline fits. 
+
+After preprocessing, we can reduce the size of the resulting MethyLumiSet 
+substantially by dropping the out-of-band intensities with stripOOB().  This 
+frees up some memory, but precludes later coercion to an RGChannelSet.
+
+<<preprocess, eval=TRUE>>=
+mset450k.proc <- stripOOB(normalizeMethyLumiSet(methylumi.bgcorr(mset450k)))
+@
+
+Now we compare the post-processing controls with those from figure 1.
+
+\begin{figure}[h!]
+\centering
+<<controls2, fig.width=5, fig.height=7, quiet=TRUE, echo=TRUE, cache=FALSE>>=
+library(ggplot2)
+p2 <- qc.probe.plot(mset450k.proc, by.type=TRUE)
+print(p2)
+@
+\caption{Controls after preprocessing}
+\label{fig:controlplot2}
+\end{figure}            
+
+\clearpage
+
+\section{Coercions to other data structures}
+
+Coercions are provided to and from various data structures in the lumi and 
+minfi packages.  Each provides various functionality and exhibits different 
+design decisions.  One may be more appropriate than the other for some needs.
+Preprocessing in methylumi retains SNP probes, which can identify label swaps,
+but is less efficient than preprocessing in minfi, and cannot use shinyMethyl.
+
+Coercing to lumi (e.g. for lumiMethyN or similar):
+
+<<coerceLumi, eval=TRUE>>=
+suppressPackageStartupMessages(require(lumi))
+mset450k.lumi <- as(mset450k.proc, 'MethyLumiM')
+show(mset450k.lumi)
+@ 
+\clearpage
+
+Coercing back to a MethyLumiSet:
+
+<<coerceBack, eval=TRUE>>=
+mset450k.andBack <- as(mset450k.lumi, 'MethyLumiSet')
+show(mset450k.andBack)
+@
+
+\clearpage
+MethyLumiSet objects with OOB matrices can be coerced to RGChannelSet objects
+for further processing using functions found in the minfi or ChAMP packages.
+
+<<coerceMinfi, eval=TRUE>>=
+suppressPackageStartupMessages(require(FDb.InfiniumMethylation.hg19))
+rgSet450k <- as(mset450k, 'RGChannelSet')
+show(rgSet450k)
+@
+
+The above will not work for the processed data, but only because we called 
+stripOOB() on the resulting object to reduce its size.  If you plan on using
+a preprocessed MethyLumiSet in minfi for further processing, don't strip it.
+
+The GenomicMethylSet and GenomicRatioSet classes in minfi inherit from the 
+SummarizedExperiment class, which has some particularly useful features:
+
+<<coerceMinfi2, eval=TRUE>>=
+suppressPackageStartupMessages(require(minfi))
+suppressPackageStartupMessages(require(IlluminaHumanMethylation450kanno.ilmn12.hg19))
+grSet450k <- mapToGenome(mset450k.andBack)
+
+sexChroms <- GRanges( seqnames=c('chrX','chrY'),
+                      IRanges(start=c(1, 1), 
+                              end=c(155270560, 59373566)),
+                      strand=c('*','*') )
+summary(subsetByOverlaps(grSet450k, sexChroms))
+dim(subsetByOverlaps(grSet450k, sexChroms))
+@
+
+\clearpage
+
+These SummarizedExperiment-derived objects can be subsetted by nearly anything 
+that has an interval-based representation.  Here we extract some promoters, but
+one could just as easily use AnnotationHub resources to find CTCF peaks or, say,
+H3K4me1 peaks in ChIP-seq data (often associated with transcriptional enhancers;
+the presence or absence of DNA methylation may help determine their activity).
+
+<<subsetMinfi, eval=TRUE>>=
+## perhaps more topical:
+suppressPackageStartupMessages(require(Homo.sapiens))
+txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene ## from Homo.sapiens
+
+KDM6AEntrezID=org.Hs.egSYMBOL2EG[['KDM6A']]
+txs.KDM6A <- transcriptsBy(txdb, 'gene')[[KDM6AEntrezID]]
+tss.KDM6A <- unique(resize(txs.KDM6A, 1, fix='start')) ## two start sites
+promoters.KDM6A <- flank(tss.KDM6A, 100) ## an arbitrary distance upstream
+show( subsetByOverlaps(grSet450k, promoters.KDM6A) ) ## probes in this window
+
+@
+
+Consult the AnnotationHub package vignette for some other possibilities.  If you
+are unfamiliar with the powerful GenomicRanges and GenomicFeatures packages, you
+may want to familiarize yourself with them as well.  
+
+\clearpage
+\section{sessionInfo}
+
+<<results='asis'>>=
+toLatex(sessionInfo())
+@ 
+
+\end{document}
+
