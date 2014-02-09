@@ -14,14 +14,13 @@
     chip=gsub('^IlluminaHumanMethylation','HM',gsub('k$','',annotation(from)))
     row.dat <- getPlatform(chip)
     asy.dat <- SimpleList()
-    anames <- ls(Biobase::assayData(from))
     features <- intersect(featureNames(from), names(row.dat))
     if(is(from, 'MethyLumiM')) {
       asy.dat$mvals = assayDataElement(from, 'exprs')[features, ]
     } else if(is(from, 'MethyLumiSet')) {
       asy.dat$betas = assayDataElement(from, 'betas')[features, ]
     }
-    if(all(c('methylated','unmethylated') %in% anames)) {
+    if(all(c('methylated','unmethylated') %in% assayDataElementNames(from))){
       asy.dat$total = assayDataElement(from, 'methylated')[features, ] +
                       assayDataElement(from, 'unmethylated')[features, ]
     }
@@ -33,13 +32,13 @@
   mlumiToMset <- function(from) { # {{{
 
     stopifnot(is(from, 'MethyLumiM'))
-    anames <- ls(Biobase::assayData(from))
-    stopifnot( ('exprs' %in% anames) ||
-               (all(c('methylated','unmethylated') %in% anames)) )
+    adatnames <- assayDataElementNames(from)
+    stopifnot( ('exprs' %in% adatnames) ||
+               (all(c('methylated','unmethylated') %in% adatnames)) )
 
     ## got everything (more or less)?
-    if(all(c('methylated','unmethylated') %in% anames)){
-      if('detection' %in% anames) {
+    if(all(c('methylated','unmethylated') %in% assayDataElementNames(from))){
+      if('detection' %in% adatnames) {
         pvals <- assayDataElement(from, 'detection')
       } else { 
         warning('Detection p-values not found, using a matrix of NAs instead')
@@ -54,7 +53,7 @@
                            pvals=pvals)
     } else { 
       warning('Methylated and/or unmethylated signals missing.  Dye bias equalization cannot be applied.')
-      if('detection' %in% anames) {
+      if('detection' %in% adatnames) {
         pvals <- assayDataElement(from, 'detection')
       } else { 
         warning('Detection p-values not found, using a matrix of NAs instead')
@@ -137,7 +136,7 @@
       return(GR)
     } # }}}
 
-    byChannel.Both <- function(mset, annot, hasOOB=FALSE) { # {{{
+    byChannel.Both <- function(mset, annot) { # {{{
       probes <- names(split(annot, as(annot$channel, 'vector'))[['Both']])
       probes <- intersect(probes, featureNames(mset))
       addrs <- as(values(annot[probes])$addressA, 'vector')
@@ -145,110 +144,71 @@
       Red = unmethylated(mset)[probes, ]
       rownames(Green) = rownames(Red) = as.character(addrs)
       return(list(Green=Green, Red=Red))
-    } # }}} 
-    byChannel.Grn <- function(mset, annot, hasOOB=FALSE) { # {{{
+    } # }}}
+    byChannel.Grn <- function(mset, annot) { # {{{
       probes <- names(split(annot, as(annot$channel, 'vector'))[['Grn']])
       probes <- intersect(probes, featureNames(mset))
       addrsA <- as(values(annot[probes])$addressA, 'vector')
       addrsB <- as(values(annot[probes])$addressB, 'vector')
+
       Grn.M = methylated(mset)[probes, ]
       rownames(Grn.M) = as.character(addrsB)
       Grn.U = unmethylated(mset)[probes, ]
       rownames(Grn.U) = as.character(addrsA)
       Green = rbind(Grn.M, Grn.U)
-      if(hasOOB) {
-        Red.M = mOOB(mset)[probes, ] # {{{
-        rownames(Red.M) = as.character(addrsB)
-        Red.U = uOOB(mset)[probes, ]
-        rownames(Red.U) = as.character(addrsA) # }}}
-      } else { 
-        #{{{ substitute a matrix of NAs
-        Red.M <- matrix(NA_real_, ncol = ncol(mset), nrow = length(probes),
-                        dimnames = list(as.character(addrsB),sampleNames(mset)))
-        Red.U <- matrix(NA_real_, ncol = ncol(mset), nrow = length(probes),
-                        dimnames = list(as.character(addrsA),sampleNames(mset)))
-        # }}}
-      } 
+
+      Red.M = mOOB(mset)[probes, ]
+      rownames(Red.M) = as.character(addrsB)
+      Red.U = uOOB(mset)[probes, ]
+      rownames(Red.U) = as.character(addrsA)
       Red = rbind(Red.M, Red.U)
+
       return(list(Green=Green, Red=Red))
     } # }}}
-    byChannel.Red <- function(mset, annot, hasOOB=FALSE) { # {{{
+    byChannel.Red <- function(mset, annot) { # {{{
       probes <- names(split(annot, as(annot$channel, 'vector'))[['Red']])
       probes <- intersect(probes, featureNames(mset))
       addrsA <- as(values(annot[probes])$addressA, 'vector')
       addrsB <- as(values(annot[probes])$addressB, 'vector')
-      if(hasOOB) {
-        Grn.M = mOOB(mset)[probes, ] # {{{
-        rownames(Grn.M) = addrsB
-        Grn.U = uOOB(mset)[probes, ]
-        rownames(Grn.U) = addrsA
-        Green = rbind(Grn.M, Grn.U) # }}}
-      } else { 
-        # {{{ substitute a matrix of NAs 
-        Grn.M <- matrix(NA_real_, ncol = ncol(mset), nrow = length(probes),
-                        dimnames = list(as.character(addrsB),sampleNames(mset)))
-        Grn.U <- matrix(NA_real_, ncol = ncol(mset), nrow = length(probes),
-                        dimnames = list(as.character(addrsA),sampleNames(mset)))
-        Green = rbind(Grn.M, Grn.U)
-        # }}}
-      }
+
+      Grn.M = mOOB(mset)[probes, ]
+      rownames(Grn.M) = addrsB
+      Grn.U = uOOB(mset)[probes, ]
+      rownames(Grn.U) = addrsA
+      Green = rbind(Grn.M, Grn.U)
+
       Red.M = methylated(mset)[probes, ]
       rownames(Red.M) = addrsB
       Red.U = unmethylated(mset)[probes, ]
       rownames(Red.U) = addrsA
       Red = rbind(Red.M, Red.U)
+
       return(list(Green=Green, Red=Red))
     } # }}}
-    byChannel <- function(mset, channel, annot, hasOOB=FALSE) { # {{{
+    byChannel <- function(mset, channel, annot) { # {{{
       stopifnot(channel %in% 
                 levels(values(annot)$channel))
-      switch(channel,
-             Both=byChannel.Both(mset, annot, hasOOB),
-             Grn=byChannel.Grn(mset, annot, hasOOB),
-             Red=byChannel.Red(mset, annot, hasOOB))
+      if(channel=='Both') byChannel.Both(mset, annot)
+      else if(channel=='Grn') byChannel.Grn(mset, annot)
+      else if(channel=='Red') byChannel.Red(mset, annot)
     } # }}}
 
     methylumiToMinfi <- function(from, annot=NULL) { # {{{
       require(minfi)
-      anames <- ls(Biobase::assayData(from))
-      if(!all(c('methylated','unmethylated') %in% anames)) { 
-        stop('Cannot construct an RGChannelSet without M and U intensities')
-      }
-      hasOOB <- TRUE
-      if(!all(c('methylated.OOB','unmethylated.OOB') %in% anames)) {
-        message('Out-of-band intensities missing, NAs will be substituted')
-        hasOOB <- FALSE
+      if(!all(c('methylated','unmethylated','methylated.OOB','unmethylated.OOB')
+              %in% assayDataElementNames(from))){
+        stop('Cannot construct an RGChannelSet without full (OOB) intensities')
       }
       chip=gsub('^IlluminaHumanMethylation','HM',gsub('k$','',annotation(from)))
       if(is.null(annot)) annot <- getPlatform(chip)
     
       chs <- levels(values(annot)$channel)
       names(chs) <- chs
-      chans <- lapply(chs, byChannel, mset=from, annot=annot, hasOOB=hasOOB)
-      if(!is.null(QCdata(from))) { 
-        Grn.ctls <- methylated(QCdata(from)) 
-        Red.ctls <- unmethylated(QCdata(from))
-        ctl.addrs <- as.character(fData(QCdata(from))$Address)
-        rownames(Grn.ctls) <- rownames(Red.ctls) <- ctl.addrs 
-      } else { 
-        if(chip == 'HM27') { 
-          data(hm27.controls) # {{{
-          Grn.ctls <- matrix(NA_real_, ncol=ncol(from),nrow=nrow(hm27.controls),
-                             dimnames=list(as.character(hm27.controls$Address),
-                                           as.character(sampleNames(from))))
-          Red.ctls <- matrix(NA_real_, ncol=ncol(from),nrow=nrow(hm27.controls),
-                             dimnames=list(as.character(hm27.controls$Address),
-                                           as.character(sampleNames(from))))#}}}
-        } else if(chip == 'HM450') { 
-          data(hm450.controls) # {{{
-          Grn.ctls <- matrix(NA_real_,ncol=ncol(from),nrow=nrow(hm450.controls),
-                             dimnames=list(as.character(hm450.controls$Address),
-                                           as.character(sampleNames(from))))
-          Red.ctls <- matrix(NA_real_,ncol=ncol(from),nrow=nrow(hm450.controls),
-                             dimnames=list(as.character(hm450.controls$Address),
-                                           as.character(sampleNames(from))))#}}}
-        } 
-      }
+      chans <- lapply(chs, byChannel, mset=from, annot=annot)
+      Grn.ctls <- methylated(QCdata(from))
+      Red.ctls <- methylated(QCdata(from))
+      ctl.addrs <- as.character(fData(QCdata(from))$Address)
+      rownames(Grn.ctls) <- rownames(Red.ctls) <- ctl.addrs
       Green = do.call( rbind, lapply(chans, function(x) x[['Green']]) )
       Green = rbind(Green, Grn.ctls)
       Red = do.call( rbind, lapply(chans, function(x) x[['Red']]) )
@@ -256,13 +216,7 @@
 
       stopifnot(identical(rownames(Red), rownames(Green)))
       rg <- RGChannelSet(Green=Green, Red=Red, phenoData=phenoData(from))
-      if(chip == 'HM450') {
-        annotation(rg) <- c(array="IlluminaHumanMethylation450k",
-                            annotation="ilmn12.hg19")
-      } else { 
-        annotation(rg) <- c(array="IlluminaHumanMethylation27k",
-                            annotation="ilmn12.hg19")
-      }
+      annotation(rg) <- annotation(from)
       return(rg)
 
     } # }}}
