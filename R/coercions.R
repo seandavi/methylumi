@@ -215,7 +215,8 @@
       Red = rbind(Red, Red.ctls)
 
       stopifnot(identical(rownames(Red), rownames(Green)))
-      rg <- RGChannelSet(Green=Green, Red=Red, phenoData=phenoData(from))
+      rg <- RGChannelSet(Green=Green, Red=Red)
+      pData(rg) <- pData(from)
       annotation(rg) <- annotation(from)
       return(rg)
 
@@ -269,33 +270,35 @@
     setAs("MethyLumiM", "RGChannelSet", function(from) methylumiToMinfi(from))
     setAs("MethyLumiSet", "MethylSet", function(from) { # {{{
       pre <- c('methylumi')
-      if(any(grepl('bgcorr', as.character(getHistory(from)$command)))) 
-        pre <- c(pre, 'background corrected')
-      if(any(grepl('ormalize', as.character(getHistory(from)$command))))
-        pre <- c(pre, 'dye bias equalized')
-      to <- MethylSet(Meth=methylated(from), Unmeth=unmethylated(from))
+      fromHist <- as.character(from@history$command)
+      ## this could stand to be improved
+      if(any(grepl('bgcorr', fromHist))) pre <- c(pre, 'background corrected')
+      if(any(grepl('ormalize', fromHist))) pre <- c(pre, 'dye bias equalized')
+      to <- MethylSet(Meth=methylated(from), 
+                      Unmeth=unmethylated(from),
+                      phenoData=phenoData(from))
       to@annotation <- c(array=annotation(from), annotation='ilmn12.hg19')
       to@preprocessMethod <- c(rg.norm=paste(pre, collapse=', '),
                                minfi=paste(packageVersion('minfi'),
                                            collapse='.'), 
                                manifest='0.4')
-      pData(to) <- pData(from)
       fData(to) <- fData(from)
       return(to)
     }) # }}}
     setAs("MethyLumiM", "MethylSet", function(from) { # {{{
       pre <- c('methylumi')
-      if(any(grepl('bgcorr', as.character(getHistory(from)$command)))) 
-        pre <- c(pre, 'background corrected')
-      if(any(grepl('ormalize', as.character(getHistory(from)$command))))
-        pre <- c(pre, 'dye bias equalized')
-      to <- MethylSet(Meth=methylated(from), Unmeth=unmethylated(from))
+      fromHist <- as.character(from@history$command)
+      ## this could stand to be improved
+      if(any(grepl('bgcorr', fromHist))) pre <- c(pre, 'background corrected')
+      if(any(grepl('ormalize', fromHist))) pre <- c(pre, 'dye bias equalized')
+      to <- MethylSet(Meth=methylated(from), 
+                      Unmeth=unmethylated(from),
+                      phenoData=phenoData(from))
       to@annotation <- c(array=annotation(from), annotation='ilmn.v1.2')
       to@preprocessMethod <- c(rg.norm=paste(pre, collapse=', '),
                                minfi=paste(packageVersion('minfi'),
                                            collapse='.'), 
                                manifest='0.4')
-      pData(to) <- pData(from)
       fData(to) <- fData(from)
       return(to)
     }) # }}}
