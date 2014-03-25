@@ -111,9 +111,7 @@ getAssayDataNameSubstitutions <- function() {
 
   dattypes <- data.frame(original=unique(datcnSplit[,2]),
                         newnames=.doAssayDataNameSubstitutions(unique(datcnSplit[,2])), stringsAsFactors = FALSE)  ## turn off stringAsFactors
- #                        newnames=.doAssayDataNameSubstitutions(unique(datcnSplit[,2]))) # changed by Pan Du, July 1, 2010
   
-	## added by Pan Du, July 1, 2010
 	## Check the number of columns of each data types, remove those do not match with the substituted ones, which should have the same dimensions.
 	colnum <- table(datcnSplit[,2])
 	## If the column numbers for each datatype are not consistent, we need to futher check it and remove the inconsistent ones.
@@ -127,7 +125,11 @@ getAssayDataNameSubstitutions <- function() {
 	}
 
   assaydata <- new.env(hash=TRUE,parent=emptyenv())
-  featurenames <- make.unique(as.character(dat$TargetID))
+  if (!is.null(dat$TargetID)) {
+    featurenames <- make.unique(as.character(dat$TargetID))
+  } else if (!is.null(dat$ID_REF)) {
+    featurenames <- make.unique(as.character(dat$ID_REF))
+  }
   for (i in 1:nrow(dattypes)) {
     if (dattypes$original[i] != '') {
       colsOfInterest <- grep(dattypes$original[i],cn)
@@ -138,10 +140,9 @@ getAssayDataNameSubstitutions <- function() {
     }
   }
 
-  ## added by Pan Du, July 1, 2010
   storageMode(assaydata) <- "lockedEnvironment"
 
-  fd <- dat[,(!(cn %in% datcn)), drop=FALSE]  # add drop = FALSE by Pan Du on Oct 6, 2010
+  fd <- dat[,(!(cn %in% datcn)), drop=FALSE]
   rownames(fd) <- featurenames
   featuredata <- as(fd,"AnnotatedDataFrame")
   return(list(featuredata=featuredata,assaydata=assaydata))
