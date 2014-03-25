@@ -61,8 +61,17 @@ setAs("eSet", "MethyLumiM", function(from) {
   	history.submitted <- as.character(Sys.time())
 
 	# from <- asS4(from)
+	## convert Methylated_Signal (or Unmethylated_Signal) as methylated (or unmethylated)
+	if (exists('Methylated_Signal', assayData(from)) && exists('Unmethylated_Signal', assayData(from))) {
+	  assayDataElement(from, 'methylated') <- assayDataElement(from, 'Methylated_Signal') 
+	  assayDataElement(from, 'unmethylated') <- assayDataElement(from, 'Unmethylated_Signal') 
+	  storageMode(from) <- 'environment'
+	  assayDataElement(from, 'Methylated_Signal') <- NULL
+	  assayDataElement(from, 'Unmethylated_Signal') <- NULL
+	  storageMode(from) <- 'lockedEnvironment'
+	}
 	
-	if (exists('methylated', assayData(from)) && exists('methylated', assayData(from))) {
+	if (exists('methylated', assayData(from)) && exists('unmethylated', assayData(from))) {
 		M <- estimateM(from, returnType="matrix")
 	} else {
 		stop("Cannot convert as MethyLumiM object because methylated and unmethylated slots do not exist!\n")
