@@ -129,6 +129,8 @@ getAssayDataNameSubstitutions <- function() {
     featurenames <- make.unique(as.character(dat$TargetID))
   } else if (!is.null(dat$ID_REF)) {
     featurenames <- make.unique(as.character(dat$ID_REF))
+  } else {
+    featurenames <- 1:nrow(dat)
   }
   for (i in 1:nrow(dattypes)) {
     if (dattypes$original[i] != '') {
