@@ -1,5 +1,10 @@
-import(Biobase)
 import(BiocGenerics)
+import(S4Vectors)
+import(IRanges)
+import(GenomeInfoDb)
+import(GenomicRanges)
+
+import(Biobase)
 
 importFrom(annotate,
            getAnnMap)
