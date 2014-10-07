@@ -183,6 +183,7 @@ the presence or absence of DNA methylation may help determine their activity).
 <<subsetMinfi, eval=TRUE>>=
 ## perhaps more topical:
 suppressPackageStartupMessages(require(Homo.sapiens))
+suppressPackageStartupMessages(require(TxDb.Hsapiens.UCSC.hg19.knownGene))
 txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene ## from Homo.sapiens
 
 KDM6AEntrezID=org.Hs.egSYMBOL2EG[['KDM6A']]
