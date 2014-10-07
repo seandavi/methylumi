@@ -582,8 +582,8 @@ methylumIDAT <- function(barcodes=NULL,pdat=NULL,parallel=F,n=F,n.sd=F,oob=T,ida
     barcodes = pdat$barcode
     if(any(grepl('idat',ignore.case=T,barcodes))) { 
       message('Warning: filtering out raw filenames') 
-      barcodes = gsub('_(Red|Grn)','', barcodes, ignore=TRUE)
-      barcodes = gsub('.idat', '', barcodes, ignore=TRUE)
+      barcodes = gsub('_(Red|Grn)','', barcodes, ignore.case=TRUE)
+      barcodes = gsub('.idat', '', barcodes, ignore.case=TRUE)
     }
     if(any(duplicated(barcodes))) {  
       message('Warning: filtering out duplicates') 
@@ -655,8 +655,8 @@ methylumIDAT2 <- function(barcodes=NULL,pdat=NULL,parallel=F,n=T,n.sd=F,oob=T,id
     barcodes = pdat$barcode
     if(any(grepl('idat',ignore.case=T,barcodes))) { 
       message('Warning: filtering out raw filenames') 
-      barcodes = gsub('_(Red|Grn)','', barcodes, ignore=TRUE)
-      barcodes = gsub('.idat', '', barcodes, ignore=TRUE)
+      barcodes = gsub('_(Red|Grn)','', barcodes, ignore.case=TRUE)
+      barcodes = gsub('.idat', '', barcodes, ignore.case=TRUE)
     }
     if(any(duplicated(barcodes))) {  
       message('Warning: filtering out duplicates') 
