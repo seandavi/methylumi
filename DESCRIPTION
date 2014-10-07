@@ -27,5 +27,27 @@ Description: This package provides classes for holding and manipulating
        HumanMethylation27 and HumanMethylation450 microarrays.  Normalization,
        background correction, and quality control features for GoldenGate,
        Infinium, and Infinium HD arrays are also included.
+Collate:    AllGenerics.R
+  MethyLumiSet-class.R
+  MethyLumiM-class.R
+  MoreGenerics.R
+    Methods.R
+  bgcorr.R
+  coercions.R
+  detectionpval.R
+  featureFilter.R
+  mclapply_replace.R
+  methylData-class.R
+  methylumIDAT.R
+  methylumiCSV.R
+  methylumiR.R
+  normalization.R
+  plotNegOob.R
+  qc.probe.plot.R
+  readIDAT2.R
+  stripMethyLumiSet.R
+  subset450kas27k.R
+  utilities.R
+  varFilter.R
 VignetteBuilder: knitr
 License: GPL-2
