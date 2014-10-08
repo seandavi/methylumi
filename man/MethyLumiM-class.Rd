@@ -4,7 +4,7 @@
 \alias{MethyLumiM-class}
 \alias{MethyLumiM}
 \alias{QCdata,MethyLumiM-method}
-\alias{[,MethyLumiM-method}
+\alias{[,MethyLumiM,ANY-method}
 \alias{betas,MethyLumiM-method}
 \alias{combine,MethyLumiM,MethyLumiM-method}
 \alias{controlData,MethyLumiM-method}

@@ -31,7 +31,7 @@ Collate:    AllGenerics.R
   MethyLumiSet-class.R
   MethyLumiM-class.R
   MoreGenerics.R
-    Methods.R
+  Methods.R
   bgcorr.R
   coercions.R
   detectionpval.R

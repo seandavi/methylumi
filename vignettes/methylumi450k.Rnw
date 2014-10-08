@@ -4,6 +4,7 @@
 %\VignetteDepends{FDb.InfiniumMethylation.hg19}
 %\VignetteDepends{TCGAMethylation450k}
 %\VignetteDepends{Homo.sapiens}
+%\VignetteDepends{TxDb.Hsapiens.UCSC.hg19.knownGene}
 %\VignetteDepends{minfi}
 %\VignetteDepends{lumi}
 %\VignettePackage{methylumi}
@@ -182,9 +183,9 @@ the presence or absence of DNA methylation may help determine their activity).
 
 <<subsetMinfi, eval=TRUE>>=
 ## perhaps more topical:
-suppressPackageStartupMessages(require(Homo.sapiens))
 suppressPackageStartupMessages(require(TxDb.Hsapiens.UCSC.hg19.knownGene))
-txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene ## from Homo.sapiens
+suppressPackageStartupMessages(require(Homo.sapiens))
+txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene
 
 KDM6AEntrezID=org.Hs.egSYMBOL2EG[['KDM6A']]
 txs.KDM6A <- transcriptsBy(txdb, 'gene')[[KDM6AEntrezID]]
