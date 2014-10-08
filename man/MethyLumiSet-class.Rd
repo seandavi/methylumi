@@ -6,7 +6,7 @@
 \alias{Cy5.N,MethyLumiSet-method}
 \alias{QCdata,MethyLumiSet-method}
 \alias{QCdata<-,MethyLumiSet}
-\alias{[,MethyLumiSet-method}
+\alias{[,MethyLumiSet,ANY-method}
 \alias{betas,MethyLumiSet-method}
 \alias{betas<-,MethyLumiSet,matrix-method}
 \alias{boxplot,MethyLumiSet-method}

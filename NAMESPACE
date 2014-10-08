@@ -14,12 +14,6 @@ importMethodsFrom(AnnotationDbi,
 
 importFrom(stats4, plot, summary)
 
-
-importFrom(graphics,
-           hist,
-           image,
-           pairs)
-
 importFrom(lattice,
            dotplot,
            parallel)

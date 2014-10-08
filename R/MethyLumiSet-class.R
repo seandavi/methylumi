@@ -5,6 +5,7 @@
 setClass('MethyLumi', contains='eSet')
 setClass('MethyLumiQC', contains='MethyLumi')
 setClassUnion("QCDataOrNULL",c('NULL',"MethyLumiQC"))
+setClassUnion("methylData",c('MethyLumi','ExpressionSet'))
 
 setClass('MethyLumiSet', # {{{
          representation(QC="QCDataOrNULL",
@@ -89,6 +90,8 @@ setMethod('mvals', signature(object='MethyLumiSet'), function(object) { # {{{
         pmax(pmin(1-betas(object), 0.99999), 0.000001) )
 }) # }}}
 
+setGeneric('pvals',
+           function(object) standardGeneric('pvals'))
 setMethod("pvals", signature(object="MethyLumi"), # {{{
           function(object) assayDataElement(object,"pvals")) # }}}
 setReplaceMethod("pvals", signature(object="MethyLumi",value="matrix"), # {{{
