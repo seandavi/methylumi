@@ -19,14 +19,11 @@ setReplaceMethod('pval.detect', signature(object="methylData", value="numeric"),
   channels <- c(Cy3='Cy3',Cy5='Cy5')
 
   ## determine which channel each probe is in 
-  require(paste(annotation(object),'db',sep='.'), character.only=TRUE)
-  colorchan <- toTable(get(paste(annotation(object), 'COLORCHANNEL', sep='')))
   probes <- list( # {{{ by color channel and design type
-    Cy3=colorchan$Probe_ID[which(colorchan$Color_Channel=='Grn')],
-    Cy5=colorchan$Probe_ID[which(colorchan$Color_Channel=='Red')],
-    New=colorchan$Probe_ID[which(colorchan$Color_Channel=='Both')]
+    Cy3=fData(object)$Probe_ID[which(fData(object)$COLOR_CHANNEL=='Grn')],
+    Cy5=fData(object)$Probe_ID[which(fData(object)$COLOR_CHANNEL=='Red')],
+    New=fData(object)$Probe_ID[which(fData(object)$COLOR_CHANNEL=='Both')]
   ) # }}}
-  rm(colorchan)
 
   # instead of a normal approximation, use the ECDF of the negative controls
   # interestingly, this can come in handy when dealing with FFPE samples 
