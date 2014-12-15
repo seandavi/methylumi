@@ -49,8 +49,8 @@ options('width'=50)
 
 <<loadLibraries, eval=TRUE>>=
 suppressPackageStartupMessages(require('methylumi'))
-suppressPackageStartupMessages(require('IlluminaHumanMethylation450k.db'))
 suppressPackageStartupMessages(require('TCGAMethylation450k'))
+suppressPackageStartupMessages(require('FDb.InfiniumMethylation.hg19'))
 @ 
 
 <<loadData, eval=TRUE>>=
