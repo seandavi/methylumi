@@ -1,6 +1,5 @@
 \name{methylumiGenerics}
 \alias{combine27k450k}
-\alias{compare.chips}
 \alias{controlData}
 \alias{controlData<-}
 \alias{cy3}
@@ -44,11 +43,7 @@
 \alias{pval.detect}
 \alias{pval.detect<-}
 \alias{qc.probe.plot}
-\alias{readMethyLumIDAT}
 \alias{sampleNAs}
-\alias{subset27kas450k}
-\alias{subset450kas27k}
-\alias{subsetCommonProbes}
 \alias{total.intensity}
 \alias{unmethylated.N}
 \alias{unmethylated.N<-}
