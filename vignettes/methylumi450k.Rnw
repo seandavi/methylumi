@@ -1,6 +1,5 @@
 %\VignetteIndexEntry{Working with Illumina 450k Arrays using methylumi}
 %\VignetteEngine{knitr::knitr}
-%\VignetteDepends{IlluminaHumanMethylation450k.db}
 %\VignetteDepends{FDb.InfiniumMethylation.hg19}
 %\VignetteDepends{TCGAMethylation450k}
 %\VignetteDepends{Homo.sapiens}
