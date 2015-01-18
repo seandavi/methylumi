@@ -104,7 +104,6 @@
       GR <- keepSeqlevels(GR, paste0("chr", c(1:22, "X", "Y")))
       if ("name" %in% names(mcols(GR))) names(GR) <- mcols(GR)$name
       if (is.na(unique(genome(GR)))) genome(GR) <- genome
-      # seqinfo(GR) <- SeqinfoForBSGenome(unique(genome(GR)))[seqlevels(GR)]
       platform <- toupper(platform)
       if (platform %in% c("HM450", "ILLUMINAHUMANMETHYLATION450")) {
         hm450.controls <- NULL
@@ -232,6 +231,39 @@
            function(object) assays(object)$betas ) # }}}
     setMethod("betas", signature(object="GenomicMethylSet"), # {{{
            function(object) minfi::getBeta(object)) # }}} 
+
+    SEtoGRset <- function(from) {
+      message('This function is almost solely for TCGA/HOVON use... beware...')
+      assaynames <- names(assays(from, withDimnames=F))
+      stopifnot(any(c('betas','exprs') %in% names(assays(from))))
+      if (nrow(from) > 27578) { # 450k
+        grset <- mapToGenome(from)
+        if ('barcode' %in% names(assays(from))) {
+          assays(grset)$barcode <- assays(from)$barcode
+        }
+      } else { ## 27k or HELP
+        message("Assuming this is HumanMethylation27 or maybe HELP data...") 
+        if (!'betas' %in% names(assays(from))) {
+          message("Assuming the exprs are log(HpaII/MspI) ratios from HELP...")
+          help2beta <- function(x) (exp(x)/(1 + exp(x))) * -1 
+          assays(from)$betas <- help2beta(assays(from)$exprs)
+        }
+        annot <- c(array="IlluminaHumanMethylationOrMaybeHELP", 
+                   annotation="Unknown")
+        prepro <- c(rg.norm="Unknown")
+        grset <- GenomicRatioSet(gr=rowData(from),
+                                 Beta=assays(from)$betas,
+                                 pData=colData(from),
+                                 annotation=annot,
+                                 preprocessMethod=prepro)
+      } 
+      exptData(grset) <- exptData(from)
+      return(grset)
+    }
+
+    setAs("SummarizedExperiment", "GenomicRatioSet", function(from) { # {{{
+      SEtoGRset(from)
+    }) # }}}
 
     setAs("SummarizedExperiment", "GenomicMethylSet", function(from) { # {{{
       message('This function is almost solely for TCGA use... beware...')
