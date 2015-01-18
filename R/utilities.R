@@ -15,6 +15,11 @@ psummary <- function (pvals, cuts=c(0.001,0.01,0.025,0.05,0.1,1), digits=getOpti
     invisible(pvals)
 } # }}}
 
+# get the URL of a Bioconductor package:
+getBiocPkgUrl <- function(pkg) { # {{{
+  paste0("http://www.bioconductor.org/packages/release/bioc/html/",pkg,".html")
+} # }}}
+
 # useful for feature selection if not using shrinkage
 sdmax <- function(y) sd(na.omit(y))/sqrt(mean(na.omit(y))*(1-mean(na.omit(y))))
 
