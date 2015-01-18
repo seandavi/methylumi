@@ -104,7 +104,7 @@
       GR <- keepSeqlevels(GR, paste0("chr", c(1:22, "X", "Y")))
       if ("name" %in% names(mcols(GR))) names(GR) <- mcols(GR)$name
       if (is.na(unique(genome(GR)))) genome(GR) <- genome
-      seqinfo(GR) <- SeqinfoForBSGenome(unique(genome(GR)))[seqlevels(GR)]
+      # seqinfo(GR) <- SeqinfoForBSGenome(unique(genome(GR)))[seqlevels(GR)]
       platform <- toupper(platform)
       if (platform %in% c("HM450", "ILLUMINAHUMANMETHYLATION450")) {
         hm450.controls <- NULL
