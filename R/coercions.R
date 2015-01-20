@@ -232,15 +232,12 @@
     setMethod("betas", signature(object="GenomicMethylSet"), # {{{
            function(object) minfi::getBeta(object)) # }}} 
 
-    SEtoGRset <- function(from) {
+    SEtoGRset <- function(from) { # {{{ 
       message('This function is almost solely for TCGA/HOVON use... beware...')
       assaynames <- names(assays(from, withDimnames=F))
       stopifnot(any(c('betas','exprs') %in% names(assays(from))))
-      if (nrow(from) > 27578) { # 450k
+      if (nrow(from) > 50000) { # DMRs can be summarized over > # of probes
         grset <- mapToGenome(from)
-        if ('barcode' %in% names(assays(from))) {
-          assays(grset)$barcode <- assays(from)$barcode
-        }
       } else { ## 27k or HELP
         message("Assuming this is HumanMethylation27 or maybe HELP data...") 
         if (!'betas' %in% names(assays(from))) {
@@ -248,7 +245,7 @@
           help2beta <- function(x) (exp(x)/(1 + exp(x))) * -1 
           assays(from)$betas <- help2beta(assays(from)$exprs)
         }
-        annot <- c(array="IlluminaHumanMethylationOrMaybeHELP", 
+        annot <- c(array="IlluminaHumanMethylation27OrPerhapsHELP_HG17", 
                    annotation="Unknown")
         prepro <- c(rg.norm="Unknown")
         grset <- GenomicRatioSet(gr=rowData(from),
@@ -257,9 +254,12 @@
                                  annotation=annot,
                                  preprocessMethod=prepro)
       } 
+      if ('barcode' %in% names(assays(from))) {
+        assays(grset)$barcode <- assays(from)$barcode
+      }
       exptData(grset) <- exptData(from)
       return(grset)
-    }
+    } # }}}
 
     setAs("SummarizedExperiment", "GenomicRatioSet", function(from) { # {{{
       SEtoGRset(from)
