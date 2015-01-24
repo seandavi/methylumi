@@ -89,3 +89,11 @@ beta.transform <- function(x, w=NULL, to.mean=TRUE, to.mode=FALSE, s=0.5){ #{{{
 
 } # }}}
 
+## I'm really, really lazy
+tcgaPipeline <- function(IDATs) { 
+  as(stripMethyLumiSet(
+       normalizeMethyLumiSet(
+         methylumi.bgcorr(
+           methylumIDAT(IDATs)))),
+     'SummarizedExperiment')
+}

@@ -24,7 +24,7 @@ importFrom(minfi,
 importFrom(illuminaio,
            readIDAT)
 
-export(methylumiR, extractBarcodeAndPosition, normalizeMethyLumiSet, getAssayDataNameSubstitutions, estimateM, methylumIDAT, lumIDAT, methylumiCSV, lumiCSV, methylumi.diagnostics, qc.probe.plot, cy3, cy5, getBarcodes, stripBeadNs, stripBeadSDs, stripMethyLumiSet, psummary, negctls.stderr, methylumi.bgcorr, IDATtoMatrix, IDATsToMatrices, designItoMandU, designIItoMandU, mergeProbeDesigns, NChannelSetToMethyLumiSet, stripOOB, plotNegOob, .mclapply)
+export(methylumiR, extractBarcodeAndPosition, normalizeMethyLumiSet, getAssayDataNameSubstitutions, estimateM, methylumIDAT, lumIDAT, methylumiCSV, lumiCSV, methylumi.diagnostics, qc.probe.plot, cy3, cy5, getBarcodes, stripBeadNs, stripBeadSDs, stripMethyLumiSet, psummary, negctls.stderr, methylumi.bgcorr, IDATtoMatrix, IDATsToMatrices, designItoMandU, designIItoMandU, mergeProbeDesigns, NChannelSetToMethyLumiSet, stripOOB, plotNegOob, tcgaPipeline, .mclapply)
 
 exportClasses("MethyLumiSet","MethyLumiQC","MethyLumi", "MethyLumiM","methylData")
 exportMethods("getHistory","betas","pvals","exprs","summary",
