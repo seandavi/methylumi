@@ -1,8 +1,8 @@
 Package: methylumi
 Type: Package
 Title: Handle Illumina methylation data
-Version: 2.13.7
-Date: 2015-01-20
+Version: 2.13.9
+Date: 2015-01-23
 Author: Sean Davis, Pan Du, Sven Bilke, Tim Triche, Jr., Moiz Bootwalla
 Depends: Biobase, methods, R (>= 2.13), scales, reshape2, ggplot2, matrixStats,
          FDb.InfiniumMethylation.hg19 (>= 2.2.0), minfi
