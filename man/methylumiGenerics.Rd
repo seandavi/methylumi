@@ -49,7 +49,7 @@
 \alias{unmethylated.N<-}
 \alias{dataType}
 \alias{dataType<-}
-\alias{betas,SummarizedExperiment-method}
+\alias{betas,RangedSummarizedExperiment-method}
 \alias{methylated,MethylSet-method}
 \alias{unmethylated,MethylSet-method}
 \alias{betas,GenomicMethylSet-method}

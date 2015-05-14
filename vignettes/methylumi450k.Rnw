@@ -157,7 +157,7 @@ stripOOB() on the resulting object to reduce its size.  If you plan on using
 a preprocessed MethyLumiSet in minfi for further processing, don't strip it.
 
 The GenomicMethylSet and GenomicRatioSet classes in minfi inherit from the 
-SummarizedExperiment class, which has some particularly useful features:
+RangedSummarizedExperiment class, which has some particularly useful features:
 
 <<coerceMinfi2, eval=TRUE>>=
 suppressPackageStartupMessages(require(minfi))
