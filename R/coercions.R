@@ -25,9 +25,9 @@
                       assayDataElement(from, 'unmethylated')[features, ]
     }
     SummarizedExperiment(assays=asy.dat,
-                         rowData=row.dat[features],
+                         rowRanges=row.dat[features],
                          colData=as(pData(from), 'DataFrame'),
-                         exptData=as(experimentData(from), 'SimpleList'))
+                         metadata=as.list(experimentData(from)))
   } # }}}
   mlumiToMset <- function(from) { # {{{
 
@@ -81,8 +81,8 @@
   } # }}}
 
   setAs("MethyLumiM", "MethyLumiSet", function(from) mlumiToMset(from))
-  setAs("MethyLumiSet", "SummarizedExperiment", function(from) msetToSE(from))
-  setAs("MethyLumiM", "SummarizedExperiment", function(from) msetToSE(from))
+  setAs("MethyLumiSet", "RangedSummarizedExperiment", function(from) msetToSE(from))
+  setAs("MethyLumiM", "RangedSummarizedExperiment", function(from) msetToSE(from))
 
     getPlatform <- function(platform="HM450", genome="hg19") { ## {{{ 
       require(Biostrings)
@@ -227,7 +227,7 @@
       return(assayDataElement(object,"Unmeth"))) # }}}
     setMethod("betas",signature(object="MethylSet"), function(object) # {{{
       return(minfi::getBeta(object))) # }}}
-    setMethod("betas", signature(object="SummarizedExperiment"), # {{{
+    setMethod("betas", signature(object="RangedSummarizedExperiment"), # {{{
            function(object) assays(object)$betas ) # }}}
     setMethod("betas", signature(object="GenomicMethylSet"), # {{{
            function(object) minfi::getBeta(object)) # }}} 
@@ -248,7 +248,7 @@
         annot <- c(array="IlluminaHumanMethylation27OrPerhapsHELP_HG17", 
                    annotation="Unknown")
         prepro <- c(rg.norm="Unknown")
-        grset <- GenomicRatioSet(gr=rowData(from),
+        grset <- GenomicRatioSet(gr=rowRanges(from),
                                  Beta=assays(from)$betas,
                                  pData=colData(from),
                                  annotation=annot,
@@ -257,15 +257,15 @@
       if ('barcode' %in% names(assays(from))) {
         assays(grset)$barcode <- assays(from)$barcode
       }
-      exptData(grset) <- exptData(from)
+      metadata(grset) <- metadata(from)
       return(grset)
     } # }}}
 
-    setAs("SummarizedExperiment", "GenomicRatioSet", function(from) { # {{{
+    setAs("RangedSummarizedExperiment", "GenomicRatioSet", function(from) { # {{{
       SEtoGRset(from)
     }) # }}}
 
-    setAs("SummarizedExperiment", "GenomicMethylSet", function(from) { # {{{
+    setAs("RangedSummarizedExperiment", "GenomicMethylSet", function(from) { # {{{
       message('This function is almost solely for TCGA use... beware...')
       assaynames <- names(assays(from, withDimnames=F))
       stopifnot(all(c('betas','total') %in% assaynames) ||
@@ -278,7 +278,7 @@
         prepro <- c(rg.norm='methylumi.bgcorr()')
       } # }}}
       if('betas' %in% assaynames) { # {{{
-        gm <- GenomicMethylSet(gr=rowData(from),
+        gm <- GenomicMethylSet(gr=rowRanges(from),
                                Meth=(assays(from, withDim=F)$betas* 
                                      assays(from, withDim=F)$total ),
                                Unmeth=((1-assays(from, withDim=F)$betas)*
@@ -287,14 +287,14 @@
                                annotation=annot,
                                preprocessMethod=prepro) # }}}
       } else { # {{{
-        gm <- GenomicMethylSet(gr=rowData(from),
+        gm <- GenomicMethylSet(gr=rowRanges(from),
                                Meth=assays(from, withDimnames=F)$methylated,
                                Unmeth=assays(from, withDimnames=F)$unmethylated,
                                pData=colData(from),
                                annotation=annot,
                                preprocessMethod=prepro)
       } # }}}
-      exptData(gm) <- exptData(from)
+      metadata(gm) <- metadata(from)
       return(gm)
     }) # }}}
 
@@ -349,7 +349,7 @@
           }) # }}}
 
     if(!is.na(tryCatch(getClass('MethyGenoSet'),error=function(e) return(NA)))){
-      setAs("SummarizedExperiment", "MethyGenoSet", 
+      setAs("RangedSummarizedExperiment", "MethyGenoSet", 
         function(from) { # {{{
           stopifnot(any(c('M','Beta','exprs','betas') %in% names(assays(from))))
           logit2 <- function(x) { # {{{
@@ -378,7 +378,7 @@
                             dimnames=dimnames(from)))
             }
           } # }}}
-          MethyGenoSet(locData=as(rowData(from), 'RangedData'),
+          MethyGenoSet(locData=as(rowRanges(from), 'RangedData'),
                        exprs=getM(from),
                        methylated=getMeth(from),
                        unmethylated=getUnmeth(from),
