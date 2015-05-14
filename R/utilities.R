@@ -100,5 +100,5 @@ tcgaPipeline <- function(IDATs) {
        stripMethyLumiSet(
          methylumi.bgcorr(
            methylumIDAT(IDATs)))),
-     "SummarizedExperiment")
+     "RangedSummarizedExperiment")
 }
