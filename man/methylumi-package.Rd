@@ -22,6 +22,8 @@ A worked example of the use of the package can be found by typing:
 A full listing of the available documentation can be obtained by typing
 \code{help.start()} and selecting \code{methylumi} from the \code{Packages}
 link or by typing \code{library(help="methylumi")}.
+
+If you use the methylumIDAT function or its out-of-band preprocessing mechanisms in your work, a citation to the paper "Low-level processing of Illumina Infinium DNA methylation beadarrays" by TJ Triche, DJ Weisenberger, D Van Den Berg, KD Siegmund, and PW Laird, Nucleic acids research, 2013, would be appreciated.  
 }
 \details{
 \tabular{ll}{
