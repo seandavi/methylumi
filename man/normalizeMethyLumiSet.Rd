@@ -12,8 +12,10 @@
 
   For HumanMethylation450 data, the function delegates to normalizeViaControls()
   the task of scaling red and green intensities against a reference array (chip)
-  which defaults to the first chip in a set.  The code to do this is based on 
-  code from the 'minfi' package and uses the built-in normalization controls to
+  which uses the closest-to-equal chip (i.e., which.min(abs(R.G.ratio - 1))).
+
+  The code to do this is based on code from the 'minfi' package and uses the 
+  built-in red and green normalization control probes on the hm450 arrays to
   scale the channels of the samples, so that a consistent degree of dye bias is 
   maintained for Infinium II probes across an experiment or set of experiments. 
 }
