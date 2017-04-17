@@ -215,7 +215,7 @@
 
       stopifnot(identical(rownames(Red), rownames(Green)))
       rg <- RGChannelSet(Green=Green, Red=Red)
-      pData(rg) <- pData(from)
+      colData(rg) <- DataFrame(pData(from))
       annotation(rg) <- annotation(from)
       return(rg)
 
@@ -308,13 +308,13 @@
       if(any(grepl('ormalize', fromHist))) pre <- c(pre, 'dye bias equalized')
       to <- MethylSet(Meth=methylated(from), 
                       Unmeth=unmethylated(from),
-                      phenoData=phenoData(from))
+                      colData=DataFrame(pData(from)))
       to@annotation <- c(array=annotation(from), annotation='ilmn12.hg19')
       to@preprocessMethod <- c(rg.norm=paste(pre, collapse=', '),
                                minfi=paste(packageVersion('minfi'),
                                            collapse='.'), 
                                manifest='0.4')
-      fData(to) <- fData(from)
+      rowData(to) <- fData(from)
       return(to)
     }) # }}}
     setAs("MethyLumiM", "MethylSet", function(from) { # {{{

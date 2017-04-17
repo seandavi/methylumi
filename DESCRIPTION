@@ -1,8 +1,8 @@
 Package: methylumi
 Type: Package
 Title: Handle Illumina methylation data
-Version: 2.21.0
-Date: 2016-06-01
+Version: 2.21.1
+Date: 2017-04-17
 Author: Sean Davis, Pan Du, Sven Bilke, Tim Triche, Jr., Moiz Bootwalla
 Depends: Biobase, methods, R (>= 2.13), scales, reshape2, ggplot2, matrixStats,
          FDb.InfiniumMethylation.hg19 (>= 2.2.0), minfi
@@ -24,7 +24,7 @@ Description: This package provides classes for holding and manipulating
        HumanMethylation27 and HumanMethylation450 microarrays.  Normalization,
        background correction, and quality control features for GoldenGate,
        Infinium, and Infinium HD arrays are also included.
-Collate:    AllGenerics.R
+Collate: AllGenerics.R
   MethyLumiSet-class.R
   MethyLumiM-class.R
   MoreGenerics.R
@@ -48,3 +48,4 @@ Collate:    AllGenerics.R
 VignetteBuilder: knitr
 BugReports: https://github.com/seandavi/methylumi/issues/new
 License: GPL-2
+RoxygenNote: 6.0.1
