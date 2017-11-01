@@ -1,7 +1,7 @@
 language: r
 cache: packages
 sudo: true
-r: bioc
+r: bioc-release
 r_github_packages:
   - jimhester/covr
 before_install:
