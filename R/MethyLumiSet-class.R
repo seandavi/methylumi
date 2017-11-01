@@ -452,6 +452,8 @@ setMethod("[", "MethyLumiSet", function(x, i, j, ..., drop = FALSE) { # {{{
   
   ddim <- dim(x)
   if (!missing(i) & !missing(j)) {
+    if( 'QC' %in% slotNames(x) ) x@QC = x@QC[,j,drop=FALSE]		
+    if( 'OOB' %in% slotNames(x) ) x@OOB = x@OOB[i,j,drop=FALSE]  
     history.command <- paste('Subset of',ddim[1],'features &',ddim[2],'samples')
   } else if (!missing(i)) {
     history.command <- paste('Subset of', ddim[1], 'features.')
