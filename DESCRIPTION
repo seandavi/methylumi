@@ -8,7 +8,8 @@ Depends: Biobase, methods, R (>= 2.13), scales, reshape2, ggplot2, matrixStats,
          FDb.InfiniumMethylation.hg19 (>= 2.2.0), minfi
 Imports: BiocGenerics, S4Vectors, IRanges, GenomeInfoDb, GenomicRanges,
          SummarizedExperiment, Biobase, graphics, lattice, annotate,
-         genefilter, AnnotationDbi, minfi, stats4, illuminaio
+         genefilter, AnnotationDbi, minfi, stats4, illuminaio,
+	 GenomicFeatures
 Suggests: lumi, lattice, limma, xtable, SQN, MASS, matrixStats,
           parallel, rtracklayer, Biostrings, methyAnalysis,
           TCGAMethylation450k, IlluminaHumanMethylation450kanno.ilmn12.hg19,
