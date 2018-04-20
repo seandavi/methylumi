@@ -19,6 +19,9 @@ importFrom(lattice,
            dotplot,
            parallel)
 
+importFrom(GenomicFeatures,
+           features)
+
 importFrom(minfi,
            mapToGenome)
 
