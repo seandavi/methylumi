@@ -34,6 +34,7 @@
 \alias{dataType,MethyLumiM-method}
 \alias{dataType<-,MethyLumiM,ANY-method}
 \alias{dataType<-,MethyLumiM-method}
+\alias{[,MethyLumiM,ANY,ANY,ANY-method}
 
 \title{Class "MethyLumiM": for Illumina Methylation microarray data
   using logRatios}

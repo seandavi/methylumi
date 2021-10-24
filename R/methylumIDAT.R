@@ -93,7 +93,12 @@ getMethylationBeadMappers <- function(chipType=c('450k','27k'), genome=c('hg19',
 
 } # }}}
 
-## process a single IDAT (just the mean intensities) 
+#' process a single IDAT (just the mean intensities)
+#' 
+#' @param x character(1)
+#' @param fileExts named list
+#' @param idatPath character(1)
+#'  
 IDATtoMatrix <- function(x,fileExts=list(Cy3="Grn",Cy5="Red"),idatPath='.'){#{{{
   chs = names(fileExts)
   names(chs) = fileExts
@@ -112,6 +117,14 @@ IDATtoMatrix <- function(x,fileExts=list(Cy3="Grn",Cy5="Red"),idatPath='.'){#{{{
   attr(probe.data, 'ChipType') = processed[[1]][['ChipType']]
   return(probe.data)
 } # }}}
+
+#' convert multiple idats to matrices
+#' 
+#' @param barcodes character()
+#' @param fileExts character()
+#' @param parallel logical(1)
+#' @param idatPath character(1)
+#' 
 IDATsToMatrices <- function(barcodes, fileExts=list(Cy3="Grn", Cy5="Red"), parallel=F, idatPath='.') { # {{{
   names(barcodes) = as.character(barcodes)
   if(parallel) {

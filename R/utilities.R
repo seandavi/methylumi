@@ -95,6 +95,10 @@ beta.transform <- function(x, w=NULL, to.mean=TRUE, to.mode=FALSE, s=0.5){ #{{{
 } # }}}
 
 ## I'm really, really lazy
+#' Total convenience function for processing IDATs like tcga
+#' 
+#' @param IDATs character() of idat files
+#' 
 tcgaPipeline <- function(IDATs) { 
   as(normalizeMethyLumiSet(
        stripMethyLumiSet(

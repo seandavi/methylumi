@@ -48,6 +48,8 @@
 \alias{total.intensity,MethyLumiSet-method}
 \alias{unmethylated,MethyLumiSet-method}
 \alias{unmethylated<-,MethyLumiSet,matrix-method}
+\alias{[,MethyLumiSet,ANY,ANY,ANY-method}
+
 
 \title{Class \code{"MethyLumiSet"} for containing Illumina methylation data}
 \description{This class inherits from the MethyLumi class (and
