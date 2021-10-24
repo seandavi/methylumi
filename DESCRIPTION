@@ -15,7 +15,7 @@ Suggests: lumi, lattice, limma, xtable, SQN, MASS, matrixStats,
           TCGAMethylation450k, IlluminaHumanMethylation450kanno.ilmn12.hg19,
           FDb.InfiniumMethylation.hg18 (>= 2.2.0), Homo.sapiens, knitr
 biocViews: DNAMethylation, TwoChannel, Preprocessing, QualityControl, CpGIsland
-Maintainer: Sean Davis <sdavis2@mail.nih.gov>
+Maintainer: Sean Davis <seandavi@gmail.com>
 Description: This package provides classes for holding and manipulating
 	     Illumina methylation data.  Based on eSet, it can contain MIAME
 	     information, sample information, feature information, and
