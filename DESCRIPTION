@@ -1,8 +1,8 @@
 Package: methylumi
 Type: Package
 Title: Handle Illumina methylation data
-Version: 2.39.3
-Date: 2021-10-24
+Version: 2.39.4
+Date: 2021-10-27
 Author: Sean Davis, Pan Du, Sven Bilke, Tim Triche, Jr., Moiz Bootwalla
 Depends: Biobase, methods, R (>= 2.13), scales, reshape2, ggplot2, matrixStats,
          FDb.InfiniumMethylation.hg19 (>= 2.2.0), minfi
@@ -11,7 +11,7 @@ Imports: BiocGenerics, S4Vectors, IRanges, GenomeInfoDb, GenomicRanges,
          genefilter, AnnotationDbi, minfi, stats4, illuminaio,
 	 GenomicFeatures
 Suggests: lumi, lattice, limma, xtable, SQN, MASS, matrixStats,
-          parallel, rtracklayer, Biostrings, methyAnalysis,
+          parallel, rtracklayer, Biostrings, 
           TCGAMethylation450k, IlluminaHumanMethylation450kanno.ilmn12.hg19,
           FDb.InfiniumMethylation.hg18 (>= 2.2.0), Homo.sapiens, knitr
 biocViews: DNAMethylation, TwoChannel, Preprocessing, QualityControl, CpGIsland
