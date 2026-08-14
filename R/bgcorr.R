@@ -26,7 +26,21 @@ methylumi.bgcorr<-function(x, method='noob', offset=15, controls=NULL, correct=T
   } # }}}
 
   # 'noob' is just shorthand for 'normexp, OOB'
-  if(tolower(method) == 'noob') controls = intensities.OOB(x)
+  if(tolower(method) == 'noob') {
+    # OOB intensities only exist if the object was built from raw IDATs (#24)
+    if(!all(c('methylated.OOB','unmethylated.OOB') %in% assayDataElementNames(x))) {
+      stop("Background correction method '", method, "' needs out-of-band (OOB) ",
+           "probe intensities, which this object does not have. OOB intensities ",
+           "are only produced by reading raw IDAT files with methylumIDAT(); ",
+           "objects built from GEO series matrices or GenomeStudio output (e.g. ",
+           "via methylumiR()) carry only methylated/unmethylated/pval data. ",
+           "Either re-read the raw IDATs with methylumIDAT(), or use a method ",
+           "that does not need OOB probes -- e.g. method='illumina' or ",
+           "method='median' against the Illumina negative controls, or supply ",
+           "your own controls=list(Cy3=..., Cy5=...).")
+    }
+    controls = intensities.OOB(x)
+  }
   if(tolower(method) == 'lumi') controls = intensities.M(x)
   if(tolower(method) == 'noob') method = 'normexp'
 
