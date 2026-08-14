@@ -24,6 +24,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # quarto-actions/setup shells out to jq to resolve the release download
+      # URL, and the Bioconductor container does not ship jq -- without this the
+      # setup step dies with "jq: command not found". Running as root in the
+      # container, so no sudo.
+      - name: Install jq
+        run: apt-get update -qq && apt-get install -y --no-install-recommends jq
+
       # Posit's supported action for provisioning Quarto. The vignettes are
       # .qmd with %\VignetteEngine{quarto::html} (#31), so R CMD build needs
       # the Quarto CLI. Installing it explicitly rather than hoping the
