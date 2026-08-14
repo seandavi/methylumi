@@ -1,0 +1,79 @@
+name: pkgdown
+
+# Push to devel and manual runs only -- deliberately NOT on pull_request. A site
+# build re-runs every example and every vignette, and methylumi450k.qmd pulls
+# TCGAMethylation450k plus the hg19 annotation packages. That is far too much
+# work to spend on every PR; R-CMD-check-bioc already covers PRs.
+on:
+  push:
+    branches: [devel]
+  workflow_dispatch:
+
+concurrency:
+  group: pkgdown
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  pkgdown:
+    runs-on: ubuntu-latest
+    # Same container as check-bioc.yml: it has the Bioconductor dependency tree
+    # and, importantly, the system freetype/libpng/libtiff/libjpeg/libwebp
+    # headers that pkgdown's ragg dependency needs to compile.
+    container: bioconductor/bioconductor_docker:devel
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # quarto-actions/setup shells out to jq, which the Bioconductor container
+      # does not ship. Same workaround as check-bioc.yml.
+      - name: Install jq
+        run: apt-get update -qq && apt-get install -y --no-install-recommends jq
+
+      # The vignettes are .qmd, so pkgdown renders the articles with the Quarto
+      # CLI (pkgdown >= 2.1) rather than knitr.
+      - name: Set up Quarto
+        uses: quarto-dev/quarto-actions/setup@v2
+
+      # Shares the key with check-bioc.yml so the two jobs warm the same cache.
+      - name: Cache R library
+        uses: actions/cache@v4
+        with:
+          path: /usr/local/lib/R/site-library
+          key: ${{ runner.os }}-bioc-devel-${{ hashFiles('DESCRIPTION') }}
+          restore-keys: ${{ runner.os }}-bioc-devel-
+
+      - name: Install dependencies
+        shell: Rscript {0}
+        run: |
+          options(warn = 1, Ncpus = 2)
+          BiocManager::install(ask = FALSE, update = TRUE)
+          if (!requireNamespace("remotes", quietly = TRUE)) install.packages("remotes")
+          remotes::install_deps(
+            dependencies = TRUE,
+            repos = BiocManager::repositories()
+          )
+          remotes::install_cran(c("pkgdown", "quarto"))
+
+      - name: Build site
+        shell: Rscript {0}
+        run: |
+          pkgdown::check_pkgdown()
+          pkgdown::build_site(install = TRUE, new_process = FALSE)
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+      - id: deployment
+        uses: actions/deploy-pages@v4

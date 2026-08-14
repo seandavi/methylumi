@@ -1,0 +1,71 @@
+url: https://seandavi.github.io/methylumi/
+
+template:
+  bootstrap: 5
+
+# pkgdown fails the build if any man/ topic is missing from this index, so every
+# entry below is one .Rd file. The S4 hub pages (methylumiGenerics.Rd, 55
+# aliases; the *-class pages) are single topics no matter how many generics
+# they document -- they can only be listed once, in the group that fits best.
+reference:
+- title: Package overview
+  contents:
+  - methylumi-package
+
+- title: Import
+  desc: >
+    Reading Illumina data into a MethyLumiSet: final report text files, raw
+    IDATs, and the lower-level IDAT readers.
+  contents:
+  - methylumiR
+  - methylumIDAT
+  - IDATsToMatrices
+  - IDATtoMatrix
+  - extractBarcodeAndPosition
+
+- title: Classes
+  desc: The eSet-derived containers for methylation data and its controls.
+  contents:
+  - MethyLumi-class
+  - methylData-class
+  - MethyLumiSet-class
+  - MethyLumiM-class
+  - MethyLumiQC-class
+
+- title: Accessors and generics
+  desc: >
+    Assay-data accessors (betas, methylated, unmethylated, pvals, QCdata) and
+    the generics the classes above implement, including the coercions between
+    MethyLumiSet, MethyLumiM and the minfi classes.
+  contents:
+  - betas
+  - methylumiGenerics
+  - getAssayDataNameSubstitutions
+
+- title: Preprocessing and normalization
+  desc: >
+    Background correction, dye-bias and control normalization, M-value
+    estimation, and the strippers that drop out-of-band and bead-level assays.
+  contents:
+  - normalizeMethyLumiSet
+  - estimateM
+  - MethyLumi-strippers
+
+- title: Filtering
+  contents:
+  - featureFilter
+  - varFilter
+
+- title: QC and plotting
+  contents:
+  - qcplot
+  - plotSampleIntensities
+
+- title: Pipelines
+  contents:
+  - tcgaPipeline
+
+- title: Example data
+  contents:
+  - mldat
+  - CpGs
