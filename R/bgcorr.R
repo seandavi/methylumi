@@ -7,7 +7,15 @@ methylumi.bgcorr<-function(x, method='noob', offset=15, controls=NULL, correct=T
 
   allelic = FALSE
 
-  # GoldenGate: not supported (it could be, perhaps, but why?) 
+  if(tolower(method) %in% c('goob','gamma','mode')) { # {{{
+    stop("method='", method, "' was removed in methylumi 2.59.x. The gamma-family ",
+         "background corrections ('goob', 'gamma', 'mode') relied on gamma.mle(), ",
+         "gamma.mode() and gamma.integral() from the rGammaGamma package, which is ",
+         "not available from CRAN or Bioconductor, so they have not worked for ",
+         "years. Use method='noob' instead.")
+  } # }}}
+
+  # GoldenGate: not supported (it could be, perhaps, but why?)
   stopifnot(grepl('IlluminaHumanMethylation', annotation(x)))
 
   if(any(methylated(x)<=0)) { # {{{
@@ -17,11 +25,10 @@ methylumi.bgcorr<-function(x, method='noob', offset=15, controls=NULL, correct=T
     unmethylated(x)[which(unmethylated(x)==0)] <- 1
   } # }}}
 
-  # 'noob' and 'goob' are just shorthand for 'normexp, OOB', and 'gamma, OOB'
-  if(tolower(method) %in% c('noob','goob','mode')) controls = intensities.OOB(x)
+  # 'noob' is just shorthand for 'normexp, OOB'
+  if(tolower(method) == 'noob') controls = intensities.OOB(x)
   if(tolower(method) == 'lumi') controls = intensities.M(x)
   if(tolower(method) == 'noob') method = 'normexp'
-  if(tolower(method) == 'goob') method = 'gamma'
 
   # controls must be a list(Cy3=matrix, Cy5=matrix) if supplied
   if(!is.null(controls) &&  # {{{
@@ -181,9 +188,6 @@ get.xs <- function(xf, controls, method, offset=50, robust=TRUE, correct=TRUE, p
   if(method == 'normexp') return(normexp.get.xs(xf, controls, offset, robust))
   if(method == 'median') return(median.get.xs(xf, controls, offset))
   if(method == 'illumina') return(illumina.get.xs(xf, controls, offset))
-  if(method == 'gamma') return(gammaGetXs(xf, controls, offset, correct, 
-                                            parallel=parallel))
-  if(method == 'mode') return(gammaM.get.xs(xf, controls, offset, correct))
   if(method == 'lumi') return(lumi.get.xs(xf, controls, offset))
   else stop(paste('Method',method,'has not been added to get.xs() yet'))
 }  # }}}
@@ -226,50 +230,6 @@ illumina.get.xs <- function(xf, controls, offset=50, robust=TRUE, ...){#{{{
               params=data.frame(bg=bg, offset=offset),
               meta=c('background fifth percentile','offset')))
 } # }}}
-gammaGetXs <- function(xf,controls,offset=50,correct=TRUE,parallel=FALSE,...){#{{{
-
-  #require(rGammaGamma)
-  bg = sapply(seq_len(ncol(xf)), function(i) gamma.mle(controls[,i]))
-  if(correct) { # {{{
-    bgmu = colMeans(controls, na.rm=TRUE)
-    fg = sapply(seq_len(ncol(xf)), function(i) gamma.mle(pmax(xf[,i]-bgmu[i], 1))) #}}}
-  } else { # {{{
-    fg = sapply(seq_len(ncol(xf)), function(i) gamma.mle(xf[,i]))
-  } # }}}
-  params = cbind(t(fg), t(bg))
-  colnames(params) = c('gamma','alpha','delta','beta')
-  meta = c('signal shape','signal scale','background shape','background scale')
-  names(meta) = c('gamma','alpha','delta','beta')
-
-  if( parallel == TRUE ) {
-    xs = data.matrix(as.data.frame(.mclapply(seq_len(ncol(xf)), function(i) {
-           gamma.integral(xf[,i], params[i,], offset=offset)
-    })))
-  } else { 
-    cat('Estimating xs serially (probably not what you want)...', "\n")
-    xs = data.matrix(as.data.frame(lapply(seq_len(ncol(xf)), function(i) {
-           gamma.integral(xf[,i], params[i,], offset=offset)
-    })))
-  }
-  params = cbind(params, c(rep(offset, nrow(params))))
-  colnames(params) = c('gamma','alpha','delta','beta','offset')
-  meta['offset'] = 'offset'
-  return(list(xs=xs, params=as.data.frame(params), meta=meta))
-  
-} # }}}
-gammaM.get.xs <- function(xf,controls,offset=15,correct=TRUE,parallel=FALSE,...){#{{{
-
-  #require(rGammaGamma)
-  bg = sapply(seq_len(ncol(xf)), function(i) gamma.mode(gamma.mle(controls[,i])))
-  xs = sapply(seq_len(ncol(xf)), function(s) pmax(xf[,s] - bg[s], offset))
-  params = data.frame(mode=bg)
-  params$offset = offset
-  meta = c('background mode','offset')
-  names(meta) = c('mode','offset')
-  cat("Background mode estimated from", nrow(controls), "probes\n")
-  return(list(xs=xs, params=params, meta=meta))
-  
-} # }}}
 lumi.get.xs <- function(xf, controls, offset=50, robust=TRUE, nbin=1000,...){#{{{
 
   # from lumi's estimateBG() function
@@ -294,8 +254,6 @@ get.xcs <- function(xcf, method, params, robust=TRUE, correct=TRUE) { # {{{
   if(method == 'normexp') return(normexp.get.xcs(xcf, params))
   if(method == 'median') return(median.get.xcs(xcf, params))
   if(method == 'illumina') return(illumina.get.xcs(xcf, params,correct=correct))
-  if(method == 'gamma') return(gammaGetXcs(xcf, params))
-  if(method == 'mode') return(gammaM.get.xcs(xcf, params))
   if(method == 'lumi') return(lumi.get.xcs(xcf, params))
   else stop(paste('Method',method,'has not been added to get.xcs() yet'))
 }  # }}}
@@ -335,24 +293,6 @@ illumina.get.xcs <- function(xcf, params, robust=TRUE, ...){#{{{
   return(xcf+offset)
 
 } # }}}
-gammaGetXcs <- function(xcf, params, robust=TRUE, parallel=FALSE,...){#{{{
-
-  #require(rGammaGamma)
-  offset = params[[grep('offset', names(params), value=TRUE)]][1]
-  params[[grep('offset', names(params), value=TRUE)]] = NULL
-  
-  xcs = xcf
-  for(i in seq_len(ncol(xcf))) {
-    xcs[,i]=gamma.integral(xcf[,i],params=as.numeric(params[i,]),offset=offset)
-  }
-  # notice that the offset was added during the calculation of xcs|params.
-  return(xcs)
-  
-} # }}}
-gammaM.get.xcs <- function(xcf, params, robust=TRUE, parallel=FALSE, ...){ #{{{
-  bgmode = params[[grep('mode', names(params), value=TRUE)]]
-  sapply(seq_len(ncol(xcf)), function(i) pmax((xcf[,i] - bgmode[i]), offset))
-} # }}}
 lumi.get.xcs <- function(xcf, params, robust=TRUE, ...){#{{{
 
   stopifnot(any(grepl('mode', names(params))))
@@ -384,11 +324,4 @@ normexp.signal <- function (par, x)  { # {{{
     signal[o] <- pmax(signal[o], 1e-06)
   }
   signal
-} # }}}
-
-# gamma deconvolution (conditional expectation of xs|xf; my code)
-gammaSignal <- function (par, x)  { # {{{
-  #require(rGammaGamma)
-  par = as.numeric(par)
-  gamma.integral(x, par, offset=0)
 } # }}}
