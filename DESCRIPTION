@@ -13,7 +13,8 @@ Imports: BiocGenerics, S4Vectors, IRanges, GenomeInfoDb, GenomicRanges,
 Suggests: lumi, lattice, limma, xtable, SQN, MASS, matrixStats,
           parallel, rtracklayer, Biostrings, 
           TCGAMethylation450k, IlluminaHumanMethylation450kanno.ilmn12.hg19,
-          FDb.InfiniumMethylation.hg18 (>= 2.2.0), Homo.sapiens, knitr
+          FDb.InfiniumMethylation.hg18 (>= 2.2.0), Homo.sapiens, knitr,
+          testthat (>= 3.0.0)
 biocViews: DNAMethylation, TwoChannel, Preprocessing, QualityControl, CpGIsland
 Maintainer: Sean Davis <seandavi@gmail.com>
 Description: This package provides classes for holding and manipulating
@@ -51,3 +52,4 @@ BugReports: https://github.com/seandavi/methylumi/issues/new
 License: GPL-2
 Encoding: UTF-8
 RoxygenNote: 7.1.2
+Config/testthat/edition: 3
