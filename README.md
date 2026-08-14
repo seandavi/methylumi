@@ -1,3 +1,8 @@
+# methylumi
+
+Reference documentation and vignettes:
+<https://seandavi.github.io/methylumi/>
+
 This package provides classes for holding and manipulating
 Illumina methylation data.  Based on eSet, it can contain MIAME
 information, sample information, feature information, and
