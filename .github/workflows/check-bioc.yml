@@ -1,0 +1,67 @@
+name: R-CMD-check-bioc
+
+on:
+  push:
+    branches: [devel]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    # Check against Bioconductor devel, which is what the Bioc builders use.
+    # Matching the builders is the whole point: a stale local library is how
+    # the defunct lattice::parallel import went unnoticed until it broke
+    # installation outright (#28).
+    container: bioconductor/bioconductor_docker:devel
+
+    env:
+      # Missing Suggests should not fail the check; the vignette dependency
+      # tree (TCGAMethylation450k, Homo.sapiens, TxDb...) is large and we
+      # deliberately do not build vignettes here yet. See #31.
+      _R_CHECK_FORCE_SUGGESTS_: false
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache R library
+        uses: actions/cache@v4
+        with:
+          path: /usr/local/lib/R/site-library
+          key: ${{ runner.os }}-bioc-devel-${{ hashFiles('DESCRIPTION') }}
+          restore-keys: ${{ runner.os }}-bioc-devel-
+
+      - name: Install dependencies
+        shell: Rscript {0}
+        run: |
+          options(warn = 1, Ncpus = 2)
+          BiocManager::install(ask = FALSE, update = TRUE)
+          if (!requireNamespace("remotes", quietly = TRUE)) install.packages("remotes")
+          remotes::install_deps(
+            dependencies = c("Depends", "Imports", "LinkingTo"),
+            repos = BiocManager::repositories()
+          )
+          remotes::install_cran(c("rcmdcheck", "testthat"))
+
+      - name: Check
+        shell: Rscript {0}
+        run: |
+          # error_on = "error", not "warning": the package carries a backlog of
+          # legacy check NOTEs (undefined globals from missing importFrom, Rd
+          # cross-references without package anchors, DESCRIPTION metadata).
+          # Those are exactly what #30 and #34 clean up. Failing CI on them today
+          # would mean CI is red from the moment it is introduced, which teaches
+          # everyone to ignore it. Ratchet this to "warning" once #30 lands.
+          res <- rcmdcheck::rcmdcheck(
+            args = c("--no-manual", "--ignore-vignettes"),
+            build_args = c("--no-build-vignettes"),
+            error_on = "error",
+            check_dir = "check"
+          )
+
+      - name: Upload check results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: check-results
+          path: check

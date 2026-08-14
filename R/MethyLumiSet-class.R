@@ -703,7 +703,7 @@ setGeneric("parplot", function(object,...) { # {{{
            standardGeneric("parplot")
 }) # }}}
 .parallel <- function(object,quantiles,what,...) { # {{{
-  parallel(apply(what(object),2,function(x,quantiles) {
+  parallelplot(apply(what(object),2,function(x,quantiles) {
     a <- ecdf(x)
     return(a(quantiles))
     },quantiles),...)
