@@ -115,6 +115,19 @@ test_that("normalizeMethyLumiSet is unchanged", {
   expect_equal(sum(betas(n), na.rm = TRUE), 5517.872753, tolerance = TOL)
 })
 
+test_that("noob background correction refuses non-IDAT input (#24)", {
+  ## mldat has no methylated.OOB/unmethylated.OOB -- like any set built from a
+  ## GEO series matrix or GenomeStudio output. It used to die inside
+  ## intensities.OOB() ("unable to find an inherited method ... for signature
+  ## MethyLumiQC, missing"); now it says what is missing and what to do.
+  expect_error(methylumi.bgcorr(mldat), "out-of-band")
+  expect_error(methylumi.bgcorr(mldat), "methylumIDAT")
+
+  ## The signature reported in #24: a MethyLumiQC reaching methylumi.bgcorr had
+  ## no intensities.OOB method at all, so dispatch failed before any check.
+  expect_error(methylumi.bgcorr(QCdata(mldat)), "out-of-band")
+})
+
 test_that("MethyLumiSet coerces to MethyLumiM", {
   mm <- as(mldat, "MethyLumiM")
   expect_s4_class(mm, "MethyLumiM")
