@@ -98,6 +98,25 @@ getMethylationBeadMappers <- function(chipType=c('450k','27k'), genome=c('hg19',
 
 } # }}}
 
+## Illumina writes IDATs either flat in one directory or, more commonly, one
+## directory per slide (<idatPath>/<Slide>/<Slide>_<Array>_Grn.idat). Resolve a
+## bare IDAT filename against either layout, returning NA if it is not there.
+## ponytail: rescans idatPath once per file that is not flat; if that ever costs
+## anything for thousands of samples, hoist the recursive listing into a single
+## call in methylumIDAT()/IDATsToMatrices() and pass the index down.
+.findIDAT <- function(idatPath, filename) { # {{{
+  flat <- file.path(idatPath, filename)
+  if (file.exists(flat)) return(flat)
+  hits <- list.files(idatPath, pattern=glob2rx(filename), recursive=TRUE,
+                     full.names=TRUE)
+  if (length(hits) == 0) return(NA_character_)
+  if (length(hits) > 1) {
+    stop("'", filename, "' is ambiguous: found in more than one subdirectory ",
+         "of '", idatPath, "': ", paste(hits, collapse=", "))
+  }
+  hits
+} # }}}
+
 #' process a single IDAT (just the mean intensities)
 #' 
 #' @param x character(1)
@@ -109,7 +128,11 @@ IDATtoMatrix <- function(x,fileExts=list(Cy3="Grn",Cy5="Red"),idatPath='.'){#{{{
   names(chs) = fileExts
   processed = lapply(fileExts, function(ch) {
     ext = paste(ch, 'idat', sep='.')
-    dat = readIDAT(file.path(idatPath, paste(x, ext, sep='_')))
+    idatFile = .findIDAT(idatPath, paste(x, ext, sep='_'))
+    if (is.na(idatFile)) {
+      stop("Cannot find ", paste(x, ext, sep='_'), " under '", idatPath, "'")
+    }
+    dat = readIDAT(idatFile)
     Quants = data.matrix(dat$Quants)
     colnames(Quants) = paste(chs[ch], colnames(Quants), sep='.')
     return(list(Quants=Quants, 
@@ -492,7 +515,7 @@ methylumIDAT <- function(barcodes=NULL,pdat=NULL,parallel=FALSE,n=FALSE,n.sd=FAL
   } # }}}
   files.present = rep(TRUE, length(barcodes)) # {{{
   idats = sapply(barcodes, function(b) paste(b,c('_Red','_Grn'),'.idat',sep=''))
-  for(i in colnames(idats)) for(j in idats[,i]) if(!j %in% list.files(idatPath))  {
+  for(i in colnames(idats)) for(j in idats[,i]) if(is.na(.findIDAT(idatPath,j))) {
     message(paste('Error: file', j, 'is missing for sample', i))
     files.present = FALSE
   }
