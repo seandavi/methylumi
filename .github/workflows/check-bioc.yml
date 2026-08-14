@@ -16,13 +16,21 @@ jobs:
     container: bioconductor/bioconductor_docker:devel
 
     env:
-      # Missing Suggests should not fail the check; the vignette dependency
-      # tree (TCGAMethylation450k, Homo.sapiens, TxDb...) is large and we
-      # deliberately do not build vignettes here yet. See #31.
+      # Suggests are installed below, so this is not covering for a missing
+      # dependency list -- it stops a transient failure to install one of the
+      # large annotation packages from failing the whole check.
       _R_CHECK_FORCE_SUGGESTS_: false
 
     steps:
       - uses: actions/checkout@v4
+
+      # Posit's supported action for provisioning Quarto. The vignettes are
+      # .qmd with %\VignetteEngine{quarto::html} (#31), so R CMD build needs
+      # the Quarto CLI. Installing it explicitly rather than hoping the
+      # Bioconductor container ships it makes CI deterministic and pins the
+      # version we test against.
+      - name: Set up Quarto
+        uses: quarto-dev/quarto-actions/setup@v2
 
       - name: Cache R library
         uses: actions/cache@v4
@@ -37,31 +45,26 @@ jobs:
           options(warn = 1, Ncpus = 2)
           BiocManager::install(ask = FALSE, update = TRUE)
           if (!requireNamespace("remotes", quietly = TRUE)) install.packages("remotes")
+          # Suggests included: the vignettes execute against TCGAMethylation450k,
+          # Homo.sapiens, the TxDb and lumi, so building them needs the full set.
           remotes::install_deps(
-            dependencies = c("Depends", "Imports", "LinkingTo"),
+            dependencies = TRUE,
             repos = BiocManager::repositories()
           )
-          remotes::install_cran(c("rcmdcheck", "testthat"))
-
-      # The vignettes are Quarto (#31), which needs the Quarto CLI to render.
-      # Whether the Bioconductor build machines ship it is the open question on
-      # that issue, and this container is the closest proxy we have. Reported,
-      # not enforced: the check below does not build vignettes either way.
-      - name: Report Quarto CLI availability
-        run: quarto --version || echo "QUARTO CLI NOT PRESENT in this container"
+          remotes::install_cran(c("rcmdcheck", "testthat", "quarto"))
 
       - name: Check
         shell: Rscript {0}
         run: |
-          # error_on = "error", not "warning": the package carries a backlog of
-          # legacy check NOTEs (undefined globals from missing importFrom, Rd
-          # cross-references without package anchors, DESCRIPTION metadata).
-          # Those are exactly what #30 and #34 clean up. Failing CI on them today
-          # would mean CI is red from the moment it is introduced, which teaches
-          # everyone to ignore it. Ratchet this to "warning" once #30 lands.
+          # Vignettes ARE built here. They are the package's front door, they
+          # exercise a lot of real code paths, and a Quarto toolchain problem
+          # should surface on a PR rather than on the Bioconductor build report.
+          #
+          # error_on = "error", not "warning": the package still carries a
+          # backlog of legacy check NOTEs. Failing on those would mean CI is red
+          # by default, which teaches everyone to ignore it.
           res <- rcmdcheck::rcmdcheck(
-            args = c("--no-manual", "--ignore-vignettes"),
-            build_args = c("--no-build-vignettes"),
+            args = "--no-manual",
             error_on = "error",
             check_dir = "check"
           )
