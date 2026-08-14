@@ -52,6 +52,16 @@ test_that("noob background correction is unchanged", {
   expect_equal(sum(is.na(betas(bg))), 3L)
 })
 
+test_that("the removed gamma-family methods give an informative error", {
+  ## #18: these called gamma.mle()/gamma.mode()/gamma.integral() from the
+  ## unavailable rGammaGamma package. They must not fail with "could not find
+  ## function" any more.
+  for (m in c("goob", "gamma", "mode", "GOOB")) {
+    expect_error(methylumi.bgcorr(example_idats(), method = m),
+                 "rGammaGamma")
+  }
+})
+
 test_that("stripOOB drops the out-of-band assays without touching betas", {
   mi <- example_idats()
   so <- stripOOB(mi)
