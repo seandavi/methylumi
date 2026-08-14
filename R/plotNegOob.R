@@ -45,10 +45,10 @@ plotNegOob <- function(x, log2=F) {
                           position=position_identity()) +
            facet_grid(chip ~ channel) + 
            scale_x_continuous(limits=xl) + 
-           scale_y_continuous(breaks=NA) + 
+           scale_y_continuous(breaks=NULL) + 
            scale_fill_manual(values=chcolors) + 
-           opts(title='Negative controls and out-of-band probe intensities',
-                legend.title='Probe group') + 
+           labs(title='Negative controls and out-of-band probe intensities',
+                fill='Probe group') +
            theme_bw() )
 
 }

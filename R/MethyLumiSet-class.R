@@ -466,21 +466,31 @@ setMethod("hist",signature(x="MethyLumiQC"),function(x,...) { # {{{
 setMethod("[", "MethyLumiSet", function(x, i, j, ..., drop = FALSE) { # {{{
 
   history.submitted <- as.character(Sys.time())
+
+  ## eSet's "[" method drops the QC slot, so keep a reference before calling it
+  ## and reattach below. Subsetting it afterwards, as the previous code did, is
+  ## a no-op: x@QC is already NULL by then, and NULL[, j, drop=FALSE] returns
+  ## NULL silently rather than erroring, which is how this went unnoticed. See
+  ## issue #21.
+  qc <- if ('QC' %in% slotNames(x)) x@QC else NULL
+
   x <- callNextMethod()
-  
+
+  ## QC probes are control probes: they live in their own feature space and are
+  ## not indexed by i. Only sample selection applies to them.
+  if (!is.null(qc)) x@QC <- if (missing(j)) qc else qc[, j, drop=FALSE]
+
   ddim <- dim(x)
   if (!missing(i) & !missing(j)) {
-    if( 'QC' %in% slotNames(x) ) x@QC = x@QC[,j,drop=FALSE]		
-    if( 'OOB' %in% slotNames(x) ) x@OOB = x@OOB[i,j,drop=FALSE]  
     history.command <- paste('Subset of',ddim[1],'features &',ddim[2],'samples')
   } else if (!missing(i)) {
     history.command <- paste('Subset of', ddim[1], 'features.')
   } else if (!missing(j)) {
-    if( 'QC' %in% slotNames(x) ) x@QC = x@QC[,j,drop=FALSE]
-    if( 'OOB' %in% slotNames(x) ) x@OOB = x@OOB[,j,drop=FALSE]
     history.command <- paste('Subset of', ddim[2], 'samples.')
+  } else {
+    history.command <- 'Subset with no indices.'
   }
-  
+
   # history tracking
   history.finished <- as.character(Sys.time())
   x@history<- rbind(x@history, data.frame(submitted=history.submitted,finished=history.finished,command=history.command))
