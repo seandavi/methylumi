@@ -419,6 +419,43 @@ NChannelSetToMethyLumiSet <- function(NChannelSet, parallel=F, normalize=F, pval
 
 } # }}}
 
+#' methylumIDAT
+#'
+#' Read a directory of methylumi idat files and return a `MethyLumiSet`.
+#'
+#' Read a set of .idat files and return a `MethyLumiSet` object. If you use
+#' this function to any significant degree in your analysis, we would
+#' appreciate your citing the paper describing it, "Low-level processing of
+#' Illumina Infinium DNA methylation beadarrays", TJ Triche, DJ Weisenberger,
+#' D Van Den Berg, KD Siegmund, and PW Laird, Nucleic Acids Research, 2013.
+#'
+#' @param barcodes A vector of barcodes to read. Either this argument or
+#'   `pdat` must be specified.
+#' @param pdat A data.frame describing the samples. A special column named
+#'   "barcodes" can be used to specify the barcodes to be read.
+#' @param parallel If TRUE, an attempt will be made to process using multiple
+#'   cores on a multicore machine.
+#' @param n Keep the bead numbers? (Default: no)
+#' @param n.sd Keep the bead-level SD? (Default: no)
+#' @param oob Keep the out-of-band (OOB) or opposite-channel signals?
+#'   (Default: yes)
+#' @param idatPath The path to the directory containing the idat files.
+#' @param ... Additional arguments to be passed to sub-functions.
+#' @return A `MethyLumiSet` object.
+#' @author Tim Triche, Jr.
+#' @seealso The `methylumi450k` vignette:
+#'   `vignette("methylumi450k", package="methylumi")`
+#' @keywords IO
+#' @examples
+#' \dontrun{
+#' if(require('IlluminaHumanMethylation450k.db')) {
+#'   barcodes <- c('6005486014_R04C02',
+#'               '6005486023_R05C01')
+#'   lumi450k <- methylumIDAT(barcodes,idatPath=system.file('extdata/idat',package='methylumi')) # no normalization done
+#'   sampleNames(lumi450k) <- c('TCGA1','TCGA2')
+#'   show(lumi450k)
+#' }
+#' }
 methylumIDAT <- function(barcodes=NULL,pdat=NULL,parallel=F,n=F,n.sd=F,oob=T,idatPath=getwd(), ...) { # {{{
   if(is(barcodes, 'data.frame')) pdat = barcodes
   if((is.null(barcodes))&(is.null(pdat) | (!('barcode' %in% names(pdat))))){#{{{

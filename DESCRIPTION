@@ -33,6 +33,7 @@ Collate: AllGenerics.R
   Methods.R
   bgcorr.R
   coercions.R
+  data.R
   detectionpval.R
   featureFilter.R
   mclapply_replace.R
@@ -51,5 +52,5 @@ VignetteBuilder: knitr
 BugReports: https://github.com/seandavi/methylumi/issues/new
 License: GPL-2
 Encoding: UTF-8
-RoxygenNote: 7.1.2
 Config/testthat/edition: 3
+Config/roxygen2/version: 8.1.0

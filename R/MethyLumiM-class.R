@@ -368,6 +368,30 @@ setMethod("[", "MethyLumiM", function(x, i, j, ..., drop = FALSE)  {
 ## Other functions designed for MethyLumiM class object
 
 # estimate the M-value based on methylated and unmethylated probe intensities
+#' Estimate methylation M-value matrix
+#'
+#' Estimate the methylation M-value matrix from a `MethyLumiM` or `eSet`
+#' object, which includes methylated and unmethylated probe intensities.
+#'
+#' The M-value is the log2 ratio between the Illumina methylated and
+#' unmethylated probe intensities. As variations of small intensities can cause
+#' big changes in the ratio estimation, an offset is added to the methylated
+#' and unmethylated probe intensities when estimating the M-value.
+#'
+#' Please check the lumi package for more details of the `estimateM` function.
+#'
+#' @param methyLumiM A [MethyLumiM-class] or `eSet` object, which includes
+#'   methylated and unmethylated probe intensities.
+#' @param returnType Determines whether to return an `ExpressionSet`
+#'   (`MethyLumiM` in this case) or a matrix object.
+#' @param offset Offset added to the methylated and unmethylated probe
+#'   intensities when estimating the M-value.
+#' @return A `MethyLumiM` or matrix object of methylation M-values.
+#' @references Du, P., Zhang, X, Huang, C.C., Jafari, N., Kibbe, W.A., Hou, L.,
+#'   and Lin, S.M. (2010) 'Comparison of Beta-value and M-value methods for
+#'   quantifying methylation levels by microarray analysis'.
+#' @author Pan Du
+#' @keywords methods
 estimateM <- function(methyLumiM, returnType=c("ExpressionSet", "matrix"), offset=100) {
 	
 	if (!assayDataValidMembers(assayData(methyLumiM), c("unmethylated", "methylated"))) {
