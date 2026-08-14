@@ -13,7 +13,6 @@ if(is.null(getGeneric('pval.detect<-'))) setGeneric('pval.detect<-', # {{{
 ) # }}}
 setReplaceMethod('pval.detect', signature(object="methylData", value="numeric"), function(object, ..., value){ # {{{
 
-  require(matrixStats)
   if(is(object, 'MethyLumiSet')) stopifnot('QC' %in% slotNames(object))
   if(is(object, 'MethyLumiM')) stopifnot('controlData' %in% slotNames(object))
   channels <- c(Cy3='Cy3',Cy5='Cy5')
@@ -33,7 +32,7 @@ setReplaceMethod('pval.detect', signature(object="methylData", value="numeric"),
                             ids <- rownames(negctls(object, ch))
                             color <- fData(QCdata(object))[ids,'Color_Channel']
                             keep <- which(color != '-99')
-                            background <- negctls(object, ch)[keep, i, drop=F]
+                            background <- negctls(object, ch)[keep, i, drop=FALSE]
                             ecdf(background)
                           } # }}}
     )

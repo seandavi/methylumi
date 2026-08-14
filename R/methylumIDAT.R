@@ -36,7 +36,12 @@ getMethylationBeadMappers <- function(chipType=c('450k','27k'), genome=c('hg19',
   
   genome <- match.arg(genome) ## default to FDb.InfiniumMethylation.hg19
   pkg <- paste0('FDb.InfiniumMethylation.', genome)
-  require(pkg, character.only=TRUE) ## and
+  ## NB: requireNamespace() takes a package *name* as a string already, so
+  ## there is no character.only argument to pass -- unlike require().
+  if (!requireNamespace(pkg, quietly = TRUE)) {
+    stop("The ", pkg, " package is required to annotate this chip. ",
+         "Please install it.")
+  }
 
   chipType <- sub('^IlluminaHumanMethylation', '', chipType)
   if(class(chipType) %in% c('NChannelSet','MethyLumiSet','MethyLumiM')) {
@@ -125,7 +130,7 @@ IDATtoMatrix <- function(x,fileExts=list(Cy3="Grn",Cy5="Red"),idatPath='.'){#{{{
 #' @param parallel logical(1)
 #' @param idatPath character(1)
 #' 
-IDATsToMatrices <- function(barcodes, fileExts=list(Cy3="Grn", Cy5="Red"), parallel=F, idatPath='.') { # {{{
+IDATsToMatrices <- function(barcodes, fileExts=list(Cy3="Grn", Cy5="Red"), parallel=FALSE, idatPath='.') { # {{{
   names(barcodes) = as.character(barcodes)
   if(parallel) {
     mats = .mclapply(barcodes,IDATtoMatrix,fileExts=fileExts,idatPath=idatPath)
@@ -146,7 +151,7 @@ extractAssayDataFromList <- function(assay, mats, fnames) { # {{{
 } # }}}
 
 ## a faster rewrite of DFsToNChannelSet() so that I can decommission it...
-DataToNChannelSet <- function(mats, chans=c(Cy3='GRN',Cy5='RED'), parallel=F, protocol.data=F, IDAT=TRUE){ # {{{
+DataToNChannelSet <- function(mats, chans=c(Cy3='GRN',Cy5='RED'), parallel=FALSE, protocol.data=FALSE, IDAT=TRUE){ # {{{
 
   stopifnot(is(mats, 'list'))
   assayNames = paste0(names(chans), '.Mean')
@@ -205,7 +210,7 @@ getControlProbes <- function(NChannelSet) { # {{{
   ctls <- match(fD[['Address']], featureNames(NChannelSet))
 
   ## FIXME: make this happen in the annotations, to avoid redundancy in names!
-  rownames(fD) <- ctlnames <- make.names(fD[,'Name'], unique=T)
+  rownames(fD) <- ctlnames <- make.names(fD[,'Name'], unique=TRUE)
   fvD <- data.frame(labelDescription=c(
         'Address of this control bead',
         'Purpose of this control bead',
@@ -225,7 +230,7 @@ getControlProbes <- function(NChannelSet) { # {{{
 } # }}}
 
 ## 27k design, both probes same channel; ~100,000 of the 450k probes as well
-designItoMandU <- function(NChannelSet, parallel=F, n=F, n.sd=F, oob=T) { # {{{
+designItoMandU <- function(NChannelSet, parallel=FALSE, n=FALSE, n.sd=FALSE, oob=TRUE) { # {{{
 
   mapper <- getMethylationBeadMappers(annotation(NChannelSet))
   probes <- mapper$probes(design='I') # as list(G=..., R=...)
@@ -245,7 +250,7 @@ designItoMandU <- function(NChannelSet, parallel=F, n=F, n.sd=F, oob=T) { # {{{
     return(a)
   } # }}}
 
-  getAllele <- function(NChannelSet, al, parallel=F, n=n, n.sd=T, oob=T) { # {{{
+  getAllele <- function(NChannelSet, al, parallel=FALSE, n=n, n.sd=TRUE, oob=TRUE) { # {{{
     fluor = lapply(channels, function(ch) getIntCh(NChannelSet, ch, al))
     fluor.oob = lapply(channels, function(ch) getOOBCh(NChannelSet, ch, al))
     res = list()
@@ -258,7 +263,7 @@ designItoMandU <- function(NChannelSet, parallel=F, n=F, n.sd=F, oob=T) { # {{{
   } # }}}
 
   signal <- lapply(c(M='M',U='U'), function(al) {
-    getAllele(NChannelSet, al, parallel=F, n=n, n.sd=n.sd, oob=oob)
+    getAllele(NChannelSet, al, parallel=FALSE, n=n, n.sd=n.sd, oob=oob)
   })
 
   retval = list(
@@ -275,7 +280,7 @@ designItoMandU <- function(NChannelSet, parallel=F, n=F, n.sd=F, oob=T) { # {{{
 } # }}}
 
 ## 450k/GoldenGate design (green=methylated, red=unmethylated, single address)
-designIItoMandU <- function(NChannelSet, parallel=F, n=F, n.sd=F, oob=T) { # {{{
+designIItoMandU <- function(NChannelSet, parallel=FALSE, n=FALSE, n.sd=FALSE, oob=TRUE) { # {{{
 
   ## loads the annotation DB so we can run SQL queries
   mapper <- getMethylationBeadMappers(annotation(NChannelSet))
@@ -284,12 +289,12 @@ designIItoMandU <- function(NChannelSet, parallel=F, n=F, n.sd=F, oob=T) { # {{{
 
   getIntCh <- function(NChannelSet, ch=NULL, al) { # {{{
     ch <- ifelse(al=='M', 'G', 'R')
-    a <- assayDataElement(NChannelSet,ch)[as.character(probes2[[al]]), , drop=F]
+    a <- assayDataElement(NChannelSet,ch)[as.character(probes2[[al]]), , drop=FALSE]
     rownames(a) <- as.character(probes2[['Probe_ID']])
     return(a)
   } # }}}
 
-  getAllele <- function(NChannelSet, al, n=F, n.sd=F, oob=F) { # {{{
+  getAllele <- function(NChannelSet, al, n=FALSE, n.sd=FALSE, oob=FALSE) { # {{{
 
     ch <- ifelse(al=='M', 'G', 'R')
     res <- list()
@@ -317,7 +322,7 @@ designIItoMandU <- function(NChannelSet, parallel=F, n=F, n.sd=F, oob=T) { # {{{
 } # }}}
 
 ## 12/12/14: this code is hideous, what sort of clown wrote it?  Oh yeah, I did
-mergeProbeDesigns <- function(NChannelSet, parallel=F, n=F, n.sd=F, oob=T){ #{{{
+mergeProbeDesigns <- function(NChannelSet, parallel=FALSE, n=FALSE, n.sd=FALSE, oob=TRUE){ #{{{
   
   if(annotation(NChannelSet) == 'IlluminaHumanMethylation450k') {
     design1=designItoMandU(NChannelSet,parallel=parallel,n=n,n.sd=n.sd,oob=oob)
@@ -337,7 +342,7 @@ mergeProbeDesigns <- function(NChannelSet, parallel=F, n=F, n.sd=F, oob=T){ #{{{
 
 } # }}}
 
-NChannelSetToMethyLumiSet <- function(NChannelSet, parallel=F, normalize=F, pval=0.05, n=F, n.sd=F, oob=T, caller=NULL){ # {{{
+NChannelSetToMethyLumiSet <- function(NChannelSet, parallel=FALSE, normalize=FALSE, pval=0.05, n=FALSE, n.sd=FALSE, oob=TRUE, caller=NULL){ # {{{
 
   history.submitted = as.character(Sys.time())
 
@@ -396,7 +401,7 @@ NChannelSetToMethyLumiSet <- function(NChannelSet, parallel=F, normalize=F, pval
                       'CHR36',
                       'CPG36',
                       'CPGS')
-  fvarLabels(x.lumi) <- possibleLabels[ 1:ncol(fdat) ]
+  fvarLabels(x.lumi) <- possibleLabels[ seq_len(ncol(fdat)) ]
   possibleMetadata <- c('Illumina probe ID from manifest',
                         'Infinium design type (I or II)',
                         'Color channel (for type I probes)',
@@ -406,7 +411,7 @@ NChannelSetToMethyLumiSet <- function(NChannelSet, parallel=F, normalize=F, pval
                         'Chromosome mapping for probe in hg18 assembly',
                         'Coordinates of interrogated cytosine in hg18',
                         'Number of CpG dinucleotides in probe sequence')
-  fvarMetadata(x.lumi)[,1] <- possibleMetadata[ 1:ncol(fdat) ]
+  fvarMetadata(x.lumi)[,1] <- possibleMetadata[ seq_len(ncol(fdat)) ]
   pval.detect(x.lumi) <- pval # default value
   history.finished <- as.character(Sys.time())
   history.command <- ifelse(is.null(caller),'NChannelSet(x)',caller)
@@ -456,7 +461,7 @@ NChannelSetToMethyLumiSet <- function(NChannelSet, parallel=F, normalize=F, pval
 #'   show(lumi450k)
 #' }
 #' }
-methylumIDAT <- function(barcodes=NULL,pdat=NULL,parallel=F,n=F,n.sd=F,oob=T,idatPath=getwd(), ...) { # {{{
+methylumIDAT <- function(barcodes=NULL,pdat=NULL,parallel=FALSE,n=FALSE,n.sd=FALSE,oob=TRUE,idatPath=getwd(), ...) { # {{{
   if(is(barcodes, 'data.frame')) pdat = barcodes
   if((is.null(barcodes))&(is.null(pdat) | (!('barcode' %in% names(pdat))))){#{{{
     stop('"barcodes" or "pdat" (with pdat$barcode defined) must be supplied.')
@@ -464,7 +469,7 @@ methylumIDAT <- function(barcodes=NULL,pdat=NULL,parallel=F,n=F,n.sd=F,oob=T,ida
   if(!is.null(pdat) && 'barcode' %in% tolower(names(pdat))) { # {{{
     names(pdat)[ which(tolower(names(pdat))=='barcode') ] = 'barcode'
     barcodes = pdat$barcode
-    if(any(grepl('idat',ignore.case=T,barcodes))) { 
+    if(any(grepl('idat',ignore.case=TRUE,barcodes))) { 
       message('Warning: filtering out raw filenames') 
       barcodes = gsub('_(Red|Grn)','', barcodes, ignore.case=TRUE)
       barcodes = gsub('.idat', '', barcodes, ignore.case=TRUE)
@@ -475,7 +480,7 @@ methylumIDAT <- function(barcodes=NULL,pdat=NULL,parallel=F,n=F,n.sd=F,oob=T,ida
       barcodes = pdat$barcode
     } # }}}
   } else { # {{{
-    if(any(grepl('idat',ignore.case=T,barcodes))) { 
+    if(any(grepl('idat',ignore.case=TRUE,barcodes))) { 
       message('Warning: filtering out raw filenames') 
       barcodes = unique(gsub('_(Red|Grn)','', barcodes, ignore.case=TRUE))
       barcodes = unique(gsub('.idat','', barcodes, ignore.case=TRUE))
@@ -502,7 +507,7 @@ methylumIDAT <- function(barcodes=NULL,pdat=NULL,parallel=F,n=F,n.sd=F,oob=T,ida
   } # }}}
 
   mats <- IDATsToMatrices(barcodes, parallel=parallel, idatPath=idatPath) 
-  dats <- DataToNChannelSet(mats, IDAT=T, parallel=parallel)
+  dats <- DataToNChannelSet(mats, IDAT=TRUE, parallel=parallel)
   mlumi <- NChannelSetToMethyLumiSet(dats, parallel=parallel, oob=oob, 
                                      caller=deparse(match.call()))
 
@@ -522,7 +527,7 @@ methylumIDAT <- function(barcodes=NULL,pdat=NULL,parallel=F,n=F,n.sd=F,oob=T,ida
 
 } # }}}
 
-lumIDAT <- function(barcodes, pdat=NULL, parallel=F, n=T, idatPath=getwd(), ...){ # {{{ 
-  as(methylumIDAT(barcodes=barcodes,pdat=pdat,parallel=parallel,n=n,oob=F,idatPath=idatPath),
+lumIDAT <- function(barcodes, pdat=NULL, parallel=FALSE, n=TRUE, idatPath=getwd(), ...){ # {{{ 
+  as(methylumIDAT(barcodes=barcodes,pdat=pdat,parallel=parallel,n=n,oob=FALSE,idatPath=idatPath),
      'MethyLumiM')
 } # }}}

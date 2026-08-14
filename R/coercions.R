@@ -10,7 +10,6 @@
   uOOB <- function(mset) assayDataElement(mset, 'unmethylated.OOB')
 
   msetToSE <- function(from) { # {{{
-    require(FDb.InfiniumMethylation.hg19) 
     chip=gsub('^IlluminaHumanMethylation','HM',gsub('k$','',annotation(from)))
     row.dat <- getPlatform(chip)
     asy.dat <- SimpleList()
@@ -85,16 +84,17 @@
   setAs("MethyLumiM", "RangedSummarizedExperiment", function(from) msetToSE(from))
 
     getPlatform <- function(platform="HM450", genome="hg19") { ## {{{ 
-      require(Biostrings)
-      require(rtracklayer)
+      ## Biostrings is only needed for DNAStringSet() below and is a
+      ## Suggests, so check for it properly rather than require()ing it.
+      ## rtracklayer was required here but never used.
+      if (!requireNamespace("Biostrings", quietly = TRUE)) {
+        stop("The Biostrings package is required here. Please install it.")
+      }
       if (genome == "hg19") {
         message("Fetching coordinates for hg19...")
-        if(require(FDb.InfiniumMethylation.hg19)) {
-          GR <- features(FDb.InfiniumMethylation.hg19)
-        } else {
-          message("The FDb.InfiniumMethylation.hg19 package appears to be unavailable.  Please install it to use hg19 coordinates")
-          stop()
-        }
+        ## FDb.InfiniumMethylation.hg19 is a hard dependency (Depends), so
+        ## it is always attached by the time we get here.
+        GR <- features(FDb.InfiniumMethylation.hg19)
       } else if (genome == "hg18") {
         # FDb.InfiniumMethyulation.hg18 is gone as of bioc 2.12
         stop('hg18 is no longer supported')
@@ -127,7 +127,7 @@
       mcols(GR)$percentGC <- as.numeric(mcols(GR)$percentGC)
       mcols(GR)$probeType <- Rle(as.factor(mcols(GR)$probeType))
       mcols(GR)$platform <- Rle(as.factor(mcols(GR)$platform))
-      mcols(GR)$sourceSeq <- DNAStringSet(mcols(GR)$sourceSeq)
+      mcols(GR)$sourceSeq <- Biostrings::DNAStringSet(mcols(GR)$sourceSeq)
       kept = c("addressA", "addressB", "channel", "platform", "percentGC", 
                "sourceSeq","probeType","probeStart","probeEnd","probeTarget")
       val <- mcols(GR)[, intersect(names(mcols(GR)), kept)]
@@ -193,7 +193,6 @@
     } # }}}
 
     methylumiToMinfi <- function(from, annot=NULL) { # {{{
-      require(minfi)
       if(!all(c('methylated','unmethylated','methylated.OOB','unmethylated.OOB')
               %in% assayDataElementNames(from))){
         stop('Cannot construct an RGChannelSet without full (OOB) intensities')
@@ -234,7 +233,7 @@
 
     SEtoGRset <- function(from) { # {{{ 
       message('This function is almost solely for TCGA/HOVON use... beware...')
-      assaynames <- names(assays(from, withDimnames=F))
+      assaynames <- names(assays(from, withDimnames=FALSE))
       stopifnot(any(c('betas','exprs') %in% names(assays(from))))
       if (nrow(from) > 50000) { # DMRs can be summarized over > # of probes
         grset <- mapToGenome(from)
@@ -267,7 +266,7 @@
 
     setAs("RangedSummarizedExperiment", "GenomicMethylSet", function(from) { # {{{
       message('This function is almost solely for TCGA use... beware...')
-      assaynames <- names(assays(from, withDimnames=F))
+      assaynames <- names(assays(from, withDimnames=FALSE))
       stopifnot(all(c('betas','total') %in% assaynames) ||
                 all(c('methylated','unmethylated') %in% assaynames))
       if(nrow(from) > 27578) { # {{{ 450k
@@ -279,17 +278,17 @@
       } # }}}
       if('betas' %in% assaynames) { # {{{
         gm <- GenomicMethylSet(gr=rowRanges(from),
-                               Meth=(assays(from, withDim=F)$betas* 
-                                     assays(from, withDim=F)$total ),
-                               Unmeth=((1-assays(from, withDim=F)$betas)*
-                                       assays(from, withDim=F)$total),
+                               Meth=(assays(from, withDim=FALSE)$betas* 
+                                     assays(from, withDim=FALSE)$total ),
+                               Unmeth=((1-assays(from, withDim=FALSE)$betas)*
+                                       assays(from, withDim=FALSE)$total),
                                pData=colData(from),
                                annotation=annot,
                                preprocessMethod=prepro) # }}}
       } else { # {{{
         gm <- GenomicMethylSet(gr=rowRanges(from),
-                               Meth=assays(from, withDimnames=F)$methylated,
-                               Unmeth=assays(from, withDimnames=F)$unmethylated,
+                               Meth=assays(from, withDimnames=FALSE)$methylated,
+                               Unmeth=assays(from, withDimnames=FALSE)$unmethylated,
                                pData=colData(from),
                                annotation=annot,
                                preprocessMethod=prepro)

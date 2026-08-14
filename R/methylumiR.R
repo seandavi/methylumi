@@ -97,7 +97,7 @@ getAssayDataNameSubstitutions <- function() {
 .doAssayDataNameSubstitutions <- function(assayDataNames) {
   assayDataNamesCopy <- assayDataNames
   subs <- getAssayDataNameSubstitutions()
-  for(i in 1:nrow(subs)) {
+  for(i in seq_len(nrow(subs))) {
     tmp <- grep(subs$regex[i],assayDataNames)
     if(length(tmp)>1) {
       warning(sprintf("Found greater than 1 match in assayDataNames for regex %s\nso will use the last one",
@@ -150,9 +150,9 @@ getAssayDataNameSubstitutions <- function() {
   } else if (!is.null(dat$ID_REF)) {
     featurenames <- make.unique(as.character(dat$ID_REF))
   } else {
-    featurenames <- 1:nrow(dat)
+    featurenames <- seq_len(nrow(dat))
   }
-  for (i in 1:nrow(dattypes)) {
+  for (i in seq_len(nrow(dattypes))) {
     if (dattypes$original[i] != '') {
       colsOfInterest <- grep(dattypes$original[i],cn)
       tmpmat <- as.matrix(dat[,colsOfInterest])
@@ -342,7 +342,7 @@ methylumiR <-
 	## added by Pan Du, July 1, 2010
 	if (any(duplicated(sampleName))) {
 		warning("Duplicated column names found!\n Suffix indexes were appended!\n")
-		sampleName <- make.names(sampleName, unique=T)
+		sampleName <- make.names(sampleName, unique=TRUE)
 	}
 	
     sampleID <- sampleName

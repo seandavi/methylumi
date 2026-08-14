@@ -28,6 +28,51 @@ importFrom(minfi,
 importFrom(illuminaio,
            readIDAT)
 
+importFrom(BiocParallel,
+           bplapply)
+
+importFrom(matrixStats,
+           colMedians,
+           colQuantiles,
+           colSds,
+           rowMins)
+
+## Base packages. R CMD check reported every one of these as an undefined
+## global; they were being resolved only because the packages happen to be
+## attached.
+importFrom(grDevices,
+           colorRampPalette)
+
+importFrom(graphics,
+           abline,
+           axis,
+           box,
+           lines,
+           par,
+           points,
+           rect,
+           text,
+           title)
+
+importFrom(stats,
+           as.dist,
+           dnorm,
+           ecdf,
+           hclust,
+           p.adjust,
+           pnorm,
+           weighted.mean)
+
+## Not `data`: BiocGenerics exports its own, and importing utils::data here
+## shadows it and warns at load time.
+importFrom(utils,
+           capture.output,
+           packageDescription,
+           packageVersion,
+           read.csv,
+           read.delim,
+           read.table)
+
 export(methylumiR, extractBarcodeAndPosition, normalizeMethyLumiSet, getAssayDataNameSubstitutions, estimateM, methylumIDAT, lumIDAT, methylumiCSV, lumiCSV, methylumi.diagnostics, qc.probe.plot, cy3, cy5, getBarcodes, stripBeadNs, stripBeadSDs, stripMethyLumiSet, psummary, negctls.stderr, methylumi.bgcorr, IDATtoMatrix, IDATsToMatrices, designItoMandU, designIItoMandU, mergeProbeDesigns, NChannelSetToMethyLumiSet, stripOOB, plotNegOob, tcgaPipeline, .mclapply)
 
 exportClasses("MethyLumiSet","MethyLumiQC","MethyLumi", "MethyLumiM","methylData")

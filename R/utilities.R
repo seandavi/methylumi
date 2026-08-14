@@ -61,7 +61,7 @@ beta.mme <- function(x, w=NULL, ...) { # {{{
   if(any(is.na(x))) stop("Cannot handle NA values!")
   ## a lie: we COULD, but let the user call impute.knn()
   if(is.null(w)) w <- rep(1 / length(x), length(x))
-  xb <- weighted.mean(x, w, na.rm=T)
+  xb <- weighted.mean(x, w, na.rm=TRUE)
   s2 <- sum(w * ( (x - xb) ** 2)) / sum(w)
   a <- xb * ( ( (xb * (1 - xb)) / s2) - 1)
   b <- (1 - xb) * ( ( (xb * (1 - xb)) / s2) - 1)
@@ -88,7 +88,7 @@ beta.transform <- function(x, w=NULL, to.mean=TRUE, to.mode=FALSE, s=0.5){ #{{{
   n <- length(x)
   if( is.null(w) ) w <- rep(1, n)
   else w <- (w / (sum(w) / n))
-  if(to.mean) s <- weighted.mean(x, w, na.rm=T)
+  if(to.mean) s <- weighted.mean(x, w, na.rm=TRUE)
   if(to.mode) s <- pmax(0.01, pmin(0.99, beta.mode(beta.mme(x, w))))
   return( ( ( x * ( n - 1 ) ) + s) / n )
 

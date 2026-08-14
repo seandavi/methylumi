@@ -1,6 +1,6 @@
 ## backwards compatibility with methylumiCSV 
 ##
-CSVtoDF <- function(x, parallel=F, chans=c(Cy3='GRN',Cy5='RED')) { # {{{ tidy up
+CSVtoDF <- function(x, parallel=FALSE, chans=c(Cy3='GRN',Cy5='RED')) { # {{{ tidy up
   if(length(x) > 1) {
     names(x) <- x
     DFs <- lapply(x, CSVtoDF)
@@ -22,9 +22,9 @@ CSVtoDF <- function(x, parallel=F, chans=c(Cy3='GRN',Cy5='RED')) { # {{{ tidy up
   }
 } # }}}
 
-methylumiCSV <- function(barcodes,pdat=NULL,n=T,n.sd=F,oob=T,parallel=F, ...){ # {{{
+methylumiCSV <- function(barcodes,pdat=NULL,n=TRUE,n.sd=FALSE,oob=TRUE,parallel=FALSE, ...){ # {{{
 
-    if(any(duplicated(barcodes))|any(grepl('csv',ignore.case=T,barcodes))) {
+    if(any(duplicated(barcodes))|any(grepl('csv',ignore.case=TRUE,barcodes))) {
       message('Warning: filtering out duplicate barcodes and raw filenames')
       barcodes = unique(gsub('_(Red|Grn).idat','',barcodes, ignore.case=TRUE))
     }
@@ -45,6 +45,6 @@ methylumiCSV <- function(barcodes,pdat=NULL,n=T,n.sd=F,oob=T,parallel=F, ...){ #
 
 } # }}}
 
-lumiCSV <- function(barcodes, pdat=NULL, parallel=F, ...){ # {{{ one-liner
+lumiCSV <- function(barcodes, pdat=NULL, parallel=FALSE, ...){ # {{{ one-liner
     as(methylumiCSV(barcodes=barcodes,pdat=pdat,parallel=parallel),'MethyLumiM')
 } # }}}
