@@ -131,34 +131,46 @@ methylumi.diagnostics <- function (x, onlybg=FALSE) { # {{{
                  green = log2(negctls(x.qc, "Cy3")))
       message("(Using negative controls for dashed vertical background line)")
   } # }}}
+  ## annotation() is character(0) on objects that never had a platform set
+  ## (e.g. mldat, read from a Sentrix CSV), so compare with identical(), not ==.
   if(!('COLOR_CHANNEL' %in% fvarLabels(x))) { # {{{
-    if(annotation(x) == 'IlluminaHumanMethylation27k') { 
+    if(identical(annotation(x), 'IlluminaHumanMethylation27k')) {
       fData(x)$COLOR_CHANNEL = mget(featureNames(x),
                                     IlluminaHumanMethylation27kCOLORCHANNEL)
-    } else if(annotation(x) == 'IlluminaHumanMethylation450k') { 
+    } else if(identical(annotation(x), 'IlluminaHumanMethylation450k')) {
       fData(x)$COLOR_CHANNEL = mget(featureNames(x),
                                     IlluminaHumanMethylation450kCOLORCHANNEL)
     }
   } # }}}
   assays <- c("exprs", "methylated", "unmethylated")
   if(onlybg) assays <- c("methylated", "unmethylated")
-  is.450k = (annotation(x) == 'IlluminaHumanMethylation450k')
-  par(mfrow = c(length(assays), 2 + is.450k))
-  dye <- list('red'='Cy5','green'='Cy3')
-  if(is.450k) dye[['both']] = 'Design II'
+  is.450k = identical(annotation(x), 'IlluminaHumanMethylation450k')
+  # {{{ one panel column per probe set; the red/Grn swap below is deliberate
+  colorchannel <- fData(x)[['COLOR_CHANNEL']]
+  if(is.null(colorchannel)) {
+    # ponytail: no per-probe colour channel (GoldenGate data, unannotated 27k
+    # CSV); plot every probe in a single column rather than erroring out.
+    dye <- list(all='all')
+    probesets <- list(all=seq_len(nrow(x)))
+  } else {
+    dye <- list('red'='Cy5','green'='Cy3')
+    probesets <- list(red=which(colorchannel=='Grn'),
+                      green=which(colorchannel=='Red'))
+    if(is.450k) {
+      dye[['both']] = 'Design II'
+      probesets[['both']] = which(colorchannel=='Both')
+    }
+  } # }}}
+  par(mfrow = c(length(assays), length(dye)))
   for(assay in assays) {
     for(channel in names(dye)) {
-      if(channel=="red") { # {{{
-        probes = which(fData(x)[['COLOR_CHANNEL']]=='Grn')
-        chcolor = channel # }}}
-      } else if(channel=="green") { # {{{
-        probes = which(fData(x)[['COLOR_CHANNEL']]=='Red')
-        chcolor = channel # }}}
-      } else if(channel=="both") { # {{{
-        probes=which(fData(x)[['COLOR_CHANNEL']]=='Both')
-        chcolor = ifelse(assay == 'exprs', 'blue', 
-                         ifelse(assay == 'methylated', 'green', 'red'))
-      } # }}}
+      probes <- probesets[[channel]]
+      chcolor <- switch(channel,
+                        both = ifelse(assay == 'exprs', 'blue',
+                                      ifelse(assay == 'methylated', 'green',
+                                             'red')),
+                        all = 'blue',
+                        channel)
       if (assay == "exprs") { # {{{
         if (is(x, "MethyLumiM")) { # {{{
           dat <- mvals(x)[probes, ]
@@ -183,19 +195,22 @@ methylumi.diagnostics <- function (x, onlybg=FALSE) { # {{{
         title(paste(xlab, ":", dye[[channel]], "probes")) # }}}
       } else { # {{{ methylated/unmethylated
         dat <- log2(assayDataElement(x, assay)[probes,])
-        plot.density(density(na.omit(dat)), col = "white", xlim = c(0, 16), 
-                     ylim = c(0, 0.8), lwd = 1, xlab = "log2(Intensity)", 
-                     ylab = "Proportion", main = "", lty = 1)
-        for(i in 1:dim(dat)[2]) lines(density(dat[, i]), col=chcolor, lty=1)
+        ## stats::plot.density is a method, not an exported function: call plot()
+        plot(density(na.omit(dat)), col = "white", xlim = c(0, 16),
+             ylim = c(0, 0.8), lwd = 1, xlab = "log2(Intensity)",
+             ylab = "Proportion", main = "", lty = 1)
+        for(i in 1:dim(dat)[2]) {
+          lines(density(na.omit(dat[, i])), col=chcolor, lty=1)
+        }
         if (!is.null(x.qc)) {
-          if(channel=='both' && assay=='methylated') bgch = bg[['green']]
-          else if(channel=='both' && assay=='unmethylated') bgch = bg[['red']]
+          if(channel=='both') bgch = bg[[ifelse(assay=='methylated','green','red')]]
+          else if(channel=='all') bgch = do.call(rbind, bg)
           else bgch = bg[[channel]]
           for(bgmean in colMeans(bgch, na.rm=TRUE)) {
             abline(v=bgmean, col=paste("dark",chcolor,sep=""), lty=3, lwd=1)
           }
-          title(paste(assay, "intensities:", dye[[channel]]))
         }
+        title(paste(assay, "intensities:", dye[[channel]]))
       } # }}}
     }
   }

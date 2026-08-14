@@ -53,6 +53,15 @@ test_that("the ggplot2 plots build without deprecation warnings (#40)", {
   }
 })
 
+test_that("diagnostics runs with and without COLOR_CHANNEL (regression test for #23)", {
+  ## mldat has neither annotation() nor a COLOR_CHANNEL column; the IDAT object
+  ## has both. Both go through methylumi.diagnostics(), which also called the
+  ## non-existent plot.density().
+  data(mldat, package = "methylumi", envir = environment())
+  expect_message(diagnostics(mldat), "negative controls")
+  expect_no_error(diagnostics(example_idats()))
+})
+
 test_that("plotNegOob runs (regression test for #36)", {
   ## scale_y_continuous(breaks = NA) errored under current ggplot2, which wants
   ## NULL to mean "draw no breaks".
