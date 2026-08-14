@@ -10,7 +10,7 @@ Imports: BiocGenerics, S4Vectors, IRanges, GenomeInfoDb, GenomicRanges,
          SummarizedExperiment, Biobase, graphics, grDevices, stats, utils,
          lattice, annotate, genefilter, AnnotationDbi, minfi, stats4,
          illuminaio, GenomicFeatures, BiocParallel
-Suggests: lumi, limma, xtable, SQN, MASS, rtracklayer, Biostrings,
+Suggests: lumi, limma, SQN, MASS, rtracklayer, Biostrings, quarto,
           TCGAMethylation450k, IlluminaHumanMethylation450kanno.ilmn12.hg19,
           FDb.InfiniumMethylation.hg18 (>= 2.2.0), Homo.sapiens,
           TxDb.Hsapiens.UCSC.hg19.knownGene, knitr, testthat (>= 3.0.0)
@@ -47,7 +47,7 @@ Collate: AllGenerics.R
   stripMethyLumiSet.R
   utilities.R
   varFilter.R
-VignetteBuilder: knitr
+VignetteBuilder: quarto
 BugReports: https://github.com/seandavi/methylumi/issues/new
 License: GPL-2
 Encoding: UTF-8

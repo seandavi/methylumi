@@ -43,6 +43,13 @@ jobs:
           )
           remotes::install_cran(c("rcmdcheck", "testthat"))
 
+      # The vignettes are Quarto (#31), which needs the Quarto CLI to render.
+      # Whether the Bioconductor build machines ship it is the open question on
+      # that issue, and this container is the closest proxy we have. Reported,
+      # not enforced: the check below does not build vignettes either way.
+      - name: Report Quarto CLI availability
+        run: quarto --version || echo "QUARTO CLI NOT PRESENT in this container"
+
       - name: Check
         shell: Rscript {0}
         run: |

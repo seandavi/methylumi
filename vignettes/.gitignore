@@ -7,3 +7,5 @@
 .build.timestamp
 cacheSweaveStorage*
 cache
+*.html
+*_files/
