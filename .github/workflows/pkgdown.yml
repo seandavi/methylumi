@@ -63,11 +63,23 @@ jobs:
           )
           remotes::install_cran(c("pkgdown", "quarto"))
 
+      # Install the package ourselves, into the ordinary site-library, rather
+      # than letting build_site(install = TRUE) do it. pkgdown installs into a
+      # *temporary* library, which is only on .libPaths() of the R process that
+      # created it. Quarto renders each .qmd in a fresh R session, which
+      # inherits none of that, so library(methylumi) in a vignette resolves
+      # against whatever stale methylumi the container/cache already has --
+      # which is how the article build died with the long-fixed
+      # "object 'parallel' is not exported by 'namespace:lattice'" (#28).
+      - name: Install methylumi
+        shell: Rscript {0}
+        run: install.packages(".", repos = NULL, type = "source")
+
       - name: Build site
         shell: Rscript {0}
         run: |
           pkgdown::check_pkgdown()
-          pkgdown::build_site(install = TRUE, new_process = FALSE)
+          pkgdown::build_site(install = FALSE, new_process = FALSE)
 
       - uses: actions/configure-pages@v5
 
