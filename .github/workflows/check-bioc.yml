@@ -2,7 +2,7 @@ name: R-CMD-check-bioc
 
 on:
   push:
-    branches: [master]
+    branches: [devel]
   pull_request:
   workflow_dispatch:
 
