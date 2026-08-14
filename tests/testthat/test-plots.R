@@ -40,6 +40,19 @@ test_that("qc.probe.plot runs on IDAT-derived data", {
   expect_no_error(print(qc.probe.plot(example_idats())))
 })
 
+test_that("the ggplot2 plots build without deprecation warnings (#40)", {
+  ## These used qplot(), deprecated in ggplot2 3.4.0. lifecycle only warns once
+  ## per session by default, so force it on for the duration of the test.
+  old <- options(lifecycle_verbosity = "warning")
+  on.exit(options(old), add = TRUE)
+  data(mldat, package = "methylumi", envir = environment())
+  for (p in list(qc.probe.plot(example_idats()),
+                 plotNAs(mldat),
+                 plotProbeNAs(mldat))) {
+    expect_no_warning(expect_no_error(ggplot2::ggplot_build(p)))
+  }
+})
+
 test_that("plotNegOob runs (regression test for #36)", {
   ## scale_y_continuous(breaks = NA) errored under current ggplot2, which wants
   ## NULL to mean "draw no breaks".

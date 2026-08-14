@@ -68,9 +68,12 @@ setMethod("plotNAs", signature(object="methylData"), function(object){ # {{{
                       pop(strsplit(x, '_')[[1]])
                     })))
   NAs <- NAs[order(NAs$dropouts),]
-  ggplot2::qplot(data=NAs, x=index, y=dropouts, size=dropouts, colour=slot,
-                 geom=c('segment','point'), yend=0, xend=index, xlab='Sample #',
-                 main=paste('Probe dropouts, colored by position, p >', pval))
+  ## size= on a segment is deprecated in ggplot2; linewidth is the same value.
+  ggplot2::ggplot(NAs, ggplot2::aes(x=index, y=dropouts, colour=slot)) +
+    ggplot2::geom_segment(ggplot2::aes(xend=index, yend=0, linewidth=dropouts)) +
+    ggplot2::geom_point(ggplot2::aes(size=dropouts)) +
+    ggplot2::labs(x='Sample #', y='dropouts',
+                  title=paste('Probe dropouts, colored by position, p >', pval))
 }) # }}}
 setGeneric('plotProbeNAs', # {{{ 
            function(object) standardGeneric('plotProbeNAs')
@@ -79,9 +82,10 @@ setMethod("plotProbeNAs",signature(object="methylData"),function(object){ # {{{
   pval <- pval.detect(object)
   x <- data.frame(drops=probeNAs(object)/dim(object)[2], 
                   mu=rowMeans(betas(object),na.rm=TRUE))
-  ggplot2::qplot(geom='jitter', x=mu, y=drops, ylab='failed probes',xlab='mean',
-                 main=paste('Probe dropouts, colored by mean beta, p >', pval),
-                 data=x, colour=mu)
+  ggplot2::ggplot(x, ggplot2::aes(x=mu, y=drops, colour=mu)) +
+    ggplot2::geom_jitter() +
+    ggplot2::labs(x='mean', y='failed probes',
+                  title=paste('Probe dropouts, colored by mean beta, p >', pval))
 }) # }}}
 
 if(!isGeneric('controlTypes')) setGeneric('controlTypes', # {{{

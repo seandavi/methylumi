@@ -91,16 +91,22 @@ qc.probe.plot <- function(obj,controltype="negnorm",log2=TRUE,by.type=FALSE,...)
                      'point')
   if( tolower(controltype) == 'oob' ) {
     qc$grouping = paste(qc$variable, qc$type, sep='.')
-    p <- ggplot2::qplot(data = qc, colour = type, fill = type, group = grouping,
-                        x = variable, y = value, geom = 'boxplot', main=a.title,
-                        xlab="Sample", ylab="Intensities") + 
-                        coord_flip() 
+    p <- ggplot2::ggplot(qc, ggplot2::aes(x = variable, y = value, colour = type,
+                                          fill = type, group = grouping)) +
+                        ggplot2::geom_boxplot() +
+                        ggplot2::labs(title = a.title,
+                                      x = "Sample", y = "Intensities") +
+                        coord_flip()
     if (log2) p <- p + scale_x_continuous(trans='log2', limits=c(2**4, 2**16))
     else p <- p + scale_x_continuous(limits=c(2**4, 2**16))
   } else {
-    p <- ggplot2::qplot(data = qc, colour = type, shape = type, 
-                        x = value, y = variable, geom = geometry,
-                        main=a.title, ylab="Sample", xlab="Intensities")
+    p <- ggplot2::ggplot(qc, ggplot2::aes(x = value, y = variable,
+                                          colour = type, shape = type)) +
+                        ## geometry is 'jitter' for negnorm controls, else 'point'
+                        (if (geometry == 'jitter') ggplot2::geom_jitter()
+                         else ggplot2::geom_point()) +
+                        ggplot2::labs(title = a.title,
+                                      x = "Intensities", y = "Sample")
     p <- p + scale_y_discrete( limits=rev(sampleNames(obj)) ) # more readable
     if (log2) p <- p + scale_x_continuous(trans='log2', limits=c(2**4, 2**16))
     else p <- p + scale_x_continuous(limits=c(2**4, 2**16))
