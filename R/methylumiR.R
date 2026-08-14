@@ -68,6 +68,26 @@
 ### separated by either "." or ":"
 ###
 
+#' Return a data.frame of AssayData name substitutions
+#'
+#' The Illumina methylation platforms use two distinct technologies, the
+#' "goldengate" platform and the "infinium" platform. Each uses different file
+#' formats as well as different assay chemistry. To make the downstream data
+#' handling more straightforward and uniform between the two, a simple mapping
+#' from the column names in the output files of the Illumina software converts
+#' Red/Green or Cy5/Cy3 to unmethylated/methylated. This function returns that
+#' mapping.
+#'
+#' A file in the `extdata` directory called `substitutions.txt` contains two
+#' columns. The function loads this file and uses the first column as a match
+#' against column names in the data file (with the "sample part" removed). If
+#' matched, the second column gives the replacement.
+#'
+#' @return A data.frame with two columns, regex and replacement.
+#' @author Sean Davis <seandavi@gmail.com>
+#' @keywords IO
+#' @examples
+#' getAssayDataNameSubstitutions()
 getAssayDataNameSubstitutions <- function() {
   subs <- read.table(system.file("extdata/substitutions.txt",package="methylumi")
                      ,header=TRUE,as.is=TRUE,sep="\t")
@@ -255,6 +275,43 @@ getAssayDataNameSubstitutions <- function() {
 ### methods accessors will work, maps sampleDescriptions
 ### appropriately, and returns a MethyLumiSet object
 ###
+#' Load data from an Illumina methylation platform
+#'
+#' This function is useful for loading Illumina methylation data into a
+#' [MethyLumiSet-class] object. Sample information can be supplied and will
+#' then be incorporated into the resulting phenoData slot.
+#'
+#' Autodetects the file format, reads the data, makes substitutions of
+#' assayData element names for the various formats so that the method
+#' accessors will work, maps `sampleDescriptions` appropriately, and returns a
+#' `MethyLumiSet` object.
+#'
+#' @param filename A filename of the excel-like file from BeadStudio.
+#' @param qcfile A filename of the excel-like QC file from BeadStudio.
+#' @param sampleDescriptions A data.frame that contains at least one column,
+#'   SampleID (case insensitive). This column MUST match the part of the column
+#'   headers before the `.Avg_Beta`, etc. Also, if a column called SampleLabel
+#'   (case insensitive) is present, it is used for sample labels, IF that
+#'   column contains unique identifiers.
+#' @param sep Separator used in the BeadStudio (or GenomeStudio) output file.
+#'   If `NULL`, the function estimates it automatically.
+#' @param ... Passed into [utils::read.delim()].
+#' @return A [MethyLumiSet-class] object.
+#' @author Sean Davis <seandavi@gmail.com>
+#' @seealso [MethyLumiSet-class], [MethyLumiQC-class]
+#' @keywords IO
+#' @examples
+#' ## Read in sample information
+#' samps <- read.table(system.file("extdata/samples.txt",
+#'                                 package = "methylumi"), sep = "\t", header = TRUE)
+#' ## Perform the actual data reading
+#' ## This is an example of reading data from an
+#' ## Sentrix Array format file (actually two files,
+#' ## one for data and one for QC probes)
+#' mldat <- methylumiR(system.file('extdata/exampledata.samples.txt', package = 'methylumi'),
+#'                     qcfile = system.file('extdata/exampledata.controls.txt', package = "methylumi"),
+#'                     sampleDescriptions = samps)
+#' mldat
 methylumiR <-
   function(filename,qcfile=NULL,sampleDescriptions=NULL, sep=NULL, ...) {
 
@@ -360,6 +417,27 @@ methylumiR <-
      return(x.lumi)
   }
 
+#' Extract the barcode and position information from a Sentrix ID
+#'
+#' The sentrix IDs from an Illumina sentrix array contain positional
+#' information that might be useful. This function simply extracts that
+#' information from the ID itself.
+#'
+#' @param sentrixids A character vector of sentrix IDs that look like
+#'   `1632405013_R001_C001`.
+#' @return A data.frame with five columns:
+#'   \describe{
+#'     \item{sentrix}{the sentrix ID}
+#'     \item{row}{the sentrix row as it appears in the ID, e.g. `"R001"`}
+#'     \item{column}{the sentrix column as it appears in the ID, e.g. `"C001"`}
+#'     \item{rowNumber}{numeric, the sentrix row}
+#'     \item{columnNumber}{numeric, the sentrix column}
+#'   }
+#' @author Sean Davis <seandavi@gmail.com>
+#' @seealso [methylumiR()]
+#' @keywords manip
+#' @examples
+#' extractBarcodeAndPosition(c('12341234_R001_C001'))
 extractBarcodeAndPosition <- function(sentrixids) {
   l <- do.call(rbind,strsplit(sentrixids,'_'))
   l <- data.frame(l)

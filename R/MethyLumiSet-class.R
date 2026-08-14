@@ -382,6 +382,24 @@ setMethod("pairs", signature(x="MethyLumiSet"), function(x,...,logMode=FALSE,max
         par(ask=FALSE)
 })  # }}}
 
+#' Plot the sample intensities
+#'
+#' The Illumina methylation platforms all show a significant dye bias. The
+#' `plotSampleIntensities` method shows the density plots for the two channels,
+#' allowing direct visualization of the effect.
+#'
+#' @param x An object of class MethyLumi or a subclass.
+#' @param beta.cuts Cutoffs for low and high beta values.
+#' @param s Sample number to plot.
+#' @keywords hplot
+#' @examples
+#' data(mldat)
+#' plotSampleIntensities(mldat, s = 1)
+#' @name plotSampleIntensities
+#' @aliases plotSampleIntensities
+#' @usage plotSampleIntensities(x,beta.cuts,s)
+NULL
+
 if (is.null(getGeneric("plotSampleIntensities"))) { # {{{
   setGeneric("plotSampleIntensities", function(x,beta.cuts=c(0.2,0.8),s=1) {
       standardGeneric("plotSampleIntensities")
@@ -628,6 +646,74 @@ setMethod("corplot","MethyLumiSet",function(x,...) {  # {{{
   ordering=hclust(as.dist(corvals))$order
   image(corvals[ordering,ordering])
 })  # }}}
+#' Normalize a MethyLumiSet, accounting for dye bias
+#'
+#' The Illumina GoldenGate methylation platform uses two colors, one to
+#' represent the unmethylated state and the other to represent the methylated
+#' state. This function corrects that dye bias and recalculates the betas based
+#' on the corrected intensities.
+#'
+#' For HumanMethylation27 data, the function does nothing.
+#'
+#' For HumanMethylation450 data, the function delegates to
+#' `normalizeViaControls()` the task of scaling red and green intensities
+#' against a reference array (chip) which uses the closest-to-equal chip
+#' (i.e. `which.min(abs(R.G.ratio - 1))`).
+#'
+#' The code to do this is based on code from the 'minfi' package and uses the
+#' built-in red and green normalization control probes on the hm450 arrays to
+#' scale the channels of the samples, so that a consistent degree of dye bias
+#' is maintained for Infinium II probes across an experiment or set of
+#' experiments.
+#'
+#' @details
+#' For HumanMethylation450 data, the function delegates to
+#' `normalizeViaControls()` the task of scaling red and green intensities
+#' against a reference array (chip) which defaults to the first chip in a set.
+#' The code to do this is based on code from the 'minfi' package and uses the
+#' built-in normalization controls to scale the channels of the samples, so
+#' that a consistent degree of dye bias is maintained for Infinium II probes
+#' across an experiment or set of experiments. The remainder of the
+#' documentation below is specific to GoldenGate data.
+#'
+#' The Illumina GoldenGate methylation platform uses two colors, one to
+#' represent the unmethylated state and the other to represent the methylated
+#' state. This function corrects that dye bias and recalculates the betas based
+#' on the corrected intensities.
+#'
+#' As a first step, the medians for each of Cy3 and Cy5 are calculated at high
+#' and low betas, representing the (nearly) fully methylated state and the
+#' (nearly) fully unmethylated states. Values of Cy3 and Cy5 that are negative
+#' are set to zero for this process. Then, the Cy5 medians are adjusted to
+#' match those of the Cy3 channel, thereby correcting the dye bias.
+#'
+#' To map the new intensities back to betas, one of two map functions can be
+#' used. The default is the `atan(Cy3/Cy5)`. The ratio maps using the function
+#' `(Cy3/Cy3+Cy5)`. The differences should be very small, but we feel that the
+#' atan map function is probably the mathematically appropriate way of doing
+#' this.
+#'
+#' @param x A MethyLumiSet object.
+#' @param beta.cuts Two numeric values with the first less than the second and
+#'   between 0 and 1, representing the beta cutoffs that will be used when
+#'   determining the median intensities to which to correct. See details below.
+#' @param mapfun Either `"atan"` or `"ratio"`. See details below.
+#' @return A new `MethyLumiSet` that contains the corrected betas and the
+#'   adjusted intensities.
+#' @author Sean Davis <seandavi@gmail.com>
+#' @keywords manip
+#' @examples
+#' ## Read in sample information
+#' samps <- read.table(system.file("extdata/samples.txt",
+#'                                 package = "methylumi"), sep = "\t", header = TRUE)
+#' ## Perform the actual data reading
+#' ## This is an example of reading data from an
+#' ## Sentrix Array format file (actually two files,
+#' ## one for data and one for QC probes)
+#' mldat <- methylumiR(system.file('extdata/exampledata.samples.txt', package = 'methylumi'),
+#'                     qcfile = system.file('extdata/exampledata.controls.txt', package = "methylumi"),
+#'                     sampleDescriptions = samps)
+#' mldatnorm <- normalizeMethyLumiSet(mldat)
 normalizeMethyLumiSet <- function(x,beta.cuts=c(0.2,0.8),mapfun=c('atan','ratio')) { # {{{
 
   if( length(annotation(x)) > 0 ) { 
@@ -713,6 +799,33 @@ setMethod("parplot", signature(object="MethyLumi"), function(object,quantiles=se
                      what=get(what)
                      .parallel(object,quantiles=quantiles,what=what,...)
                    })  #}}}
+
+#' Methods for dealing with control data for Illumina methylation data
+#'
+#' The `qcplot` function simply generates a plot of the control probe
+#' information for a given `controlType`.
+#'
+#' The descriptions of the various control types can be obtained from the
+#' Illumina methylation user's guides.
+#'
+#' @param object An object of class [MethyLumiSet-class] or
+#'   [MethyLumiQC-class].
+#' @param controltype A single character value representing the bead type to
+#'   plot from the quality control data. The available types are accessible via
+#'   the `controlTypes` method.
+#' @param ... Passed to the plot function.
+#' @author Sean Davis <seandavi@gmail.com>
+#' @seealso [MethyLumiSet-class], [MethyLumiQC-class]
+#' @keywords hplot
+#' @examples
+#' data(mldat)
+#' controlTypes(mldat)
+#' qcplot(mldat, controlTypes(mldat)[3])
+#' @name qcplot
+#' @aliases qcplot controlTypes
+#' @usage qcplot(object,controltype,...)
+#' controlTypes(object,...)
+NULL
 
 if (is.null(getGeneric("qcplot"))) {  # {{{
   setGeneric("qcplot", function(object,controltype,...) {
