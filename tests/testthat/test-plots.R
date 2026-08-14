@@ -40,16 +40,8 @@ test_that("qc.probe.plot runs on IDAT-derived data", {
   expect_no_error(print(qc.probe.plot(example_idats())))
 })
 
-test_that("plotNegOob is broken by modern ggplot2 (BUG, see #36)", {
-  ## Characterization test. R/plotNegOob.R:48 calls
-  ##
-  ##     scale_y_continuous(breaks = NA)
-  ##
-  ## ggplot2 used to tolerate NA there as "draw no breaks"; it now rejects it
-  ## and asks for NULL. The function is exported, so this is a user-visible
-  ## breakage, not an internal wart. One-word fix, deliberately not made here --
-  ## #27 pins current behaviour and the fix lands separately.
-  ##
-  ## Invert this when #36 is fixed.
-  expect_error(plotNegOob(example_idats()), "breaks")
+test_that("plotNegOob runs (regression test for #36)", {
+  ## scale_y_continuous(breaks = NA) errored under current ggplot2, which wants
+  ## NULL to mean "draw no breaks".
+  expect_no_error(plotNegOob(example_idats()))
 })

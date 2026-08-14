@@ -30,37 +30,22 @@ test_that("betas are bounded and pvals are probabilities", {
   expect_true(all(p >= 0 & p <= 1))
 })
 
-test_that("mldat shares assayData by reference (BUG, see #35)", {
-  ## Characterization test. The shipped mldat.rda has
-  ## storageMode == "environment" rather than Biobase's default
-  ## "lockedEnvironment", so its assayData is a bare environment shared between
-  ## every copy of the object. R's copy-on-modify does not protect the payload:
-  ##
-  ##     x <- mldat
-  ##     methylated(x) <- methylated(x) + 1   # also modifies mldat
-  ##
-  ## methylumiR() and methylumIDAT() both produce "lockedEnvironment" objects,
-  ## so this is confined to the saved example dataset -- but that dataset is
-  ## what every reader of the vignette experiments with.
-  ##
-  ## Invert this when #35 is fixed.
-  expect_equal(storageMode(mldat), "environment")
+test_that("mldat copies are independent (regression test for #35)", {
+  ## The shipped mldat.rda used to have storageMode == "environment" rather
+  ## than Biobase's default "lockedEnvironment", so its assayData was a bare
+  ## environment shared between every copy and modifying a copy silently
+  ## mutated the original.
+  expect_equal(storageMode(mldat), "lockedEnvironment")
 
   x <- mldat
   before <- sum(methylated(mldat))
   methylated(x) <- methylated(x) + 1
-  expect_false(sum(methylated(mldat)) == before)   # the original was mutated
-
-  methylated(x) <- methylated(x) - 1               # undo, for later tests
-  expect_equal(sum(methylated(mldat)), before)
+  expect_equal(sum(methylated(mldat)), before)     # original untouched
+  expect_false(sum(methylated(x)) == before)       # the copy did change
 })
 
 test_that("replacement methods round-trip", {
-  ## Work on a properly isolated copy so this test cannot leak into the others,
-  ## which is precisely what #35 causes.
   x <- mldat
-  storageMode(x) <- "lockedEnvironment"
-
   b <- betas(x)
   betas(x) <- b * 0 + 0.5
   expect_true(all(betas(x) == 0.5))
@@ -94,22 +79,28 @@ test_that("subsetting selects the right features and samples", {
   expect_equal(unname(dim(mldat[1:100, ])), c(100L, 10L))
 })
 
-test_that("subsetting drops QC data (BUG, see #21)", {
-  ## Characterization test: this documents current behaviour, it does not
-  ## endorse it. eSet's "[" method drops the QC slot in callNextMethod(), and
-  ## the guard added for #21 then runs
-  ##
-  ##     x@QC <- x@QC[, j, drop = FALSE]
-  ##
-  ## against an already-NULL slot. NULL[, j, drop = FALSE] silently returns
-  ## NULL rather than erroring, so the fix is a no-op and QC data is lost on
-  ## every form of subsetting.
-  ##
-  ## When #21 is actually fixed, these expectations must be inverted to assert
-  ## that QC data survives, subset to the selected samples.
-  expect_null(QCdata(mldat[1:100, 1:3]))
-  expect_null(QCdata(mldat[, 1:3]))
-  expect_null(QCdata(mldat[1:100, ]))
+test_that("subsetting keeps QC data (regression test for #21)", {
+  ## eSet's "[" drops the QC slot, so the method saves it before calling
+  ## callNextMethod() and reattaches it afterwards. QC probes are control
+  ## probes in their own feature space, so feature indices must not touch them
+  ## -- only sample selection applies.
+  both <- QCdata(mldat[1:100, 1:3])
+  expect_s4_class(both, "MethyLumiQC")
+  expect_equal(unname(dim(both)), c(44L, 3L))
+  expect_equal(sampleNames(both), head(sampleNames(mldat), 3))
+
+  samples <- QCdata(mldat[, 1:3])
+  expect_s4_class(samples, "MethyLumiQC")
+  expect_equal(unname(dim(samples)), c(44L, 3L))
+
+  ## Feature-only subsetting leaves QC entirely alone.
+  feats <- QCdata(mldat[1:100, ])
+  expect_s4_class(feats, "MethyLumiQC")
+  expect_equal(unname(dim(feats)), c(44L, 10L))
+
+  ## And the QC values themselves are the right columns, not just the right
+  ## shape. (MethyLumiQC has no betas method; use an assay it does carry.)
+  expect_equal(methylated(QCdata(mldat))[, 1:3], methylated(both))
 })
 
 test_that("subsetting records history", {
@@ -151,4 +142,14 @@ test_that("combine of disjoint sample sets restores the whole", {
   ab <- combine(a, b)
   expect_equal(unname(dim(ab)), unname(dim(mldat)))
   expect_equal(betas(ab)[, sampleNames(mldat)], betas(mldat))
+})
+
+test_that("combine keeps control probes now that subsetting does (#21)", {
+  ## combine() used to emit "Dropped control probes: any(is.null(QCdata(x),
+  ## QCdata(y))) == TRUE" for any combine of subsets, because subsetting had
+  ## already thrown the QC data away.
+  ab <- combine(mldat[, 1:5], mldat[, 6:10])
+  qc <- QCdata(ab)
+  expect_s4_class(qc, "MethyLumiQC")
+  expect_equal(unname(dim(qc)), c(44L, 10L))
 })
