@@ -1,3 +1,50 @@
+# methylumi 2.59.3
+
+## Bug fixes
+
+* `methylumIDAT()` reads IDAT files from per-slide subdirectories, which is the
+  layout Illumina's own software produces (`<idatPath>/<Slide>/<Slide>_<Array>_Grn.idat`).
+  Both the file-presence check and the code that actually opened the files
+  assumed a flat directory, so a nested run reported every sample as missing.
+  Flat layouts are unaffected. If the same basename appears under more than one
+  subdirectory the read now errors and lists the candidates rather than picking
+  one. `getBarcodes()` had the same blind spot and is fixed too. (#19)
+
+* `diagnostics()` works on objects with no color-channel annotation, such as
+  the bundled GoldenGate `mldat`. Three `if (annotation(x) == "...")` tests
+  errored outright on a zero-length annotation, and past those, the plotting
+  loop split probes on a `COLOR_CHANNEL` column that such objects do not have,
+  so every panel would have been drawn from zero probes. The long-reported
+  call to the non-existent `plot.density()` was real, on the same path, and is
+  also fixed. (#23)
+
+* `methylumi.bgcorr()` explains itself when asked for `noob` correction on an
+  object that has no out-of-band intensities. Objects built from GEO series
+  matrices or GenomeStudio output via `methylumiR()` carry only
+  methylated/unmethylated/p-value data; OOB probes come only from reading raw
+  IDATs. This used to fail deep inside method dispatch with "unable to find an
+  inherited method for 'intensities.OOB'". (#24)
+
+## Deprecated and defunct
+
+* The gamma-family background corrections — `method = "goob"`, `"gamma"` and
+  `"mode"` — have been removed. They called `gamma.mle()`, `gamma.mode()` and
+  `gamma.integral()` from `rGammaGamma`, a GitHub-only package that is not
+  available from CRAN or Bioconductor and was never declared as a dependency,
+  so these methods have errored for years. Requesting one now produces an error
+  saying so. `method = "noob"` (the default) is unaffected. (#18)
+
+## Internal changes
+
+* `qc.probe.plot()`, `plotNAs()` and `plotProbeNAs()` no longer use ggplot2's
+  deprecated `qplot()`. Plot output is unchanged except in `plotNAs()`, where
+  the segment layer now maps `linewidth` rather than the also-deprecated
+  `size`; `scale_linewidth` uses a linear palette where `scale_size` used an
+  area one, so line widths differ slightly. (#40)
+
+* A pkgdown site is published to <https://seandavi.github.io/methylumi/> from a
+  GitHub Actions workflow. (#43)
+
 # methylumi 2.59.2
 
 ## Bug fixes
