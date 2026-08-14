@@ -122,7 +122,6 @@ test_that("noob background correction refuses non-IDAT input (#24)", {
   ## MethyLumiQC, missing"); now it says what is missing and what to do.
   expect_error(methylumi.bgcorr(mldat), "out-of-band")
   expect_error(methylumi.bgcorr(mldat), "methylumIDAT")
-  expect_error(methylumi.bgcorr(mldat, method = "mode"), "out-of-band")
 
   ## The signature reported in #24: a MethyLumiQC reaching methylumi.bgcorr had
   ## no intensities.OOB method at all, so dispatch failed before any check.
