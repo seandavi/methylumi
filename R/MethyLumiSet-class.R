@@ -303,14 +303,14 @@ setMethod("intensities.U",signature(x="MethyLumiSet", channel="missing"), # {{{
   #if (nrow(x) > 5000) {
 			#index <- seq(1, nrow(x), len=5000)
               #} else {
-		#index <- 1:nrow(x)
+		#index <- seq_len(nrow(x))
               #}
   #if (logMode & max(exprs(x), na.rm=TRUE) > 50) {
     #exprs <- log2(exprs)
   #} 
   #dataMatrix <- exprs[index,]
   #labels <- colnames(dataMatrix)
-  #if (is.null(labels)) labels <- as.character(1:ncol(dataMatrix))
+  #if (is.null(labels)) labels <- as.character(seq_len(ncol(dataMatrix)))
   ### set the margin of the plot
   #mar <- c(max(nchar(labels))/2 + 4.5, 5, 5, 3)
   #old.mar <- par('mar')
@@ -319,7 +319,7 @@ setMethod("intensities.U",signature(x="MethyLumiSet", channel="missing"), # {{{
   #par(mar=mar)
   #boxplot(dataMatrix ~ col(dataMatrix), main=main, range=range, xlab='', ylab='amplitude', ...)
   #par(xaxt='s')
-  #axis(1, at=1:ncol(dataMatrix), labels=labels, tick=TRUE, las=2)
+  #axis(1, at=seq_len(ncol(dataMatrix)), labels=labels, tick=TRUE, las=2)
   #par(mar=old.mar)
   #par(xaxt=old.xaxt)
 #}) # }}}
@@ -331,7 +331,7 @@ setMethod("pairs", signature(x="MethyLumiSet"), function(x,...,logMode=FALSE,max
     
 	upperPanel <- function(x, y, fold=fold) {
 		if (length(x) > 3000) {
-			ind <- sample(1:length(x), 3000)
+			ind <- sample(seq_along(x), 3000)
 			x <- x[ind]; y <- y[ind]
 		}
 		points(x, y)
@@ -744,7 +744,7 @@ normalizeMethyLumiSet <- function(x,beta.cuts=c(0.2,0.8),mapfun=c('atan','ratio'
   cy3[cy3<0] <- NA
   cy5 <- methylated(x)
   cy5[cy5<0] <- NA
-  for(i in 1:ncol(cy5)) {
+  for(i in seq_len(ncol(cy5))) {
     cy3inc <- (!is.na(betas(x)[,i]) & !is.na(cy3[,i]))
     cy5inc <- (!is.na(betas(x)[,i]) & !is.na(cy5[,i]))
     cy3vec <- cy3[cy3inc,i]

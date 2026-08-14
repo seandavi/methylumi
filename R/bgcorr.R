@@ -3,7 +3,7 @@ t.submit <- function() as.character(Sys.time())
 t.finish <- function() as.character(format(Sys.time(), "%H:%M:%S"))
 
 # generic dispatcher for background correction of Infinium methylation arrays
-methylumi.bgcorr<-function(x, method='noob', offset=15, controls=NULL, correct=T, parallel=F, ...) { # {{{
+methylumi.bgcorr<-function(x, method='noob', offset=15, controls=NULL, correct=TRUE, parallel=FALSE, ...) { # {{{
 
   allelic = FALSE
 
@@ -177,65 +177,64 @@ methylumi.bgcorr<-function(x, method='noob', offset=15, controls=NULL, correct=T
 } # }}}
 
 # dispatchers for arbitrary background correction methods
-get.xs <- function(xf, controls, method, offset=50, robust=T, correct=T, parallel=F) { # {{{
+get.xs <- function(xf, controls, method, offset=50, robust=TRUE, correct=TRUE, parallel=FALSE) { # {{{
   if(method == 'normexp') return(normexp.get.xs(xf, controls, offset, robust))
   if(method == 'median') return(median.get.xs(xf, controls, offset))
   if(method == 'illumina') return(illumina.get.xs(xf, controls, offset))
-  if(method == 'gamma') return(gamma.get.xs(xf, controls, offset, correct, 
+  if(method == 'gamma') return(gammaGetXs(xf, controls, offset, correct, 
                                             parallel=parallel))
   if(method == 'mode') return(gammaM.get.xs(xf, controls, offset, correct))
   if(method == 'lumi') return(lumi.get.xs(xf, controls, offset))
   else stop(paste('Method',method,'has not been added to get.xs() yet'))
 }  # }}}
-normexp.get.xs <- function(xf, controls, offset=50, robust=T, ...){#{{{
+normexp.get.xs <- function(xf, controls, offset=50, robust=TRUE, ...){#{{{
   cat("Background mean & SD estimated from", nrow(controls), "probes\n")
   if(robust){ # {{{ slower
-    require(MASS)
+    if (!requireNamespace("MASS", quietly = TRUE)) {
+      stop("robust=TRUE needs the MASS package. Please install it, or use robust=FALSE.")
+    }
     mu <- sigma <- alpha <- rep(NA, ncol(xf))
-    for( i in 1:ncol(xf) ) {
-      ests <- huber(controls[, i])
+    for( i in seq_len(ncol(xf)) ) {
+      ests <- MASS::huber(controls[, i])
       mu[i] <- ests$mu
       sigma[i] <- ests$s
-      alpha[i] <- max(huber(xf[, i])$mu - mu[i], 10)
+      alpha[i] <- max(MASS::huber(xf[, i])$mu - mu[i], 10)
     } # }}}
   } else { # {{{ faster 
-    require(matrixStats) 
-    mu = colMeans(controls, na.rm=T)
-    sigma = colSds(xf, na.rm=T)
-    alpha <- pmax((colMeans(xf, na.rm=T) - mu), 10)
+    mu = colMeans(controls, na.rm=TRUE)
+    sigma = colSds(xf, na.rm=TRUE)
+    alpha <- pmax((colMeans(xf, na.rm=TRUE) - mu), 10)
   } # }}}
   pars = data.frame(mu=mu, lsigma=log(sigma), lalpha=log(alpha))
-  for(i in 1:ncol(xf)) xf[,i] <- normexp.signal(as.list(pars[i,]), xf[,i])
+  for(i in seq_len(ncol(xf))) xf[,i] <- normexp.signal(as.list(pars[i,]), xf[,i])
   return(list(xs=xf+offset, 
               params=data.frame(mu=mu, sigma=sigma, alpha=alpha, offset=offset),
               meta=c('background mean','background SD','signal mean','offset')))
 } # }}}
-median.get.xs <- function(xf, controls, offset=50, robust=T, ...){#{{{
+median.get.xs <- function(xf, controls, offset=50, robust=TRUE, ...){#{{{
   cat("Background median estimated from", nrow(controls), "probes\n")
-  require(matrixStats)
-  bg = colMedians(controls, na.rm=T)
-  for(i in 1:ncol(xf)) xf[,i] <- pmax( xf[,i] - bg[i], 1 )
+  bg = colMedians(controls, na.rm=TRUE)
+  for(i in seq_len(ncol(xf))) xf[,i] <- pmax( xf[,i] - bg[i], 1 )
   return(list(xs=xf+offset, 
               params=data.frame(median=bg, offset=offset),
               meta=c('background median','offset')))
 } # }}}
-illumina.get.xs <- function(xf, controls, offset=50, robust=T, ...){#{{{
-  require(matrixStats)
+illumina.get.xs <- function(xf, controls, offset=50, robust=TRUE, ...){#{{{
   bg = colQuantiles(controls, 0.05)
-  for(i in 1:ncol(xf)) xf[,i] <- pmax( xf[,i] - bg[i], 1 )
+  for(i in seq_len(ncol(xf))) xf[,i] <- pmax( xf[,i] - bg[i], 1 )
   return(list(xs=xf+offset, 
               params=data.frame(bg=bg, offset=offset),
               meta=c('background fifth percentile','offset')))
 } # }}}
-gamma.get.xs <- function(xf,controls,offset=50,correct=T,parallel=F,...){#{{{
+gammaGetXs <- function(xf,controls,offset=50,correct=TRUE,parallel=FALSE,...){#{{{
 
   #require(rGammaGamma)
-  bg = sapply(1:ncol(xf), function(i) gamma.mle(controls[,i]))
+  bg = sapply(seq_len(ncol(xf)), function(i) gamma.mle(controls[,i]))
   if(correct) { # {{{
-    bgmu = colMeans(controls, na.rm=T)
-    fg = sapply(1:ncol(xf), function(i) gamma.mle(pmax(xf[,i]-bgmu[i], 1))) #}}}
+    bgmu = colMeans(controls, na.rm=TRUE)
+    fg = sapply(seq_len(ncol(xf)), function(i) gamma.mle(pmax(xf[,i]-bgmu[i], 1))) #}}}
   } else { # {{{
-    fg = sapply(1:ncol(xf), function(i) gamma.mle(xf[,i]))
+    fg = sapply(seq_len(ncol(xf)), function(i) gamma.mle(xf[,i]))
   } # }}}
   params = cbind(t(fg), t(bg))
   colnames(params) = c('gamma','alpha','delta','beta')
@@ -243,12 +242,12 @@ gamma.get.xs <- function(xf,controls,offset=50,correct=T,parallel=F,...){#{{{
   names(meta) = c('gamma','alpha','delta','beta')
 
   if( parallel == TRUE ) {
-    xs = data.matrix(as.data.frame(.mclapply(1:ncol(xf), function(i) {
+    xs = data.matrix(as.data.frame(.mclapply(seq_len(ncol(xf)), function(i) {
            gamma.integral(xf[,i], params[i,], offset=offset)
     })))
   } else { 
     cat('Estimating xs serially (probably not what you want)...', "\n")
-    xs = data.matrix(as.data.frame(lapply(1:ncol(xf), function(i) {
+    xs = data.matrix(as.data.frame(lapply(seq_len(ncol(xf)), function(i) {
            gamma.integral(xf[,i], params[i,], offset=offset)
     })))
   }
@@ -258,11 +257,11 @@ gamma.get.xs <- function(xf,controls,offset=50,correct=T,parallel=F,...){#{{{
   return(list(xs=xs, params=as.data.frame(params), meta=meta))
   
 } # }}}
-gammaM.get.xs <- function(xf,controls,offset=15,correct=T,parallel=F,...){#{{{
+gammaM.get.xs <- function(xf,controls,offset=15,correct=TRUE,parallel=FALSE,...){#{{{
 
   #require(rGammaGamma)
-  bg = sapply(1:ncol(xf), function(i) gamma.mode(gamma.mle(controls[,i])))
-  xs = sapply(1:ncol(xf), function(s) pmax(xf[,s] - bg[s], offset))
+  bg = sapply(seq_len(ncol(xf)), function(i) gamma.mode(gamma.mle(controls[,i])))
+  xs = sapply(seq_len(ncol(xf)), function(s) pmax(xf[,s] - bg[s], offset))
   params = data.frame(mode=bg)
   params$offset = offset
   meta = c('background mode','offset')
@@ -271,7 +270,7 @@ gammaM.get.xs <- function(xf,controls,offset=15,correct=T,parallel=F,...){#{{{
   return(list(xs=xs, params=params, meta=meta))
   
 } # }}}
-lumi.get.xs <- function(xf, controls, offset=50, robust=T, nbin=1000,...){#{{{
+lumi.get.xs <- function(xf, controls, offset=50, robust=TRUE, nbin=1000,...){#{{{
 
   # from lumi's estimateBG() function
   bg <- apply(controls, 2, function(x) {
@@ -282,7 +281,7 @@ lumi.get.xs <- function(xf, controls, offset=50, robust=T, nbin=1000,...){#{{{
   })
   cat("Background mode estimated from", nrow(controls), "probes\n")
 
-  for(i in 1:ncol(xf)) { # screams out to be parallelized
+  for(i in seq_len(ncol(xf))) { # screams out to be parallelized
     xf[,i] <- pmax((xf[,i] - bg[i]), 1)
   }
   return(list(xs=xf+offset, 
@@ -291,11 +290,11 @@ lumi.get.xs <- function(xf, controls, offset=50, robust=T, nbin=1000,...){#{{{
 } # }}}
 
 # dispatchers for correcting controls w/o including them in estimates 
-get.xcs <- function(xcf, method, params, robust=T, correct=T) { # {{{
+get.xcs <- function(xcf, method, params, robust=TRUE, correct=TRUE) { # {{{
   if(method == 'normexp') return(normexp.get.xcs(xcf, params))
   if(method == 'median') return(median.get.xcs(xcf, params))
   if(method == 'illumina') return(illumina.get.xcs(xcf, params,correct=correct))
-  if(method == 'gamma') return(gamma.get.xcs(xcf, params))
+  if(method == 'gamma') return(gammaGetXcs(xcf, params))
   if(method == 'mode') return(gammaM.get.xcs(xcf, params))
   if(method == 'lumi') return(lumi.get.xcs(xcf, params))
   else stop(paste('Method',method,'has not been added to get.xcs() yet'))
@@ -306,61 +305,61 @@ normexp.get.xcs <- function(xcf, params, ...){#{{{
   stopifnot(any(grepl('sigma', names(params))))
   stopifnot(any(grepl('alpha', names(params))))
   stopifnot(any(grepl('offset', names(params))))
-  pars = data.frame(mu=params[[grep('mu', names(params), value=T)]],
-                    sigma=log(params[[grep('sigma', names(params), value=T)]]),
-                    alpha=log(params[[grep('alpha', names(params), value=T)]]) )
-  for(i in 1:ncol(xcf)) xcf[,i] = normexp.signal( pars[i,], xcf[,i] )
-  return( xcf + params[[grep('offset', names(params), value=T)]][1] )
+  pars = data.frame(mu=params[[grep('mu', names(params), value=TRUE)]],
+                    sigma=log(params[[grep('sigma', names(params), value=TRUE)]]),
+                    alpha=log(params[[grep('alpha', names(params), value=TRUE)]]) )
+  for(i in seq_len(ncol(xcf))) xcf[,i] = normexp.signal( pars[i,], xcf[,i] )
+  return( xcf + params[[grep('offset', names(params), value=TRUE)]][1] )
 
 } # }}}
-median.get.xcs <- function(xcf, params, robust=T, ...){#{{{
+median.get.xcs <- function(xcf, params, robust=TRUE, ...){#{{{
 
   stopifnot(any(grepl('median', names(params))))
   stopifnot(any(grepl('offset', names(params))))
   xcs = xcf
-  mu = params[[grep('median', names(params), value=T)]]
-  offset = params[[grep('offset', names(params), value=T)]]
-  for(i in 1:ncol(xcf)) xcs[,i] <- pmax(xcf[,i] - mu[i], 1)
+  mu = params[[grep('median', names(params), value=TRUE)]]
+  offset = params[[grep('offset', names(params), value=TRUE)]]
+  for(i in seq_len(ncol(xcf))) xcs[,i] <- pmax(xcf[,i] - mu[i], 1)
   rm(xcf)
   xcs = xcs + offset
   return(xcs)
 
 } # }}}
-illumina.get.xcs <- function(xcf, params, robust=T, ...){#{{{
+illumina.get.xcs <- function(xcf, params, robust=TRUE, ...){#{{{
 
   stopifnot(any(grepl('bg', names(params))))
   stopifnot(any(grepl('offset', names(params))))
-  bg = params[[grep('bg', names(params), value=T)]]
-  offset = params[[grep('offset', names(params), value=T)]][1]
-  for(i in 1:ncol(xcf)) xcf[,i] <- pmax(xcf[,i] - bg[i], 1)
+  bg = params[[grep('bg', names(params), value=TRUE)]]
+  offset = params[[grep('offset', names(params), value=TRUE)]][1]
+  for(i in seq_len(ncol(xcf))) xcf[,i] <- pmax(xcf[,i] - bg[i], 1)
   return(xcf+offset)
 
 } # }}}
-gamma.get.xcs <- function(xcf, params, robust=T, parallel=F,...){#{{{
+gammaGetXcs <- function(xcf, params, robust=TRUE, parallel=FALSE,...){#{{{
 
   #require(rGammaGamma)
-  offset = params[[grep('offset', names(params), value=T)]][1]
-  params[[grep('offset', names(params), value=T)]] = NULL
+  offset = params[[grep('offset', names(params), value=TRUE)]][1]
+  params[[grep('offset', names(params), value=TRUE)]] = NULL
   
   xcs = xcf
-  for(i in 1:ncol(xcf)) {
+  for(i in seq_len(ncol(xcf))) {
     xcs[,i]=gamma.integral(xcf[,i],params=as.numeric(params[i,]),offset=offset)
   }
   # notice that the offset was added during the calculation of xcs|params.
   return(xcs)
   
 } # }}}
-gammaM.get.xcs <- function(xcf, params, robust=T, parallel=F, ...){ #{{{
-  bgmode = params[[grep('mode', names(params), value=T)]]
-  sapply(1:ncol(xcf), function(i) pmax((xcf[,i] - bgmode[i]), offset))
+gammaM.get.xcs <- function(xcf, params, robust=TRUE, parallel=FALSE, ...){ #{{{
+  bgmode = params[[grep('mode', names(params), value=TRUE)]]
+  sapply(seq_len(ncol(xcf)), function(i) pmax((xcf[,i] - bgmode[i]), offset))
 } # }}}
-lumi.get.xcs <- function(xcf, params, robust=T, ...){#{{{
+lumi.get.xcs <- function(xcf, params, robust=TRUE, ...){#{{{
 
   stopifnot(any(grepl('mode', names(params))))
   stopifnot(any(grepl('offset', names(params))))
-  mu = params[[grep('mode', names(params), value=T)]]
-  offset = params[[grep('offset', names(params), value=T)]][1]
-  for(i in 1:ncol(xcf)) xcf[,i] <- pmax(xcf[,i] - mu[i], 1)
+  mu = params[[grep('mode', names(params), value=TRUE)]]
+  offset = params[[grep('offset', names(params), value=TRUE)]][1]
+  for(i in seq_len(ncol(xcf))) xcf[,i] <- pmax(xcf[,i] - mu[i], 1)
   return(xcf+offset)
 
 } # }}}
@@ -388,7 +387,7 @@ normexp.signal <- function (par, x)  { # {{{
 } # }}}
 
 # gamma deconvolution (conditional expectation of xs|xf; my code)
-gamma.signal <- function (par, x)  { # {{{
+gammaSignal <- function (par, x)  { # {{{
   #require(rGammaGamma)
   par = as.numeric(par)
   gamma.integral(x, par, offset=0)

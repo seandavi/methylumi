@@ -1,11 +1,13 @@
-### Replace mcapply with reasonable default that works on windows.
+### A parallel lapply that also works on Windows.
+###
+### This used to wrap parallel::mclapply behind require(parallel), falling back
+### to lapply, and nagged about options('mc.cores'). mclapply() forks, so on
+### Windows it silently degrades to serial anyway. BiocParallel::bplapply picks
+### an appropriate backend per platform and is configured the standard
+### Bioconductor way, via register() or the BPPARAM argument.
+###
+### Exported, so the signature is kept: callers pass the same arguments they
+### would pass to lapply().
 .mclapply <- function(...) {
-  if(require(parallel)) {
-    if(is.null(options("mc.cores")[[1]])) {
-      message("Remember to set options('mc.cores') if you want multiple cores used where possible")
-    }
-    return(mclapply(...))
-  } else {
-    return(lapply(...))
-  }
+  BiocParallel::bplapply(...)
 }

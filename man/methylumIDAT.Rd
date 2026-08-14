@@ -7,10 +7,10 @@
 methylumIDAT(
   barcodes = NULL,
   pdat = NULL,
-  parallel = F,
-  n = F,
-  n.sd = F,
-  oob = T,
+  parallel = FALSE,
+  n = FALSE,
+  n.sd = FALSE,
+  oob = TRUE,
   idatPath = getwd(),
   ...
 )

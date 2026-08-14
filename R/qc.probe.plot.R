@@ -2,10 +2,7 @@ setClassUnion("methylData", c('MethyLumiSet','MethyLumiM'))
 setClassUnion("ND", c('character','missing'))
 
 # fix for QC plots in methylumi (hard to read on Infinium arrays) using ggplot2
-qc.probe.plot <- function(obj,controltype="negnorm",log2=T,by.type=F,...){ # {{{
-  require("ggplot2")
-  require("reshape2")
-  require("scales")
+qc.probe.plot <- function(obj,controltype="negnorm",log2=TRUE,by.type=FALSE,...){ # {{{
   log2_trans = log_trans(base=2)
   if( class(obj) %in% c('MethyLumiSet','MethyLumiM') ) {
     qc <- controlData(obj)
@@ -20,9 +17,9 @@ qc.probe.plot <- function(obj,controltype="negnorm",log2=T,by.type=F,...){ # {{{
     stop("Don't know how to QC this data you've given me...")
   }
   if( tolower(controltype) == 'negnorm' || missing(controltype) ) {
-    rows <- grep('(Negative|Norm)', fData(qc)$Type, ignore.case=T)
+    rows <- grep('(Negative|Norm)', fData(qc)$Type, ignore.case=TRUE)
   } else { 
-    rows <- grep(paste('^',controltype,sep=''),fData(qc)$Type,ignore.case=T)
+    rows <- grep(paste('^',controltype,sep=''),fData(qc)$Type,ignore.case=TRUE)
   }
   if( tolower(controltype) == 'oob' ) {
     # {{{ out-of-band intensities
@@ -121,7 +118,7 @@ qc.probe.plot <- function(obj,controltype="negnorm",log2=T,by.type=F,...){ # {{{
   return( p )
 } # }}}
 
-methylumi.diagnostics <- function (x, onlybg=F) { # {{{
+methylumi.diagnostics <- function (x, onlybg=FALSE) { # {{{
   x.qc <- controlData(x)
   if (!is.null(x.qc)) { # {{{ realistically, use OOB
       bg <- list(red = log2(negctls(x.qc, "Cy5")), 
@@ -176,7 +173,7 @@ methylumi.diagnostics <- function (x, onlybg=F) { # {{{
         dx <- density(na.omit(dat), n = Nx)
         plot(dx$x, dx$y, col = colrs, xlim = xlim, ylim = c(0, 
              densmax), xlab = xlab, ylab='density', type = "h")
-        for (i in 1:length(dens)) lines(dens[[i]], lty=2, col=chcolor)
+        for (i in seq_along(dens)) lines(dens[[i]], lty=2, col=chcolor)
         title(paste(xlab, ":", dye[[channel]], "probes")) # }}}
       } else { # {{{ methylated/unmethylated
         dat <- log2(assayDataElement(x, assay)[probes,])

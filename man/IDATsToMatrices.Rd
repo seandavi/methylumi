@@ -7,7 +7,7 @@
 IDATsToMatrices(
   barcodes,
   fileExts = list(Cy3 = "Grn", Cy5 = "Red"),
-  parallel = F,
+  parallel = FALSE,
   idatPath = "."
 )
 }

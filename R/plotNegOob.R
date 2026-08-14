@@ -1,6 +1,5 @@
-plotNegOob <- function(x, log2=F) {
+plotNegOob <- function(x, log2=FALSE) {
 
-  require(ggplot2)
   samples = dim(x)[2]
   if(samples > 4) stop("Too many samples, choose a subset for a decent plot")
   par(mfrow=c(samples,2))

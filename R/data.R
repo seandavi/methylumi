@@ -34,7 +34,6 @@
 #' @keywords IO
 #' @name methylumi-package
 #' @aliases methylumi-package methylumi
-#' @docType package
 NULL
 
 #' Data frame describing loci on the 27 and 450k arrays

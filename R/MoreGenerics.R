@@ -62,13 +62,12 @@ setMethod("plotNAs", signature(object="methylData"), function(object){ # {{{
   pval <- pval.detect(object)
   sortorder <- order(sampleNames(object))
   sortedNames <- sampleNames(object)[sortorder]
-  NAs <- data.frame(sample=sortedNames, index=1:length(sortedNames), 
+  NAs <- data.frame(sample=sortedNames, index=seq_along(sortedNames), 
                     dropouts=sampleNAs(object)[sortorder], 
                     slot=as.factor(sapply(sortedNames, function(x){
                       pop(strsplit(x, '_')[[1]])
                     })))
   NAs <- NAs[order(NAs$dropouts),]
-  require('ggplot2')
   ggplot2::qplot(data=NAs, x=index, y=dropouts, size=dropouts, colour=slot,
                  geom=c('segment','point'), yend=0, xend=index, xlab='Sample #',
                  main=paste('Probe dropouts, colored by position, p >', pval))
@@ -77,10 +76,9 @@ setGeneric('plotProbeNAs', # {{{
            function(object) standardGeneric('plotProbeNAs')
 ) # }}}
 setMethod("plotProbeNAs",signature(object="methylData"),function(object){ # {{{
-  require('ggplot2')
   pval <- pval.detect(object)
   x <- data.frame(drops=probeNAs(object)/dim(object)[2], 
-                  mu=rowMeans(betas(object),na.rm=T))
+                  mu=rowMeans(betas(object),na.rm=TRUE))
   ggplot2::qplot(geom='jitter', x=mu, y=drops, ylab='failed probes',xlab='mean',
                  main=paste('Probe dropouts, colored by mean beta, p >', pval),
                  data=x, colour=mu)
@@ -118,15 +116,23 @@ setMethod('QCdata', signature(object="MethyLumiM"), # {{{
 setMethod('getHistory', signature(object="MethyLumiM"), # {{{
   function(object) object@history ) # }}}
 
+## lumi is a Suggests, and these methods are the only thing that needs it.
+.needLumi <- function() { # {{{
+  if (!requireNamespace("lumi", quietly = TRUE)) {
+    stop("produceMethylationGEOSubmissionFile() needs the lumi package. ",
+         "Please install it.")
+  }
+} # }}}
+
 if(!isGeneric('produceMethylationGEOSubmissionFile')) setGeneric('produceMethylationGEOSubmissionFile', # {{{
   function(object) standardGeneric('produceMethylationGEOSubmissionFile')) # }}}
 setMethod('produceMethylationGEOSubmissionFile', signature(object="MethyLumiM"), # {{{
   function(object) {
-    require(lumi)
+    .needLumi()
     lumi:::produceMethylationGEOSubmissionFile(object)
   }) # }}}
 setMethod('produceMethylationGEOSubmissionFile', signature(object="MethyLumiSet"), # {{{
   function(object) {
-    require(lumi)
+    .needLumi()
     lumi:::produceMethylationGEOSubmissionFile(as(object,'MethyLumiM'))
   }) # }}}
