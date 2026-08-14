@@ -67,6 +67,46 @@ test_that("MethyLumiSet coerces to a minfi MethylSet", {
   expect_equal(sum(minfi::getBeta(ms), na.rm = TRUE), 25692.398717, tolerance = TOL)
 })
 
+## Copy the bundled IDATs into <dir>/<Slide>/ subdirectories, the layout the
+## scanner actually writes (see #19).
+nested_idat_path <- function() {
+  dir <- tempfile("nested-idats-")
+  dir.create(dir)
+  for (f in list.files(idat_path(), pattern = "\\.idat$", full.names = TRUE)) {
+    slide <- sub("_.*$", "", basename(f))
+    dir.create(file.path(dir, slide), showWarnings = FALSE)
+    file.copy(f, file.path(dir, slide, basename(f)))
+  }
+  dir
+}
+
+test_that("methylumIDAT reads IDATs in per-slide subdirectories (#19)", {
+  nested <- nested_idat_path()
+  expect_equal(getBarcodes(nested), setNames(idat_barcodes(), idat_barcodes()))
+
+  mi <- example_idats()
+  ne <- suppressMessages(methylumIDAT(idat_barcodes(), idatPath = nested))
+  expect_equal(sampleNames(ne), sampleNames(mi))
+  expect_identical(betas(ne),        betas(mi))
+  expect_identical(methylated(ne),   methylated(mi))
+  expect_identical(unmethylated(ne), unmethylated(mi))
+  expect_identical(intensities.OOB(ne), intensities.OOB(mi))
+})
+
+test_that("an IDAT in two subdirectories is an error, not a coin flip (#19)", {
+  nested <- nested_idat_path()
+  dir.create(file.path(nested, "elsewhere"))
+  dupe <- "5318317007_A_Grn.idat"
+  file.copy(file.path(idat_path(), dupe), file.path(nested, "elsewhere", dupe))
+  expect_error(suppressMessages(methylumIDAT(idat_barcodes(), idatPath = nested)),
+               "ambiguous")
+})
+
+test_that("a genuinely missing IDAT is still reported", {
+  expect_error(suppressMessages(
+    methylumIDAT("9999999999_A", idatPath = idat_path())), "files.present")
+})
+
 test_that("IDATsToMatrices reads both channels", {
   mats <- suppressMessages(
     IDATsToMatrices(idat_barcodes(), idatPath = idat_path())

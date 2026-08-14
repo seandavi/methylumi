@@ -46,12 +46,11 @@ t.submit <- function() as.character(Sys.time())
 t.finish <- function() as.character(format(Sys.time(), "%H:%M:%S"))
 
 ## handy for grabbing all IDAT files in an Illumina directory
+## Handles both a flat directory and Illumina's one-directory-per-slide layout.
 getBarcodes <- function(path=".") { # {{{
-  oldwd <- getwd()
-  setwd(path)
   barcds <- unique(gsub("_(Red|Grn).idat","",
-                        list.files(path=path,patt="idat")))
-  setwd(oldwd)
+                        basename(list.files(path=path,patt="idat",
+                                            recursive=TRUE))))
   names(barcds) <- barcds
   return(barcds)
 } # }}}
